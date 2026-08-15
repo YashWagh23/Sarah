@@ -49,18 +49,25 @@ import com.sarah.app.ui.theme.TextPrimary
 import com.sarah.app.ui.theme.TextSecondary
 import com.sarah.app.ui.theme.WarmAmber
 
+import com.sarah.app.ui.components.QuickCaptureBottomSheet
+import com.sarah.app.ui.screens.quickcapture.QuickCaptureViewModel
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+
 @Composable
 fun TodayScreen(
     viewModel: TodayViewModel,
-    onQuickAddClick: () -> Unit,
+    quickCaptureViewModel: QuickCaptureViewModel,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var isQuickCaptureOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onQuickAddClick,
+                onClick = { isQuickCaptureOpen = true },
                 containerColor = ElectricIndigo,
                 contentColor = TextPrimary,
                 shape = CircleShape
@@ -200,6 +207,13 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(40.dp))
                 }
             }
+        }
+
+        if (isQuickCaptureOpen) {
+            QuickCaptureBottomSheet(
+                viewModel = quickCaptureViewModel,
+                onDismiss = { isQuickCaptureOpen = false }
+            )
         }
     }
 }

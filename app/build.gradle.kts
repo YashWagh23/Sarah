@@ -95,6 +95,9 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    // ML Kit Text Recognition (On-device OCR for JPG and scanned PDFs)
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 

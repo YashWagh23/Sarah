@@ -7,7 +7,9 @@ import com.sarah.app.data.repository.ScheduleRepositoryImpl
 import com.sarah.app.data.repository.SubjectRepositoryImpl
 import com.sarah.app.data.repository.TaskRepositoryImpl
 import com.sarah.app.data.repository.UserRepositoryImpl
+import com.sarah.app.domain.engine.DocumentTextExtractor
 import com.sarah.app.domain.engine.FeasibilityEngine
+import com.sarah.app.domain.engine.NaturalLanguageTaskParser
 import com.sarah.app.domain.repository.ScheduleRepository
 import com.sarah.app.domain.repository.SubjectRepository
 import com.sarah.app.domain.repository.TaskRepository
@@ -24,6 +26,8 @@ class SarahApp : Application() {
     lateinit var userRepository: UserRepository private set
 
     val feasibilityEngine: FeasibilityEngine by lazy { FeasibilityEngine() }
+    val naturalLanguageTaskParser: NaturalLanguageTaskParser by lazy { NaturalLanguageTaskParser() }
+    val documentTextExtractor: DocumentTextExtractor by lazy { DocumentTextExtractor() }
 
     override fun onCreate() {
         super.onCreate()

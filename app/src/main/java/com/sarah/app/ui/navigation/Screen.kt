@@ -17,6 +17,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     object Onboarding : Screen("onboarding", "Onboarding")
 
     companion object {
-        val bottomNavItems = listOf(Today, Tasks, Subjects, Schedule, Profile)
+        val bottomNavItems by lazy { listOf(Today, Tasks, Subjects, Schedule, Profile) }
     }
 }

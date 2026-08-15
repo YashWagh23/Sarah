@@ -29,6 +29,7 @@ import com.sarah.app.ui.screens.onboarding.OnboardingScreen
 import com.sarah.app.ui.screens.onboarding.OnboardingViewModel
 import com.sarah.app.ui.screens.profile.ProfileScreen
 import com.sarah.app.ui.screens.profile.ProfileViewModel
+import com.sarah.app.ui.screens.quickcapture.QuickCaptureViewModel
 import com.sarah.app.ui.screens.schedule.ScheduleScreen
 import com.sarah.app.ui.screens.schedule.ScheduleViewModel
 import com.sarah.app.ui.screens.subjects.SubjectsScreen
@@ -148,11 +149,17 @@ fun AppNavigation(
                         app.feasibilityEngine
                     )
                 )
+                val quickCaptureViewModel: QuickCaptureViewModel = viewModel(
+                    factory = QuickCaptureViewModel.Factory(
+                        app.taskRepository,
+                        app.subjectRepository,
+                        app.naturalLanguageTaskParser,
+                        app.documentTextExtractor
+                    )
+                )
                 TodayScreen(
                     viewModel = todayViewModel,
-                    onQuickAddClick = {
-                        navController.navigate(Screen.Tasks.route)
-                    }
+                    quickCaptureViewModel = quickCaptureViewModel
                 )
             }
 
