@@ -1,0 +1,19 @@
+package com.sarah.app.ui.screens.today
+
+import com.sarah.app.domain.model.CollegeSchedule
+import com.sarah.app.domain.model.EnergyLevel
+import com.sarah.app.domain.model.FeasibilityReport
+import com.sarah.app.domain.model.Subject
+import com.sarah.app.domain.model.Task
+import com.sarah.app.domain.model.UserProfile
+
+data class TodayUiState(
+    val isLoading: Boolean = true,
+    val greeting: String = "Good Evening",
+    val userProfile: UserProfile? = null,
+    val schedule: CollegeSchedule = CollegeSchedule(),
+    val energyLevel: EnergyLevel = EnergyLevel.NORMAL,
+    val tasks: List<Task> = emptyList(),
+    val subjects: List<Subject> = emptyList(),
+    val feasibilityReport: FeasibilityReport? = null
+)

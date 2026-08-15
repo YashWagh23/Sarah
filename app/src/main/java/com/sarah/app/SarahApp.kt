@@ -1,0 +1,38 @@
+package com.sarah.app
+
+import android.app.Application
+import com.sarah.app.data.local.SarahDatabase
+import com.sarah.app.data.preferences.SarahPreferencesManager
+import com.sarah.app.data.repository.ScheduleRepositoryImpl
+import com.sarah.app.data.repository.SubjectRepositoryImpl
+import com.sarah.app.data.repository.TaskRepositoryImpl
+import com.sarah.app.data.repository.UserRepositoryImpl
+import com.sarah.app.domain.engine.FeasibilityEngine
+import com.sarah.app.domain.repository.ScheduleRepository
+import com.sarah.app.domain.repository.SubjectRepository
+import com.sarah.app.domain.repository.TaskRepository
+import com.sarah.app.domain.repository.UserRepository
+
+class SarahApp : Application() {
+
+    lateinit var database: SarahDatabase private set
+    lateinit var preferencesManager: SarahPreferencesManager private set
+
+    lateinit var taskRepository: TaskRepository private set
+    lateinit var subjectRepository: SubjectRepository private set
+    lateinit var scheduleRepository: ScheduleRepository private set
+    lateinit var userRepository: UserRepository private set
+
+    val feasibilityEngine: FeasibilityEngine by lazy { FeasibilityEngine() }
+
+    override fun onCreate() {
+        super.onCreate()
+        database = SarahDatabase.getInstance(this)
+        preferencesManager = SarahPreferencesManager(this)
+
+        taskRepository = TaskRepositoryImpl(database.taskDao())
+        subjectRepository = SubjectRepositoryImpl(database.subjectDao())
+        scheduleRepository = ScheduleRepositoryImpl(database.scheduleDao())
+        userRepository = UserRepositoryImpl(database.userProfileDao())
+    }
+}
