@@ -25,6 +25,7 @@ data class TaskEntity(
     val energyRequirement: String,
     val status: String,
     val completionPercentage: Int,
+    val completedMinutes: Int = 0,
     val createdAtEpochMs: Long,
     val completedAtEpochMs: Long?
 ) {
@@ -43,6 +44,7 @@ data class TaskEntity(
             energyRequirement = runCatching { EnergyRequirement.valueOf(energyRequirement) }.getOrDefault(EnergyRequirement.MEDIUM),
             status = runCatching { TaskStatus.valueOf(status) }.getOrDefault(TaskStatus.PENDING),
             completionPercentage = completionPercentage,
+            completedMinutes = completedMinutes,
             createdAtEpochMs = createdAtEpochMs,
             completedAtEpochMs = completedAtEpochMs
         )
@@ -64,6 +66,7 @@ data class TaskEntity(
                 energyRequirement = task.energyRequirement.name,
                 status = task.status.name,
                 completionPercentage = task.completionPercentage,
+                completedMinutes = task.completedMinutes,
                 createdAtEpochMs = task.createdAtEpochMs,
                 completedAtEpochMs = task.completedAtEpochMs
             )

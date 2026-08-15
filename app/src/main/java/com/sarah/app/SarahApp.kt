@@ -3,6 +3,7 @@ package com.sarah.app
 import android.app.Application
 import com.sarah.app.data.local.SarahDatabase
 import com.sarah.app.data.preferences.SarahPreferencesManager
+import com.sarah.app.data.repository.DailyPlanRepositoryImpl
 import com.sarah.app.data.repository.ScheduleRepositoryImpl
 import com.sarah.app.data.repository.SubjectRepositoryImpl
 import com.sarah.app.data.repository.TaskRepositoryImpl
@@ -10,6 +11,7 @@ import com.sarah.app.data.repository.UserRepositoryImpl
 import com.sarah.app.domain.engine.DocumentTextExtractor
 import com.sarah.app.domain.engine.FeasibilityEngine
 import com.sarah.app.domain.engine.NaturalLanguageTaskParser
+import com.sarah.app.domain.repository.DailyPlanRepository
 import com.sarah.app.domain.repository.ScheduleRepository
 import com.sarah.app.domain.repository.SubjectRepository
 import com.sarah.app.domain.repository.TaskRepository
@@ -24,6 +26,7 @@ class SarahApp : Application() {
     lateinit var subjectRepository: SubjectRepository private set
     lateinit var scheduleRepository: ScheduleRepository private set
     lateinit var userRepository: UserRepository private set
+    lateinit var dailyPlanRepository: DailyPlanRepository private set
 
     val feasibilityEngine: FeasibilityEngine by lazy { FeasibilityEngine() }
     val naturalLanguageTaskParser: NaturalLanguageTaskParser by lazy { NaturalLanguageTaskParser() }
@@ -38,5 +41,6 @@ class SarahApp : Application() {
         subjectRepository = SubjectRepositoryImpl(database.subjectDao())
         scheduleRepository = ScheduleRepositoryImpl(database.scheduleDao())
         userRepository = UserRepositoryImpl(database.userProfileDao())
+        dailyPlanRepository = DailyPlanRepositoryImpl(database.dailyPlanDao(), database.temporaryInterruptionDao())
     }
 }

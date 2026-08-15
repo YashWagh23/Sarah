@@ -51,6 +51,10 @@ data class Task(
     val energyRequirement: EnergyRequirement = EnergyRequirement.MEDIUM,
     val status: TaskStatus = TaskStatus.PENDING,
     val completionPercentage: Int = 0,
+    val completedMinutes: Int = 0,
     val createdAtEpochMs: Long = System.currentTimeMillis(),
     val completedAtEpochMs: Long? = null
-)
+) {
+    val remainingMinutes: Int
+        get() = maxOf(0, estimatedMinutes - completedMinutes)
+}

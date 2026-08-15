@@ -5,13 +5,18 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.sarah.app.data.local.dao.DailyPlanDao
 import com.sarah.app.data.local.dao.ScheduleDao
 import com.sarah.app.data.local.dao.SubjectDao
 import com.sarah.app.data.local.dao.TaskDao
+import com.sarah.app.data.local.dao.TemporaryInterruptionDao
 import com.sarah.app.data.local.dao.UserProfileDao
+import com.sarah.app.data.local.entity.DailyPlanEntity
+import com.sarah.app.data.local.entity.PlanItemEntity
 import com.sarah.app.data.local.entity.ScheduleEntity
 import com.sarah.app.data.local.entity.SubjectEntity
 import com.sarah.app.data.local.entity.TaskEntity
+import com.sarah.app.data.local.entity.TemporaryInterruptionEntity
 import com.sarah.app.data.local.entity.UserProfileEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,9 +27,12 @@ import kotlinx.coroutines.launch
         TaskEntity::class,
         SubjectEntity::class,
         ScheduleEntity::class,
-        UserProfileEntity::class
+        UserProfileEntity::class,
+        DailyPlanEntity::class,
+        PlanItemEntity::class,
+        TemporaryInterruptionEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class SarahDatabase : RoomDatabase() {
@@ -33,6 +41,8 @@ abstract class SarahDatabase : RoomDatabase() {
     abstract fun subjectDao(): SubjectDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun userProfileDao(): UserProfileDao
+    abstract fun dailyPlanDao(): DailyPlanDao
+    abstract fun temporaryInterruptionDao(): TemporaryInterruptionDao
 
     companion object {
         @Volatile
@@ -45,6 +55,7 @@ abstract class SarahDatabase : RoomDatabase() {
                     SarahDatabase::class.java,
                     "sarah_database"
                 )
+                    .fallbackToDestructiveMigration()
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
