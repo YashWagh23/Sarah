@@ -146,7 +146,10 @@ fun AppNavigation(
                         app.scheduleRepository,
                         app.userRepository,
                         app.preferencesManager,
-                        app.feasibilityEngine
+                        app.feasibilityEngine,
+                        app.dailyPlanRepository,
+                        app.adaptivePlanner,
+                        app.nextActionEngine
                     )
                 )
                 val quickCaptureViewModel: QuickCaptureViewModel = viewModel(

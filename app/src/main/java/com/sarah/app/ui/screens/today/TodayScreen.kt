@@ -55,6 +55,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+import com.sarah.app.ui.components.SarahNextActionCard
+
 @Composable
 fun TodayScreen(
     viewModel: TodayViewModel,
@@ -120,6 +122,17 @@ fun TodayScreen(
                             text = "Your real-time academic operating plan for tonight",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary
+                        )
+                    }
+                }
+
+                // Sarah's Next Move (Live Guidance Card)
+                uiState.nextAction?.let { action ->
+                    item {
+                        SarahNextActionCard(
+                            nextAction = action,
+                            onPrimaryActionClick = { viewModel.handlePrimaryNextAction(it) },
+                            onMarkCompletedClick = { viewModel.completeTaskById(it) }
                         )
                     }
                 }
