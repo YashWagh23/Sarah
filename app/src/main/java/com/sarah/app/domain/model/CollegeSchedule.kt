@@ -10,4 +10,30 @@ data class CollegeSchedule(
     val dinnerBufferMinutes: Int = 45,
     val breakDurationMinutes: Int = 15,
     val preferredSessionLengthMinutes: Int = 45
-)
+) {
+    val formattedSleepTime: String
+        get() {
+            val h = sleepTimeMinutes / 60
+            val m = sleepTimeMinutes % 60
+            val amPm = if (h >= 12) "PM" else "AM"
+            val displayH = when {
+                h == 0 -> 12
+                h > 12 -> h - 12
+                else -> h
+            }
+            return String.format("%d:%02d %s", displayH, m, amPm)
+        }
+
+    val formattedWakeTime: String
+        get() {
+            val h = wakeTimeMinutes / 60
+            val m = wakeTimeMinutes % 60
+            val amPm = if (h >= 12) "PM" else "AM"
+            val displayH = when {
+                h == 0 -> 12
+                h > 12 -> h - 12
+                else -> h
+            }
+            return String.format("%d:%02d %s", displayH, m, amPm)
+        }
+}

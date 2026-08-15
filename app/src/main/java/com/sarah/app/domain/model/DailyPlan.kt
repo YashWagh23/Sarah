@@ -28,11 +28,13 @@ enum class SchedulePaceStatus(val displayName: String) {
 }
 
 enum class NextActionType {
-    TASK,
-    BREAK,
+    START_TASK,
+    CONTINUE_TASK,
+    TAKE_BREAK,
     MEAL,
-    RECOVERY,
-    STOP_FOR_NIGHT
+    REST,
+    STOP_FOR_TONIGHT,
+    RECOVER_FROM_DELAY
 }
 
 enum class ForecastHorizon(val displayName: String) {
@@ -70,7 +72,7 @@ data class ScheduleProgress(
 data class NextAction(
     val title: String,
     val subtitle: String,
-    val actionType: NextActionType = NextActionType.TASK,
+    val actionType: NextActionType = NextActionType.START_TASK,
     val taskId: Long? = null,
     val durationMinutes: Int = 0,
     val reason: String = "",

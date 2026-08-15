@@ -43,7 +43,7 @@ data class DailyPlanEntity(
             NextAction(
                 title = nextActionTitle,
                 subtitle = nextActionSubtitle,
-                actionType = runCatching { NextActionType.valueOf(nextActionType ?: "TASK") }.getOrDefault(NextActionType.TASK),
+                actionType = runCatching { NextActionType.valueOf(nextActionType ?: "START_TASK") }.getOrDefault(NextActionType.START_TASK),
                 taskId = nextActionTaskId,
                 durationMinutes = nextActionDurationMinutes ?: 0,
                 reason = nextActionReason ?: "",
