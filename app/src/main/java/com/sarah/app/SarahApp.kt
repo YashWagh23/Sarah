@@ -8,9 +8,11 @@ import com.sarah.app.data.repository.ScheduleRepositoryImpl
 import com.sarah.app.data.repository.SubjectRepositoryImpl
 import com.sarah.app.data.repository.TaskRepositoryImpl
 import com.sarah.app.data.repository.UserRepositoryImpl
+import com.sarah.app.domain.engine.AdaptivePlanner
 import com.sarah.app.domain.engine.DocumentTextExtractor
 import com.sarah.app.domain.engine.FeasibilityEngine
 import com.sarah.app.domain.engine.NaturalLanguageTaskParser
+import com.sarah.app.domain.engine.TaskPriorityScorer
 import com.sarah.app.domain.repository.DailyPlanRepository
 import com.sarah.app.domain.repository.ScheduleRepository
 import com.sarah.app.domain.repository.SubjectRepository
@@ -28,6 +30,8 @@ class SarahApp : Application() {
     lateinit var userRepository: UserRepository private set
     lateinit var dailyPlanRepository: DailyPlanRepository private set
 
+    val taskPriorityScorer: TaskPriorityScorer by lazy { TaskPriorityScorer() }
+    val adaptivePlanner: AdaptivePlanner by lazy { AdaptivePlanner(taskPriorityScorer) }
     val feasibilityEngine: FeasibilityEngine by lazy { FeasibilityEngine() }
     val naturalLanguageTaskParser: NaturalLanguageTaskParser by lazy { NaturalLanguageTaskParser() }
     val documentTextExtractor: DocumentTextExtractor by lazy { DocumentTextExtractor() }
