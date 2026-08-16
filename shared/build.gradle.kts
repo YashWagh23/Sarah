@@ -2,6 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("org.jetbrains.compose")
+    id("com.google.devtools.ksp")
 }
 
 kotlin {
@@ -40,10 +41,17 @@ kotlin {
         }
         androidMain.dependencies {
             implementation("androidx.core:core-ktx:1.13.1")
+            val roomVersion = "2.6.1"
+            implementation("androidx.room:room-runtime:$roomVersion")
+            implementation("androidx.room:room-ktx:$roomVersion")
         }
         iosMain.dependencies {
         }
     }
+}
+
+dependencies {
+    add("kspAndroid", "androidx.room:room-compiler:2.6.1")
 }
 
 android {
@@ -57,3 +65,4 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
+

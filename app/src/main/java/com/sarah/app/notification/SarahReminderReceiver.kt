@@ -37,8 +37,9 @@ class SarahReminderReceiver : BroadcastReceiver() {
                     val reminderEntity = app.database.reminderDao().getReminderById(reminderId)
                     if (reminderEntity != null && reminderEntity.enabled && reminderEntity.dismissedAtEpochMs == null) {
                         // Check if linked task is completed or deleted
-                        if (reminderEntity.taskId != null) {
-                            val task = app.database.taskDao().getTaskById(reminderEntity.taskId)
+                        val linkedTaskId = reminderEntity.taskId
+                        if (linkedTaskId != null) {
+                            val task = app.database.taskDao().getTaskById(linkedTaskId)
                             if (task == null || task.status == TaskStatus.COMPLETED.name) {
                                 // Task is completed or removed -> dismiss and cancel
                                 app.database.reminderDao().dismissReminder(reminderId, System.currentTimeMillis())
