@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sarah.app.di.SarahAppContainer
+import com.sarah.app.domain.model.AcademicNote
 import com.sarah.app.domain.model.CollegeSchedule
 import com.sarah.app.domain.model.EnergyLevel
 import com.sarah.app.domain.model.Reminder
@@ -29,7 +30,6 @@ import com.sarah.app.domain.model.TaskStatus
 import com.sarah.app.domain.model.TaskType
 import com.sarah.app.domain.model.UserProfile
 import com.sarah.app.domain.util.currentTimeEpochMs
-import com.sarah.app.ui.components.AddAcademicNoteSheet
 import com.sarah.app.ui.navigation.Screen
 import com.sarah.app.ui.screens.notes.NotesScreenContent
 import com.sarah.app.ui.screens.notes.NotesUiState
@@ -39,11 +39,10 @@ import com.sarah.app.ui.screens.profile.ProfileScreenContent
 import com.sarah.app.ui.screens.profile.ProfileUiState
 import com.sarah.app.ui.screens.schedule.ScheduleScreenContent
 import com.sarah.app.ui.screens.schedule.ScheduleUiState
-import com.sarah.app.ui.screens.subjects.AddEditSubjectDialog
-import com.sarah.app.ui.screens.subjects.SubjectFilterMode
+import com.sarah.app.ui.screens.subjects.SubjectWithTaskCount
 import com.sarah.app.ui.screens.subjects.SubjectsScreenContent
 import com.sarah.app.ui.screens.subjects.SubjectsUiState
-import com.sarah.app.ui.screens.tasks.AddEditTaskDialog
+import com.sarah.app.ui.screens.tasks.TaskFilter
 import com.sarah.app.ui.screens.tasks.TasksScreenContent
 import com.sarah.app.ui.screens.tasks.TasksUiState
 import com.sarah.app.ui.screens.today.TodayScreenContent
@@ -118,24 +117,47 @@ fun IosAppNavigation(
                 var onboardingState by remember { mutableStateOf(OnboardingUiState()) }
                 OnboardingScreenContent(
                     uiState = onboardingState,
-                    onWakeTimeChanged = { onboardingState = onboardingState.copy(wakeTime = it) },
-                    onSleepTimeChanged = { onboardingState = onboardingState.copy(sleepTime = it) },
-                    onCollegeStartChanged = { onboardingState = onboardingState.copy(collegeStartTime = it) },
-                    onCollegeEndChanged = { onboardingState = onboardingState.copy(collegeEndTime = it) },
-                    onCommuteChanged = { onboardingState = onboardingState.copy(commuteMinutes = it) },
-                    onComplete = {
+                    onNameChange = { onboardingState = onboardingState.copy(name = it) },
+                    onCollegeChange = { onboardingState = onboardingState.copy(collegeName = it) },
+                    onDepartmentChange = { onboardingState = onboardingState.copy(department = it) },
+                    onSleepChange = { onboardingState = onboardingState.copy(sleepTimeMinutes = it) },
+                    onCollegeHoursChange = { start, end ->
+                        onboardingState = onboardingState.copy(
+                            collegeStartTimeMinutes = start,
+                            collegeEndTimeMinutes = end
+                        )
+                    },
+                    onNextStep = {
+                        if (onboardingState.currentStep < 2) {
+                            onboardingState = onboardingState.copy(currentStep = onboardingState.currentStep + 1)
+                        }
+                    },
+                    onPrevStep = {
+                        if (onboardingState.currentStep > 0) {
+                            onboardingState = onboardingState.copy(currentStep = onboardingState.currentStep - 1)
+                        }
+                    },
+                    onCompleteOnboarding = {
                         coroutineScope.launch {
+                            val userProfile = UserProfile(
+                                name = onboardingState.name,
+                                collegeName = onboardingState.collegeName,
+                                department = onboardingState.department,
+                                semesterYear = onboardingState.semesterYear
+                            )
+                            container.userRepository.saveUserProfile(userProfile)
                             val schedule = CollegeSchedule(
-                                wakeTimeMinutes = onboardingState.wakeTime.hour * 60 + onboardingState.wakeTime.minute,
-                                sleepTimeMinutes = onboardingState.sleepTime.hour * 60 + onboardingState.sleepTime.minute,
-                                collegeStartTimeMinutes = onboardingState.collegeStartTime.hour * 60 + onboardingState.collegeStartTime.minute,
-                                collegeEndTimeMinutes = onboardingState.collegeEndTime.hour * 60 + onboardingState.collegeEndTime.minute,
-                                commuteMinutes = onboardingState.commuteMinutes
+                                sleepTimeMinutes = onboardingState.sleepTimeMinutes,
+                                collegeStartTimeMinutes = onboardingState.collegeStartTimeMinutes,
+                                collegeEndTimeMinutes = onboardingState.collegeEndTimeMinutes
                             )
                             container.scheduleRepository.saveSchedule(schedule)
                             container.preferences.isOnboardingCompleted = true
                             currentScreen = Screen.Today
                         }
+                    },
+                    onCompleted = {
+                        currentScreen = Screen.Today
                     },
                     modifier = modifier.fillMaxSize().padding(innerPadding)
                 )
@@ -178,15 +200,15 @@ fun IosAppNavigation(
                 val todayUiState = TodayUiState(
                     isLoading = false,
                     greeting = "Good " + getDayGreeting() + ", " + (userProfile?.name?.ifBlank { "Student" } ?: "Student"),
-                    todayFormatted = "Today",
                     userProfile = userProfile,
                     schedule = currentSchedule,
-                    currentEnergyLevel = energyLevel,
+                    energyLevel = energyLevel,
                     tasks = activeTasks,
-                    nextAction = nextAction,
+                    subjects = subjects,
+                    upcomingReminders = upcomingReminders,
                     feasibilityReport = feasibilityReport,
                     dailyPlan = dailyPlan,
-                    upcomingReminders = upcomingReminders
+                    nextAction = nextAction
                 )
 
                 var isQuickCaptureOpen by remember { mutableStateOf(false) }
@@ -271,22 +293,43 @@ fun IosAppNavigation(
             Screen.Tasks -> {
                 val tasks by container.taskRepository.getAllTasks().collectAsState(initial = emptyList())
                 val subjects by container.subjectRepository.getAllSubjects().collectAsState(initial = emptyList())
+                var selectedFilter by remember { mutableStateOf(TaskFilter.ACTIVE) }
                 var selectedSubjectId by remember { mutableStateOf<Long?>(null) }
                 var editingTask by remember { mutableStateOf<Task?>(null) }
-                var isAddDialogOpen by remember { mutableStateOf(false) }
+                var isAddEditDialogOpen by remember { mutableStateOf(false) }
+
+                val filtered = remember(tasks, selectedFilter, selectedSubjectId) {
+                    tasks.filter { task ->
+                        val matchesFilter = when (selectedFilter) {
+                            TaskFilter.ALL -> true
+                            TaskFilter.ACTIVE -> task.status != TaskStatus.COMPLETED
+                            TaskFilter.COMPLETED -> task.status == TaskStatus.COMPLETED
+                        }
+                        val matchesSubject = selectedSubjectId == null || task.subjectId == selectedSubjectId
+                        matchesFilter && matchesSubject
+                    }
+                }
 
                 val tasksUiState = TasksUiState(
                     isLoading = false,
                     tasks = tasks,
+                    filteredTasks = filtered,
                     subjects = subjects,
-                    selectedSubjectId = selectedSubjectId
+                    selectedFilter = selectedFilter,
+                    selectedSubjectId = selectedSubjectId,
+                    isAddEditDialogOpen = isAddEditDialogOpen,
+                    editingTask = editingTask
                 )
 
                 TasksScreenContent(
                     uiState = tasksUiState,
-                    selectedSubjectId = selectedSubjectId,
-                    onSubjectFilterSelected = { selectedSubjectId = it },
-                    onToggleTask = { task ->
+                    onOpenAddTask = {
+                        editingTask = null
+                        isAddEditDialogOpen = true
+                    },
+                    onFilterChange = { selectedFilter = it },
+                    onSubjectFilterChange = { selectedSubjectId = it },
+                    onToggleTaskStatus = { task ->
                         coroutineScope.launch {
                             val newStatus = if (task.status == TaskStatus.COMPLETED) TaskStatus.PENDING else TaskStatus.COMPLETED
                             container.taskRepository.updateTaskStatus(task.id, newStatus)
@@ -295,126 +338,118 @@ fun IosAppNavigation(
                             }
                         }
                     },
-                    onAddTask = { isAddDialogOpen = true },
-                    onEditTask = { editingTask = it },
+                    onEditTask = { task ->
+                        editingTask = task
+                        isAddEditDialogOpen = true
+                    },
+                    onCloseAddEditDialog = {
+                        isAddEditDialogOpen = false
+                        editingTask = null
+                    },
+                    onSaveTask = { title, subjectId, type, description, deadlineEpochMs, estimatedMinutes, priority, difficulty, energyRequirement ->
+                        coroutineScope.launch {
+                            val subj = subjects.find { it.id == subjectId }
+                            val toSave = Task(
+                                id = editingTask?.id ?: 0L,
+                                title = title,
+                                subjectId = subjectId,
+                                subjectName = subj?.name ?: "",
+                                type = type,
+                                description = description,
+                                deadlineEpochMs = deadlineEpochMs,
+                                estimatedMinutes = estimatedMinutes,
+                                priority = priority,
+                                difficulty = difficulty,
+                                energyRequirement = energyRequirement,
+                                status = editingTask?.status ?: TaskStatus.PENDING
+                            )
+                            val savedId = container.taskRepository.insertTask(toSave)
+                            if (container.preferences.isDeadlineRemindersEnabled) {
+                                val reminders = container.deadlineReminderEngine.generateDeadlineReminders(toSave.copy(id = savedId))
+                                reminders.forEach { rem ->
+                                    val remId = container.reminderRepository.insertReminder(rem)
+                                    container.reminderScheduler.scheduleReminder(rem.copy(id = remId))
+                                }
+                            }
+                            isAddEditDialogOpen = false
+                            editingTask = null
+                        }
+                    },
                     onDeleteTask = { task ->
                         coroutineScope.launch {
                             container.taskRepository.deleteTask(task)
                             container.reminderScheduler.cancelTaskReminders(task.id)
+                            isAddEditDialogOpen = false
+                            editingTask = null
                         }
                     },
                     modifier = modifier.fillMaxSize().padding(innerPadding)
                 )
-
-                if (isAddDialogOpen || editingTask != null) {
-                    AddEditTaskDialog(
-                        task = editingTask,
-                        subjects = subjects,
-                        onDismiss = {
-                            isAddDialogOpen = false
-                            editingTask = null
-                        },
-                        onSave = { title, subjectId, type, description, deadlineEpochMs, estimatedMinutes, priority, difficulty, energyRequirement ->
-                            coroutineScope.launch {
-                                val subj = subjects.find { it.id == subjectId }
-                                val toSave = Task(
-                                    id = editingTask?.id ?: 0L,
-                                    title = title,
-                                    subjectId = subjectId,
-                                    subjectName = subj?.name ?: "",
-                                    type = type,
-                                    description = description,
-                                    deadlineEpochMs = deadlineEpochMs,
-                                    estimatedMinutes = estimatedMinutes,
-                                    priority = priority,
-                                    difficulty = difficulty,
-                                    energyRequirement = energyRequirement,
-                                    status = editingTask?.status ?: TaskStatus.PENDING
-                                )
-                                val savedId = container.taskRepository.insertTask(toSave)
-                                if (container.preferences.isDeadlineRemindersEnabled) {
-                                    val reminders = container.deadlineReminderEngine.generateDeadlineReminders(toSave.copy(id = savedId))
-                                    reminders.forEach { rem ->
-                                        val remId = container.reminderRepository.insertReminder(rem)
-                                        container.reminderScheduler.scheduleReminder(rem.copy(id = remId))
-                                    }
-                                }
-                                isAddDialogOpen = false
-                                editingTask = null
-                            }
-                        },
-                        onDelete = { task ->
-                            coroutineScope.launch {
-                                container.taskRepository.deleteTask(task)
-                                container.reminderScheduler.cancelTaskReminders(task.id)
-                                editingTask = null
-                            }
-                        }
-                    )
-                }
             }
 
             Screen.Subjects -> {
                 val subjects by container.subjectRepository.getAllSubjects().collectAsState(initial = emptyList())
                 val tasks by container.taskRepository.getAllTasks().collectAsState(initial = emptyList())
-                var filterMode by remember { mutableStateOf(SubjectFilterMode.ALL) }
                 var editingSubject by remember { mutableStateOf<Subject?>(null) }
-                var isAddDialogOpen by remember { mutableStateOf(false) }
+                var isAddEditDialogOpen by remember { mutableStateOf(false) }
+
+                val subjectsWithCount = remember(subjects, tasks) {
+                    subjects.map { subj ->
+                        SubjectWithTaskCount(
+                            subject = subj,
+                            pendingTasksCount = tasks.count { it.subjectId == subj.id && it.status != TaskStatus.COMPLETED }
+                        )
+                    }
+                }
 
                 val subjectsUiState = SubjectsUiState(
                     isLoading = false,
-                    subjects = subjects,
-                    tasks = tasks,
-                    filterMode = filterMode
+                    subjectsWithCount = subjectsWithCount,
+                    isAddEditDialogOpen = isAddEditDialogOpen,
+                    editingSubject = editingSubject
                 )
 
                 SubjectsScreenContent(
                     uiState = subjectsUiState,
-                    filterMode = filterMode,
-                    onFilterModeSelected = { filterMode = it },
-                    onAddSubject = { isAddDialogOpen = true },
-                    onEditSubject = { editingSubject = it },
+                    onOpenAddSubjectDialog = {
+                        editingSubject = null
+                        isAddEditDialogOpen = true
+                    },
+                    onOpenEditSubjectDialog = { subj ->
+                        editingSubject = subj
+                        isAddEditDialogOpen = true
+                    },
+                    onCloseAddEditDialog = {
+                        isAddEditDialogOpen = false
+                        editingSubject = null
+                    },
+                    onSaveSubject = { name, code, prof, colorHex, weeklyHours, targetAtt, currAtt ->
+                        coroutineScope.launch {
+                            val subj = Subject(
+                                id = editingSubject?.id ?: 0L,
+                                name = name,
+                                code = code,
+                                professorName = prof,
+                                colorHex = colorHex,
+                                weeklyHours = weeklyHours,
+                                targetAttendancePercentage = targetAtt,
+                                currentAttendancePercentage = currAtt,
+                                isActive = true
+                            )
+                            container.subjectRepository.insertSubject(subj)
+                            isAddEditDialogOpen = false
+                            editingSubject = null
+                        }
+                    },
                     onDeleteSubject = { subject ->
                         coroutineScope.launch {
                             container.subjectRepository.deleteSubject(subject)
+                            isAddEditDialogOpen = false
+                            editingSubject = null
                         }
                     },
                     modifier = modifier.fillMaxSize().padding(innerPadding)
                 )
-
-                if (isAddDialogOpen || editingSubject != null) {
-                    AddEditSubjectDialog(
-                        subject = editingSubject,
-                        onDismiss = {
-                            isAddDialogOpen = false
-                            editingSubject = null
-                        },
-                        onSave = { name, code, prof, colorHex, weeklyHours, targetAtt, currAtt ->
-                            coroutineScope.launch {
-                                val subj = Subject(
-                                    id = editingSubject?.id ?: 0L,
-                                    name = name,
-                                    code = code,
-                                    professorName = prof,
-                                    colorHex = colorHex,
-                                    weeklyHours = weeklyHours,
-                                    targetAttendancePercentage = targetAtt,
-                                    currentAttendancePercentage = currAtt,
-                                    isActive = true
-                                )
-                                container.subjectRepository.insertSubject(subj)
-                                isAddDialogOpen = false
-                                editingSubject = null
-                            }
-                        },
-                        onDelete = { subj ->
-                            coroutineScope.launch {
-                                container.subjectRepository.deleteSubject(subj)
-                                editingSubject = null
-                            }
-                        }
-                    )
-                }
             }
 
             Screen.Schedule -> {
@@ -426,9 +461,19 @@ fun IosAppNavigation(
 
                 ScheduleScreenContent(
                     uiState = scheduleUiState,
-                    onSaveSchedule = { updatedSchedule ->
+                    onUpdateSchedule = { wake, sleep, start, end, commute, dinner, breakDur, sessionLen ->
                         coroutineScope.launch {
-                            container.scheduleRepository.saveSchedule(updatedSchedule)
+                            val updated = CollegeSchedule(
+                                wakeTimeMinutes = wake,
+                                sleepTimeMinutes = sleep,
+                                collegeStartTimeMinutes = start,
+                                collegeEndTimeMinutes = end,
+                                commuteMinutes = commute,
+                                dinnerBufferMinutes = dinner,
+                                breakDurationMinutes = breakDur,
+                                preferredSessionLengthMinutes = sessionLen
+                            )
+                            container.scheduleRepository.saveSchedule(updated)
                         }
                     },
                     modifier = modifier.fillMaxSize().padding(innerPadding)
@@ -442,23 +487,30 @@ fun IosAppNavigation(
 
                 val profileUiState = ProfileUiState(
                     isLoading = false,
-                    profile = userProfile ?: UserProfile(),
+                    userProfile = userProfile ?: UserProfile(),
                     isDeadlineRemindersEnabled = deadlineRemindersEnabled,
                     isCustomRemindersEnabled = customRemindersEnabled
                 )
 
                 ProfileScreenContent(
                     uiState = profileUiState,
-                    onSaveProfile = { updatedProfile ->
-                        coroutineScope.launch {
-                            container.userRepository.saveUserProfile(updatedProfile)
-                        }
-                    },
-                    onToggleDeadlineReminders = { enabled ->
+                    onDeadlineRemindersToggled = { enabled ->
                         container.preferences.isDeadlineRemindersEnabled = enabled
                     },
-                    onToggleCustomReminders = { enabled ->
+                    onCustomRemindersToggled = { enabled ->
                         container.preferences.isCustomRemindersEnabled = enabled
+                    },
+                    onSaveProfile = { name, college, dept, sem, defaultEnergy ->
+                        coroutineScope.launch {
+                            val updated = UserProfile(
+                                name = name,
+                                collegeName = college,
+                                department = dept,
+                                semesterYear = sem,
+                                defaultEnergyLevel = defaultEnergy
+                            )
+                            container.userRepository.saveUserProfile(updated)
+                        }
                     },
                     onNavigateToNotes = { currentScreen = Screen.Notes },
                     modifier = modifier.fillMaxSize().padding(innerPadding)
@@ -470,32 +522,65 @@ fun IosAppNavigation(
                 val subjects by container.subjectRepository.getAllSubjects().collectAsState(initial = emptyList())
                 var searchQuery by remember { mutableStateOf("") }
                 var selectedSubjectId by remember { mutableStateOf<Long?>(null) }
-                var isAddNoteOpen by remember { mutableStateOf(false) }
+                var isAddSheetOpen by remember { mutableStateOf(false) }
+                var editingNote by remember { mutableStateOf<AcademicNote?>(null) }
+                var reminderConversionNote by remember { mutableStateOf<AcademicNote?>(null) }
+                var userMessage by remember { mutableStateOf<String?>(null) }
+
+                val filtered = remember(notes, searchQuery, selectedSubjectId) {
+                    notes.filter { note ->
+                        val matchesSearch = searchQuery.isBlank() ||
+                            note.title.contains(searchQuery, ignoreCase = true) ||
+                            note.content.contains(searchQuery, ignoreCase = true)
+                        val matchesSubject = selectedSubjectId == null || note.subjectId == selectedSubjectId
+                        matchesSearch && matchesSubject
+                    }
+                }
 
                 val notesUiState = NotesUiState(
-                    isLoading = false,
                     notes = notes,
+                    filteredNotes = filtered,
                     subjects = subjects,
                     selectedSubjectId = selectedSubjectId,
-                    searchQuery = searchQuery
+                    searchQuery = searchQuery,
+                    isLoading = false,
+                    isAddSheetOpen = isAddSheetOpen,
+                    editingNote = editingNote,
+                    reminderConversionNote = reminderConversionNote,
+                    userMessage = userMessage
                 )
 
                 NotesScreenContent(
                     uiState = notesUiState,
-                    searchQuery = searchQuery,
                     onSearchQueryChange = { searchQuery = it },
-                    selectedSubjectId = selectedSubjectId,
-                    onSubjectFilterSelected = { selectedSubjectId = it },
-                    onAddNote = { isAddNoteOpen = true },
-                    onEditNote = { /* Edit note */ },
-                    onDeleteNote = { note ->
+                    onSelectSubject = { selectedSubjectId = it },
+                    onOpenAddSheet = { noteToEdit ->
+                        editingNote = noteToEdit
+                        isAddSheetOpen = true
+                    },
+                    onCloseAddSheet = {
+                        isAddSheetOpen = false
+                        editingNote = null
+                    },
+                    onSaveNote = { title, content, subjectId, isPinned ->
                         coroutineScope.launch {
-                            container.academicNoteRepository.deleteNote(note)
+                            val note = AcademicNote(
+                                id = editingNote?.id ?: 0L,
+                                title = title,
+                                content = content,
+                                subjectId = subjectId,
+                                subjectName = subjects.find { it.id == subjectId }?.name,
+                                isPinned = isPinned,
+                                createdAtEpochMs = editingNote?.createdAtEpochMs ?: currentTimeEpochMs()
+                            )
+                            container.academicNoteRepository.insertNote(note)
+                            isAddSheetOpen = false
+                            editingNote = null
                         }
                     },
-                    onTogglePin = { note ->
+                    onTogglePin = { note, isPinned ->
                         coroutineScope.launch {
-                            container.academicNoteRepository.togglePin(note.id, !note.isPinned)
+                            container.academicNoteRepository.togglePin(note.id, isPinned)
                         }
                     },
                     onConvertToTask = { note ->
@@ -511,49 +596,38 @@ fun IosAppNavigation(
                                 estimatedMinutes = 45
                             )
                             container.taskRepository.insertTask(task)
+                            userMessage = "Task created from note!"
                         }
                     },
-                    onConvertNoteToTask = { note, taskDraft ->
-                        coroutineScope.launch {
-                            container.taskRepository.insertTask(taskDraft.toTask())
-                        }
+                    onOpenReminderConversion = { note ->
+                        reminderConversionNote = note
                     },
-                    onConvertToReminder = { note ->
+                    onCloseReminderConversion = {
+                        reminderConversionNote = null
+                    },
+                    onSaveReminderFromNote = { note, title, message, timeEpochMs ->
                         coroutineScope.launch {
                             val rem = Reminder(
-                                title = "Note Reminder: " + note.title,
-                                message = note.content.take(100),
-                                reminderTimeEpochMs = currentTimeEpochMs() + (3600 * 1000L),
+                                title = title,
+                                message = message,
+                                reminderTimeEpochMs = timeEpochMs,
                                 subjectId = note.subjectId
                             )
                             val newId = container.reminderRepository.insertReminder(rem)
                             container.reminderScheduler.scheduleReminder(rem.copy(id = newId))
+                            reminderConversionNote = null
+                            userMessage = "Reminder set for note!"
                         }
                     },
+                    onDeleteNote = { note ->
+                        coroutineScope.launch {
+                            container.academicNoteRepository.deleteNote(note)
+                        }
+                    },
+                    onClearUserMessage = { userMessage = null },
                     onNavigateBack = { currentScreen = Screen.Today },
                     modifier = modifier.fillMaxSize().padding(innerPadding)
                 )
-
-                if (isAddNoteOpen) {
-                    AddAcademicNoteSheet(
-                        subjects = subjects,
-                        onDismiss = { isAddNoteOpen = false },
-                        onSave = { title, content, subjectId, isPinned ->
-                            coroutineScope.launch {
-                                val newNote = com.sarah.app.domain.model.AcademicNote(
-                                    title = title,
-                                    content = content,
-                                    subjectId = subjectId,
-                                    subjectName = subjects.find { it.id == subjectId }?.name,
-                                    isPinned = isPinned,
-                                    createdAtEpochMs = currentTimeEpochMs()
-                                )
-                                container.academicNoteRepository.insertNote(newNote)
-                                isAddNoteOpen = false
-                            }
-                        }
-                    )
-                }
             }
         }
     }
