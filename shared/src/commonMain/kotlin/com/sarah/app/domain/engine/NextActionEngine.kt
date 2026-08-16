@@ -15,8 +15,6 @@ import com.sarah.app.domain.model.TaskStatus
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-import kotlin.math.max
-import kotlin.math.min
 
 class NextActionEngine {
 
@@ -51,7 +49,7 @@ class NextActionEngine {
 
         // 2. All Tasks Completed / No Remaining Work
         if (activeTasks.isEmpty()) {
-            val minutesToSleep = max(0, sleepMinutes - currentMinutes)
+            val minutesToSleep = maxOf(0, sleepMinutes - currentMinutes)
             return NextAction(
                 title = "All Done for Tonight!",
                 subtitle = "All planned tasks completed",
@@ -108,7 +106,7 @@ class NextActionEngine {
 
         // 7. Fallback: If no item matches but tasks remain before bedtime
         val topTask = activeTasks.first()
-        val sessionDuration = min(topTask.remainingMinutes, min(45, max(15, sleepMinutes - currentMinutes)))
+        val sessionDuration = minOf(topTask.remainingMinutes, minOf(45, maxOf(15, sleepMinutes - currentMinutes)))
         return if (topTask.completedMinutes > 0) {
             NextAction(
                 title = "Continue: ${topTask.title}",
@@ -138,7 +136,7 @@ class NextActionEngine {
         currentMinutes: Int,
         sleepMinutes: Int
     ): NextAction {
-        val remainingSlotMinutes = max(1, item.endTimeMinutes - max(currentMinutes, item.startTimeMinutes))
+        val remainingSlotMinutes = maxOf(1, item.endTimeMinutes - maxOf(currentMinutes, item.startTimeMinutes))
 
         return when (item.type) {
             PlanItemType.MEAL -> {
@@ -180,7 +178,7 @@ class NextActionEngine {
                     subtitle = "Relaxation buffer",
                     actionType = NextActionType.REST,
                     taskId = null,
-                    durationMinutes = max(10, sleepMinutes - currentMinutes),
+                    durationMinutes = maxOf(10, sleepMinutes - currentMinutes),
                     reason = "Academic tasks are completed for tonight. Wind down before sleep.",
                     urgencyBadge = "WIND DOWN"
                 )
@@ -190,7 +188,7 @@ class NextActionEngine {
                 val taskTitle = task?.title ?: item.taskTitle
                 val taskSubject = task?.subjectName ?: item.subjectName ?: "Study"
                 val taskRemaining = task?.remainingMinutes ?: item.durationMinutes
-                val effectiveDuration = min(item.durationMinutes, taskRemaining)
+                val effectiveDuration = minOf(item.durationMinutes, taskRemaining)
 
                 val isContinuing = (task?.completedMinutes ?: 0) > 0 || item.status == PlanItemStatus.IN_PROGRESS
 

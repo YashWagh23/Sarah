@@ -1,6 +1,6 @@
 package com.sarah.app.domain.model
 
-import java.time.LocalDate
+import com.sarah.app.domain.util.currentTimeEpochMs
 
 enum class PlanItemType(val displayName: String) {
     TASK("Task Session"),
@@ -94,14 +94,14 @@ data class TemporaryInterruption(
     val title: String,
     val startMinutes: Int,
     val endMinutes: Int,
-    val dateEpochDay: Long = LocalDate.now().toEpochDay()
+    val dateEpochDay: Long = currentTimeEpochMs() / 86_400_000L
 )
 
 data class DailyPlan(
     val id: Long = 0,
-    val dateEpochDay: Long = LocalDate.now().toEpochDay(),
-    val generatedAtEpochMs: Long = System.currentTimeMillis(),
-    val updatedAtEpochMs: Long = System.currentTimeMillis(),
+    val dateEpochDay: Long = currentTimeEpochMs() / 86_400_000L,
+    val generatedAtEpochMs: Long = currentTimeEpochMs(),
+    val updatedAtEpochMs: Long = currentTimeEpochMs(),
     val availableMinutes: Int = 0,
     val realisticCapacityMinutes: Int = 0,
     val requiredMinutes: Int = 0,

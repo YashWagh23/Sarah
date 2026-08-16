@@ -155,12 +155,11 @@ class AdaptivePlanner(
 
         // 4. Score and triage active tasks
         val activeTasks = tasks.filter { it.status != TaskStatus.COMPLETED && it.remainingMinutes > 0 }
+        val currentEpochMs = currentDate.atTime(currentTime).atZone(zoneId).toInstant().toEpochMilli()
         val scoredTasks = priorityScorer.prioritizeTasks(
             tasks = activeTasks,
             currentEnergy = energyLevel,
-            currentDate = currentDate,
-            currentTime = currentTime,
-            zoneId = zoneId
+            currentEpochMs = currentEpochMs
         )
 
         val mustDoMinutes = scoredTasks.filter { it.bucket == TaskBucket.MUST_DO }.sumOf { it.task.remainingMinutes }

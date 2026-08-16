@@ -1,5 +1,7 @@
 package com.sarah.app.domain.model
 
+import com.sarah.app.domain.util.currentTimeEpochMs
+
 enum class TaskType(val displayName: String) {
     ASSIGNMENT("Assignment"),
     PRACTICAL("Practical"),
@@ -52,7 +54,7 @@ data class Task(
     val status: TaskStatus = TaskStatus.PENDING,
     val completionPercentage: Int = 0,
     val completedMinutes: Int = 0,
-    val createdAtEpochMs: Long = System.currentTimeMillis(),
+    val createdAtEpochMs: Long = currentTimeEpochMs(),
     val completedAtEpochMs: Long? = null
 ) {
     val remainingMinutes: Int

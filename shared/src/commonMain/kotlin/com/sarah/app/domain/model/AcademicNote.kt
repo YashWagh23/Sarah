@@ -1,5 +1,7 @@
 package com.sarah.app.domain.model
 
+import com.sarah.app.domain.util.currentTimeEpochMs
+
 data class AcademicNote(
     val id: Long = 0,
     val subjectId: Long? = null,
@@ -7,6 +9,6 @@ data class AcademicNote(
     val title: String,
     val content: String,
     val isPinned: Boolean = false,
-    val createdEpochMs: Long = System.currentTimeMillis(),
-    val updatedEpochMs: Long = System.currentTimeMillis()
+    val createdEpochMs: Long = currentTimeEpochMs(),
+    val updatedEpochMs: Long = currentTimeEpochMs()
 )

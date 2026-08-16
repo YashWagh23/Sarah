@@ -1,5 +1,7 @@
 package com.sarah.app.domain.model
 
+import com.sarah.app.domain.util.currentTimeEpochMs
+
 enum class CaptureSourceType(val displayName: String) {
     NATURAL_LANGUAGE("Natural Language Text"),
     PDF_DOCUMENT("PDF Document"),
@@ -12,7 +14,7 @@ data class ExtractedTaskDraft(
     val subjectName: String? = null,
     val type: TaskType = TaskType.ASSIGNMENT,
     val description: String = "",
-    val deadlineEpochMs: Long = System.currentTimeMillis() + (24 * 60 * 60 * 1000),
+    val deadlineEpochMs: Long = currentTimeEpochMs() + (24 * 60 * 60 * 1000),
     val estimatedMinutes: Int = 45,
     val priority: TaskPriority = TaskPriority.MEDIUM,
     val difficulty: Difficulty = Difficulty.MEDIUM,
@@ -36,7 +38,7 @@ data class ExtractedTaskDraft(
             energyRequirement = energyRequirement,
             status = TaskStatus.PENDING,
             completionPercentage = 0,
-            createdAtEpochMs = System.currentTimeMillis(),
+            createdAtEpochMs = currentTimeEpochMs(),
             completedAtEpochMs = null
         )
     }

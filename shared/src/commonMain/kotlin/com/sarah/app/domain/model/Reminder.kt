@@ -1,5 +1,7 @@
 package com.sarah.app.domain.model
 
+import com.sarah.app.domain.util.currentTimeEpochMs
+
 enum class ReminderType(val displayName: String) {
     TASK_REMINDER("Task Reminder"),
     DEADLINE_REMINDER("Deadline Reminder"),
@@ -15,13 +17,13 @@ data class Reminder(
     val reminderTimeEpochMs: Long,
     val type: ReminderType = ReminderType.TASK_REMINDER,
     val enabled: Boolean = true,
-    val createdAtEpochMs: Long = System.currentTimeMillis(),
+    val createdAtEpochMs: Long = currentTimeEpochMs(),
     val dismissedAtEpochMs: Long? = null,
     val snoozedUntilEpochMs: Long? = null
 ) {
     val isPending: Boolean
-        get() = enabled && dismissedAtEpochMs == null && reminderTimeEpochMs > System.currentTimeMillis()
+        get() = enabled && dismissedAtEpochMs == null && reminderTimeEpochMs > currentTimeEpochMs()
 
     val isSnoozed: Boolean
-        get() = snoozedUntilEpochMs != null && snoozedUntilEpochMs > System.currentTimeMillis()
+        get() = snoozedUntilEpochMs != null && snoozedUntilEpochMs > currentTimeEpochMs()
 }

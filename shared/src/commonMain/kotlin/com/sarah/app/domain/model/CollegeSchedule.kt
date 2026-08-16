@@ -21,7 +21,8 @@ data class CollegeSchedule(
                 h > 12 -> h - 12
                 else -> h
             }
-            return String.format("%d:%02d %s", displayH, m, amPm)
+            val mStr = if (m < 10) "0$m" else "$m"
+            return "$displayH:$mStr $amPm"
         }
 
     val formattedWakeTime: String
@@ -34,6 +35,7 @@ data class CollegeSchedule(
                 h > 12 -> h - 12
                 else -> h
             }
-            return String.format("%d:%02d %s", displayH, m, amPm)
+            val mStr = if (m < 10) "0$m" else "$m"
+            return "$displayH:$mStr $amPm"
         }
 }

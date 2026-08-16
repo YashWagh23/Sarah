@@ -6,9 +6,7 @@ import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskBucket
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskType
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
+import com.sarah.app.domain.util.currentTimeEpochMs
 
 data class ScoredTask(
     val task: Task,
@@ -30,11 +28,8 @@ class TaskPriorityScorer {
     fun scoreTask(
         task: Task,
         currentEnergy: EnergyLevel,
-        currentDate: LocalDate = LocalDate.now(),
-        currentTime: LocalTime = LocalTime.now(),
-        zoneId: ZoneId = ZoneId.systemDefault()
+        currentEpochMs: Long = currentTimeEpochMs()
     ): ScoredTask {
-        val currentEpochMs = currentDate.atTime(currentTime).atZone(zoneId).toInstant().toEpochMilli()
         val msUntilDeadline = task.deadlineEpochMs - currentEpochMs
         val hoursUntilDeadline = msUntilDeadline / (1000.0 * 60.0 * 60.0)
 
@@ -136,12 +131,10 @@ class TaskPriorityScorer {
     fun prioritizeTasks(
         tasks: List<Task>,
         currentEnergy: EnergyLevel,
-        currentDate: LocalDate = LocalDate.now(),
-        currentTime: LocalTime = LocalTime.now(),
-        zoneId: ZoneId = ZoneId.systemDefault()
+        currentEpochMs: Long = currentTimeEpochMs()
     ): List<ScoredTask> {
         return tasks
-            .map { scoreTask(it, currentEnergy, currentDate, currentTime, zoneId) }
+            .map { scoreTask(it, currentEnergy, currentEpochMs) }
             .sortedWith(
                 compareByDescending<ScoredTask> { it.bucket == TaskBucket.MUST_DO }
                     .thenByDescending { it.bucket == TaskBucket.SHOULD_DO }
