@@ -237,13 +237,12 @@ fun IosAppNavigation(
                             }
                         }
                     },
-                    onAddReminder = { title, message, timeEpochMs, subjectId ->
+                    onAddReminder = { title, message, timeEpochMs, _ ->
                         coroutineScope.launch {
                             val rem = Reminder(
                                 title = title,
                                 message = message,
-                                reminderTimeEpochMs = timeEpochMs,
-                                subjectId = subjectId
+                                reminderTimeEpochMs = timeEpochMs
                             )
                             val newId = container.reminderRepository.insertReminder(rem)
                             container.reminderScheduler.scheduleReminder(rem.copy(id = newId))
@@ -571,7 +570,7 @@ fun IosAppNavigation(
                                 subjectId = subjectId,
                                 subjectName = subjects.find { it.id == subjectId }?.name,
                                 isPinned = isPinned,
-                                createdAtEpochMs = editingNote?.createdAtEpochMs ?: currentTimeEpochMs()
+                                createdEpochMs = editingNote?.createdEpochMs ?: currentTimeEpochMs()
                             )
                             container.academicNoteRepository.insertNote(note)
                             isAddSheetOpen = false
@@ -610,8 +609,7 @@ fun IosAppNavigation(
                             val rem = Reminder(
                                 title = title,
                                 message = message,
-                                reminderTimeEpochMs = timeEpochMs,
-                                subjectId = note.subjectId
+                                reminderTimeEpochMs = timeEpochMs
                             )
                             val newId = container.reminderRepository.insertReminder(rem)
                             container.reminderScheduler.scheduleReminder(rem.copy(id = newId))
