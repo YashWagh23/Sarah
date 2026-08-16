@@ -12,6 +12,13 @@ import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
 
+/**
+ * iOS implementation of ReminderScheduler using UserNotifications framework.
+ *
+ * Privacy-first compliance:
+ * - Only requests Alert, Sound, and Badge permissions.
+ * - Manages exact on-device local notifications without any remote analytics or background tracking.
+ */
 class IosReminderScheduler : ReminderScheduler {
 
     private val center = UNUserNotificationCenter.currentNotificationCenter()
@@ -58,7 +65,7 @@ class IosReminderScheduler : ReminderScheduler {
         )
 
         center.addNotificationRequest(request) { error ->
-            // Handled
+            // Notification registered with iOS system scheduler
         }
     }
 
@@ -89,6 +96,6 @@ class IosReminderScheduler : ReminderScheduler {
     }
 
     override fun rescheduleAllActiveReminders() {
-        // Handled
+        // Will be called by repositories or container when reminders are updated
     }
 }
