@@ -9,12 +9,16 @@ import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskStatus
 import com.sarah.app.domain.model.TaskType
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 class FeasibilityEngine(
@@ -25,11 +29,15 @@ class FeasibilityEngine(
         tasks: List<Task>,
         schedule: CollegeSchedule,
         energyLevel: EnergyLevel,
-        currentTime: LocalTime = LocalTime.now(),
-        currentDate: LocalDate = LocalDate.now(),
-        zoneId: ZoneId = ZoneId.systemDefault()
+        currentMinutesInput: Int? = null,
+        currentDateInput: LocalDate? = null,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
     ): FeasibilityReport {
-        val currentMinutes = currentTime.hour * 60 + currentTime.minute
+        val now = Clock.System.now()
+        val localDateTime = now.toLocalDateTime(timeZone)
+        val currentMinutes = currentMinutesInput ?: (localDateTime.hour * 60 + localDateTime.minute)
+        val currentDate = currentDateInput ?: localDateTime.date
+
         val sleepMinutes = schedule.sleepTimeMinutes
         val minutesUntilSleep = max(0, sleepMinutes - currentMinutes)
 
@@ -58,8 +66,10 @@ class FeasibilityEngine(
         val shouldDoList = mutableListOf<Task>()
         val canDeferList = mutableListOf<Task>()
 
-        val todayMidnightEpochMs = currentDate.atTime(23, 59, 59).atZone(zoneId).toInstant().toEpochMilli()
-        val tomorrowMidnightEpochMs = currentDate.plusDays(1).atTime(23, 59, 59).atZone(zoneId).toInstant().toEpochMilli()
+        val tomorrowMidnightEpochMs = currentDate.plus(1, DateTimeUnit.DAY)
+            .atTime(LocalTime(23, 59, 59))
+            .toInstant(timeZone)
+            .toEpochMilliseconds()
 
         for (task in activeTasks) {
             val isDueTodayOrTomorrowMorning = task.deadlineEpochMs <= tomorrowMidnightEpochMs

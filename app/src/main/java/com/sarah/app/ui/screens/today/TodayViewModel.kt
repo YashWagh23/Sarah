@@ -106,17 +106,13 @@ class TodayViewModel(
                 tasks = tasks,
                 schedule = safeSchedule,
                 energyLevel = energy,
-                interruptions = interruptions,
-                currentTime = nowTime,
-                currentDate = nowDate
+                interruptions = interruptions
             )
 
             val nextAction = nextActionEngine.computeNextAction(
                 plan = rawPlan,
                 tasks = tasks,
-                schedule = safeSchedule,
-                currentTime = nowTime,
-                currentDate = nowDate
+                schedule = safeSchedule
             )
 
             val fullPlan = rawPlan.copy(nextAction = nextAction)

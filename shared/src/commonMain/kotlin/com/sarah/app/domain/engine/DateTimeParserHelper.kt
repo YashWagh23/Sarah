@@ -1,43 +1,51 @@
 package com.sarah.app.domain.engine
 
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.util.Locale
-import java.util.regex.Pattern
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 object DateTimeParserHelper {
 
     fun parseDeadline(
         text: String,
-        currentDate: LocalDate = LocalDate.now(),
-        zoneId: ZoneId = ZoneId.systemDefault()
+        currentDate: LocalDate? = null,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
     ): Long? {
-        val lower = text.lowercase(Locale.US)
+        val lower = text.lowercase()
+        val baseDate = currentDate ?: Clock.System.now().toLocalDateTime(timeZone).date
 
         // 1. Check relative day offsets
         val targetDate: LocalDate = when {
-            lower.contains("day after tomorrow") -> currentDate.plusDays(2)
-            lower.contains("tomorrow") || lower.contains("tmrw") || lower.contains("tomm") -> currentDate.plusDays(1)
-            lower.contains("today") || lower.contains("tonight") -> currentDate
+            lower.contains("day after tomorrow") -> baseDate.plus(2, DateTimeUnit.DAY)
+            lower.contains("tomorrow") || lower.contains("tmrw") || lower.contains("tomm") -> baseDate.plus(1, DateTimeUnit.DAY)
+            lower.contains("today") || lower.contains("tonight") -> baseDate
             else -> {
                 // Check "in X days"
-                val inDaysMatch = Pattern.compile("in\\s+(\\d+)\\s+days?").matcher(lower)
-                if (inDaysMatch.find()) {
-                    val days = inDaysMatch.group(1)?.toLongOrNull() ?: 1L
-                    currentDate.plusDays(days)
+                val inDaysMatch = Regex("in\\s+(\\d+)\\s+days?").find(lower)
+                if (inDaysMatch != null) {
+                    val days = inDaysMatch.groupValues[1].toIntOrNull() ?: 1
+                    baseDate.plus(days, DateTimeUnit.DAY)
                 } else {
                     // Check named days of the week
-                    findNextDayOfWeek(lower, currentDate) ?: return null
+                    findNextDayOfWeek(lower, baseDate) ?: return null
                 }
             }
         }
 
         // 2. Check explicit time markers (e.g., "5 pm", "9:30 am", "17:00", "by 11pm")
-        val targetTime = parseTimeMarker(lower) ?: LocalTime.of(23, 59)
+        val targetTime = parseTimeMarker(lower) ?: LocalTime(23, 59)
 
-        return targetDate.atTime(targetTime).atZone(zoneId).toInstant().toEpochMilli()
+        return targetDate.atTime(targetTime).toInstant(timeZone).toEpochMilliseconds()
     }
 
     private fun findNextDayOfWeek(text: String, currentDate: LocalDate): LocalDate? {
@@ -59,14 +67,13 @@ object DateTimeParserHelper {
         )
 
         for ((name, targetDay) in daysMap) {
-            val regex = Pattern.compile("\\b(next\\s+|this\\s+|by\\s+|on\\s+)?$name\\b")
-            val matcher = regex.matcher(text)
-            if (matcher.find()) {
-                var daysUntil = targetDay.value - currentDate.dayOfWeek.value
+            val regex = Regex("\\b(next\\s+|this\\s+|by\\s+|on\\s+)?$name\\b")
+            if (regex.containsMatchIn(text)) {
+                var daysUntil = targetDay.isoDayNumber - currentDate.dayOfWeek.isoDayNumber
                 if (daysUntil <= 0) {
                     daysUntil += 7
                 }
-                return currentDate.plusDays(daysUntil.toLong())
+                return currentDate.plus(daysUntil, DateTimeUnit.DAY)
             }
         }
         return null
@@ -74,32 +81,32 @@ object DateTimeParserHelper {
 
     private fun parseTimeMarker(text: String): LocalTime? {
         // 12-hour format e.g. "5 pm", "5:30 pm", "9am", "11:15 AM"
-        val time12Regex = Pattern.compile("\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)\\b")
-        val match12 = time12Regex.matcher(text)
-        if (match12.find()) {
-            val rawHour = match12.group(1)?.toIntOrNull() ?: 9
-            val minute = match12.group(2)?.toIntOrNull() ?: 0
-            val amPm = match12.group(3)?.lowercase(Locale.US) ?: "pm"
+        val time12Regex = Regex("\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)\\b")
+        val match12 = time12Regex.find(text)
+        if (match12 != null) {
+            val rawHour = match12.groupValues[1].toIntOrNull() ?: 9
+            val minute = match12.groupValues.getOrNull(2)?.toIntOrNull() ?: 0
+            val amPm = match12.groupValues.getOrNull(3)?.lowercase() ?: "pm"
 
             var hour24 = rawHour % 12
             if (amPm == "pm") {
                 hour24 += 12
             }
-            return runCatching { LocalTime.of(hour24, minute) }.getOrNull()
+            return runCatching { LocalTime(hour24, minute) }.getOrNull()
         }
 
         // 24-hour format e.g. "17:00", "09:30"
-        val time24Regex = Pattern.compile("\\b([01]?\\d|2[0-3]):([0-5]\\d)\\b")
-        val match24 = time24Regex.matcher(text)
-        if (match24.find()) {
-            val hour = match24.group(1)?.toIntOrNull() ?: 12
-            val minute = match24.group(2)?.toIntOrNull() ?: 0
-            return runCatching { LocalTime.of(hour, minute) }.getOrNull()
+        val time24Regex = Regex("\\b([01]?\\d|2[0-3]):([0-5]\\d)\\b")
+        val match24 = time24Regex.find(text)
+        if (match24 != null) {
+            val hour = match24.groupValues[1].toIntOrNull() ?: 12
+            val minute = match24.groupValues[2].toIntOrNull() ?: 0
+            return runCatching { LocalTime(hour, minute) }.getOrNull()
         }
 
-        if (text.contains("morning")) return LocalTime.of(9, 0)
-        if (text.contains("afternoon")) return LocalTime.of(14, 0)
-        if (text.contains("evening") || text.contains("tonight")) return LocalTime.of(20, 0)
+        if (text.contains("morning")) return LocalTime(9, 0)
+        if (text.contains("afternoon")) return LocalTime(14, 0)
+        if (text.contains("evening") || text.contains("tonight")) return LocalTime(20, 0)
 
         return null
     }

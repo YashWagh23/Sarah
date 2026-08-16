@@ -35,10 +35,13 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+            api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
         }
 
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(kotlin("test-junit"))
+            implementation("junit:junit:4.13.2")
         }
         androidMain.dependencies {
             implementation("androidx.core:core-ktx:1.13.1")
@@ -53,6 +56,9 @@ kotlin {
 
 dependencies {
     add("kspAndroid", "androidx.room:room-compiler:2.6.1")
+    add("testImplementation", "junit:junit:4.13.2")
+    add("testImplementation", "org.jetbrains.kotlin:kotlin-test:1.9.24")
+    add("testImplementation", "org.jetbrains.kotlin:kotlin-test-junit:1.9.24")
 }
 
 android {

@@ -13,10 +13,10 @@ import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskBucket
 import com.sarah.app.domain.model.TaskStatus
 import com.sarah.app.domain.model.TemporaryInterruption
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.util.Locale
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -38,19 +38,24 @@ class AdaptivePlanner(
         schedule: CollegeSchedule,
         energyLevel: EnergyLevel,
         interruptions: List<TemporaryInterruption> = emptyList(),
-        currentTime: LocalTime = LocalTime.now(),
-        currentDate: LocalDate = LocalDate.now(),
-        zoneId: ZoneId = ZoneId.systemDefault()
+        currentMinutesInput: Int? = null,
+        currentDateInput: LocalDate? = null,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
     ): DailyPlan {
-        val currentMinutes = currentTime.hour * 60 + currentTime.minute
+        val now = Clock.System.now()
+        val localDateTime = now.toLocalDateTime(timeZone)
+        val currentMinutes = currentMinutesInput ?: (localDateTime.hour * 60 + localDateTime.minute)
+        val currentDate = currentDateInput ?: localDateTime.date
         val sleepMinutes = schedule.sleepTimeMinutes
+        val todayEpochDay = currentDate.toEpochDays().toLong()
+        val currentEpochMs = now.toEpochMilliseconds()
 
         // 1. If currently past bedtime, return minimal wind down/sleep state
         if (currentMinutes >= sleepMinutes) {
             return DailyPlan(
-                dateEpochDay = currentDate.toEpochDay(),
-                generatedAtEpochMs = System.currentTimeMillis(),
-                updatedAtEpochMs = System.currentTimeMillis(),
+                dateEpochDay = todayEpochDay,
+                generatedAtEpochMs = currentEpochMs,
+                updatedAtEpochMs = currentEpochMs,
                 availableMinutes = 0,
                 realisticCapacityMinutes = 0,
                 requiredMinutes = tasks.filter { it.status != TaskStatus.COMPLETED }.sumOf { it.remainingMinutes },
@@ -115,7 +120,6 @@ class AdaptivePlanner(
         }
 
         // Temporary Interruptions for today
-        val todayEpochDay = currentDate.toEpochDay()
         for (interruption in interruptions.filter { it.dateEpochDay == todayEpochDay }) {
             if (interruption.endMinutes > currentMinutes && interruption.startMinutes < sleepMinutes) {
                 val clampedStart = max(currentMinutes, interruption.startMinutes)
@@ -155,7 +159,6 @@ class AdaptivePlanner(
 
         // 4. Score and triage active tasks
         val activeTasks = tasks.filter { it.status != TaskStatus.COMPLETED && it.remainingMinutes > 0 }
-        val currentEpochMs = currentDate.atTime(currentTime).atZone(zoneId).toInstant().toEpochMilli()
         val scoredTasks = priorityScorer.prioritizeTasks(
             tasks = activeTasks,
             currentEnergy = energyLevel,
@@ -219,33 +222,51 @@ class AdaptivePlanner(
                 continue
             }
 
-            // Find next upcoming blocked interval start
+            // Find next available free window before the next blocked interval or sleep
             val nextBlock = mergedBlocked.firstOrNull { it.startMinutes > clock }
-            val nextBoundary = min(sleepMinutes, nextBlock?.startMinutes ?: sleepMinutes)
-            val availableSlotMinutes = nextBoundary - clock
+            val nextLimit = min(nextBlock?.startMinutes ?: sleepMinutes, sleepMinutes)
+            val windowMinutes = nextLimit - clock
 
-            if (availableSlotMinutes <= 0) {
-                clock = nextBoundary
+            if (windowMinutes < 10) {
+                // Too small for a study chunk; absorb as rest / buffer
+                if (windowMinutes > 0) {
+                    planItems.add(
+                        PlanItem(
+                            id = 0,
+                            taskTitle = "Buffer & Rest",
+                            subjectName = "Transition time",
+                            type = PlanItemType.REST,
+                            status = PlanItemStatus.PLANNED,
+                            startTimeMinutes = clock,
+                            endTimeMinutes = nextLimit,
+                            durationMinutes = windowMinutes,
+                            orderIndex = orderIndex++,
+                            reason = "Short transition buffer",
+                            isBreak = true
+                        )
+                    )
+                    clock = nextLimit
+                }
                 continue
             }
 
-            // Find next task with remaining minutes
-            val currentScoredTask = taskQueue.firstOrNull { (taskRemainingMap[it.task.id] ?: 0) > 0 }
-            if (currentScoredTask == null) {
-                // No more tasks to schedule! Fill remaining time before bedtime with Wind Down
+            // Pop next task from queue
+            val currentScored = taskQueue.firstOrNull { (taskRemainingMap[it.task.id] ?: 0) > 0 }
+            if (currentScored == null) {
+                // No more study tasks needed; fill remaining time until bedtime with relaxation/wind down
                 if (clock < sleepMinutes) {
                     planItems.add(
                         PlanItem(
                             id = 0,
-                            taskTitle = "Wind Down & Sleep Prep",
-                            subjectName = "Relaxation & prepare for tomorrow",
+                            taskTitle = "Relaxation & Free Time",
+                            subjectName = "Goals cleared for today",
                             type = PlanItemType.WIND_DOWN,
                             status = PlanItemStatus.PLANNED,
                             startTimeMinutes = clock,
                             endTimeMinutes = sleepMinutes,
                             durationMinutes = sleepMinutes - clock,
                             orderIndex = orderIndex++,
-                            reason = "All priority academic tasks cleared for tonight",
+                            reason = "All active academic goals are scheduled or complete",
                             isBreak = true
                         )
                     )
@@ -254,18 +275,13 @@ class AdaptivePlanner(
                 break
             }
 
-            val task = currentScoredTask.task
-            val remainingMins = taskRemainingMap[task.id] ?: 0
-            val chunk = min(remainingMins, min(maxChunk, availableSlotMinutes))
+            val task = currentScored.task
+            val remainingForTask = taskRemainingMap[task.id] ?: task.remainingMinutes
 
-            if (chunk <= 0) {
-                // Cannot fit even 1 minute before boundary
-                clock = nextBoundary
-                continue
-            }
+            // Determine chunk size
+            val plannedChunk = min(remainingForTask, min(maxChunk, windowMinutes))
+            val sessionEnd = clock + plannedChunk
 
-            val slotStart = clock
-            val slotEnd = clock + chunk
             planItems.add(
                 PlanItem(
                     id = 0,
@@ -274,36 +290,37 @@ class AdaptivePlanner(
                     subjectName = task.subjectName ?: task.type.displayName,
                     type = PlanItemType.TASK,
                     status = PlanItemStatus.PLANNED,
-                    startTimeMinutes = slotStart,
-                    endTimeMinutes = slotEnd,
-                    durationMinutes = chunk,
+                    startTimeMinutes = clock,
+                    endTimeMinutes = sessionEnd,
+                    durationMinutes = plannedChunk,
                     orderIndex = orderIndex++,
-                    reason = currentScoredTask.reason,
+                    reason = currentScored.reason,
                     isBreak = false
                 )
             )
-            clock = slotEnd
-            val newRemaining = remainingMins - chunk
-            taskRemainingMap[task.id] = newRemaining
 
-            // Insert restorative break if time allows before next block/sleep and more work remains
+            val newRemaining = remainingForTask - plannedChunk
+            taskRemainingMap[task.id] = newRemaining
+            clock = sessionEnd
+
+            // Check if we should insert a short break after this focus block
             val hasMoreWork = taskQueue.any { (taskRemainingMap[it.task.id] ?: 0) > 0 }
-            val nextSlotBoundary = min(sleepMinutes, mergedBlocked.firstOrNull { it.startMinutes >= clock }?.startMinutes ?: sleepMinutes)
-            if (hasMoreWork && (clock + breakDuration) <= nextSlotBoundary && (clock + breakDuration) < sleepMinutes) {
-                val breakStart = clock
-                val breakEnd = clock + breakDuration
+            val spaceForBreak = (nextLimit - clock) >= (breakDuration + 10)
+            if (hasMoreWork && spaceForBreak && clock < sleepMinutes) {
+                val breakEnd = min(clock + breakDuration, nextLimit)
+                val actualBreakDuration = breakEnd - clock
                 planItems.add(
                     PlanItem(
                         id = 0,
-                        taskTitle = "Restorative Break",
-                        subjectName = if (energyLevel == EnergyLevel.EXHAUSTED) "Hydrate & rest eyes" else "Step away & stretch",
+                        taskTitle = "Pacing Break",
+                        subjectName = "Reset focus",
                         type = PlanItemType.BREAK,
                         status = PlanItemStatus.PLANNED,
-                        startTimeMinutes = breakStart,
+                        startTimeMinutes = clock,
                         endTimeMinutes = breakEnd,
-                        durationMinutes = breakDuration,
+                        durationMinutes = actualBreakDuration,
                         orderIndex = orderIndex++,
-                        reason = "Energy pacing break between focus sessions",
+                        reason = "Scheduled mental recovery between focus blocks",
                         isBreak = true
                     )
                 )
@@ -311,11 +328,11 @@ class AdaptivePlanner(
             }
         }
 
-        // Collect any tasks that could not be scheduled before sleep cutoff
-        for (scoredTask in scoredTasks) {
-            val leftover = taskRemainingMap[scoredTask.task.id] ?: 0
-            if (leftover > 0) {
-                deferredTasksList.add(scoredTask.task)
+        // Collect any tasks that could not be fitted into the evening schedule
+        for (scored in scoredTasks) {
+            val rem = taskRemainingMap[scored.task.id] ?: 0
+            if (rem > 0) {
+                deferredTasksList.add(scored.task)
             }
         }
 
@@ -325,8 +342,8 @@ class AdaptivePlanner(
 
         return DailyPlan(
             dateEpochDay = todayEpochDay,
-            generatedAtEpochMs = System.currentTimeMillis(),
-            updatedAtEpochMs = System.currentTimeMillis(),
+            generatedAtEpochMs = currentEpochMs,
+            updatedAtEpochMs = currentEpochMs,
             availableMinutes = rawAvailableMinutes,
             realisticCapacityMinutes = realisticCapacityMinutes,
             requiredMinutes = totalRequiredMinutes,

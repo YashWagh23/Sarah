@@ -12,9 +12,9 @@ import com.sarah.app.domain.model.SchedulePaceStatus
 import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskStatus
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class NextActionEngine {
 
@@ -26,11 +26,13 @@ class NextActionEngine {
         plan: DailyPlan,
         tasks: List<Task>,
         schedule: CollegeSchedule,
-        currentTime: LocalTime = LocalTime.now(),
-        currentDate: LocalDate = LocalDate.now(),
-        zoneId: ZoneId = ZoneId.systemDefault()
+        currentMinutesInput: Int? = null,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
     ): NextAction {
-        val currentMinutes = currentTime.hour * 60 + currentTime.minute
+        val currentMinutes = currentMinutesInput ?: run {
+            val localTime = Clock.System.now().toLocalDateTime(timeZone)
+            localTime.hour * 60 + localTime.minute
+        }
         val sleepMinutes = schedule.sleepTimeMinutes
         val activeTasks = tasks.filter { it.status != TaskStatus.COMPLETED && it.remainingMinutes > 0 }
 

@@ -4,7 +4,6 @@ import com.sarah.app.domain.model.AgendaItem
 import com.sarah.app.domain.model.CollegeSchedule
 import com.sarah.app.domain.model.EnergyLevel
 import com.sarah.app.domain.model.Task
-import java.util.Locale
 import kotlin.math.min
 
 class AgendaPlanner {
@@ -38,56 +37,49 @@ class AgendaPlanner {
         }
 
         // Determine session and break lengths based on EnergyLevel
-        val breakDuration = when (energyLevel) {
-            EnergyLevel.EXHAUSTED -> 20
-            EnergyLevel.LOW -> 15
-            EnergyLevel.NORMAL -> 15
-            EnergyLevel.HIGH -> 10
+        val (sessionDuration, breakDuration) = when (energyLevel) {
+            EnergyLevel.HIGH -> Pair(50, 10)
+            EnergyLevel.NORMAL -> Pair(40, 10)
+            EnergyLevel.LOW -> Pair(25, 10)
+            EnergyLevel.EXHAUSTED -> Pair(20, 15)
         }
 
         for (task in tasks) {
-            if (clock >= sleepMinutes) break
+            var taskRemaining = task.remainingMinutes
+            if (taskRemaining <= 0) taskRemaining = task.estimatedMinutes
 
-            var remainingTaskMinutes = task.estimatedMinutes
-            val maxChunk = when (energyLevel) {
-                EnergyLevel.EXHAUSTED -> 25
-                EnergyLevel.LOW -> 30
-                EnergyLevel.NORMAL -> 45
-                EnergyLevel.HIGH -> 60
-            }
+            while (taskRemaining > 0 && clock < sleepMinutes) {
+                val availableChunk = min(sessionDuration, taskRemaining)
+                val blockEnd = min(clock + availableChunk, sleepMinutes)
+                val actualDuration = blockEnd - clock
 
-            while (remainingTaskMinutes > 0 && clock < sleepMinutes) {
-                val chunk = min(remainingTaskMinutes, min(maxChunk, sleepMinutes - clock))
-                if (chunk <= 0) break
+                if (actualDuration <= 0) break
 
-                val slotStart = clock
-                val slotEnd = clock + chunk
                 agenda.add(
                     AgendaItem(
-                        startTimeFormatted = formatTime(slotStart),
-                        endTimeFormatted = formatTime(slotEnd),
+                        startTimeFormatted = formatTime(clock),
+                        endTimeFormatted = formatTime(blockEnd),
                         title = task.title,
-                        subtitle = task.subjectName ?: task.type.displayName,
+                        subtitle = "${task.subjectName ?: task.type.displayName} • Focus block",
                         isBreak = false,
-                        durationMinutes = chunk,
-                        taskId = task.id
+                        durationMinutes = actualDuration
                     )
                 )
-                clock = slotEnd
-                remainingTaskMinutes -= chunk
 
-                // Add a break if there is still remaining task or more tasks and time before sleep
-                if (clock + breakDuration < sleepMinutes && (remainingTaskMinutes > 0 || tasks.indexOf(task) < tasks.lastIndex)) {
-                    val breakStart = clock
+                taskRemaining -= actualDuration
+                clock = blockEnd
+
+                // Add a break if there is still study time before sleep and more work
+                if (clock + breakDuration < sleepMinutes && (taskRemaining > 0 || tasks.indexOf(task) < tasks.size - 1)) {
                     val breakEnd = min(clock + breakDuration, sleepMinutes)
                     agenda.add(
                         AgendaItem(
-                            startTimeFormatted = formatTime(breakStart),
+                            startTimeFormatted = formatTime(clock),
                             endTimeFormatted = formatTime(breakEnd),
-                            title = "Restorative Break",
-                            subtitle = if (energyLevel == EnergyLevel.EXHAUSTED) "Hydrate & rest eyes" else "Step away & stretch",
+                            title = "Pacing Break",
+                            subtitle = "Rest eyes and reset attention",
                             isBreak = true,
-                            durationMinutes = breakEnd - breakStart
+                            durationMinutes = breakEnd - breakStartOrCurrent(clock, breakEnd)
                         )
                     )
                     clock = breakEnd
@@ -112,6 +104,10 @@ class AgendaPlanner {
         return agenda
     }
 
+    private fun breakStartOrCurrent(clock: Int, breakEnd: Int): Int {
+        return clock
+    }
+
     private fun formatTime(minutesFromMidnight: Int): String {
         val totalMins = minutesFromMidnight % (24 * 60)
         val hour24 = totalMins / 60
@@ -121,6 +117,7 @@ class AgendaPlanner {
             else -> h
         }
         val amPm = if (hour24 < 12) "AM" else "PM"
-        return String.format(Locale.US, "%d:%02d %s", hour12, mins, amPm)
+        val minsStr = if (mins < 10) "0$mins" else "$mins"
+        return "$hour12:$minsStr $amPm"
     }
 }

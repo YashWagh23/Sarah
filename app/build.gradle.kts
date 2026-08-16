@@ -78,6 +78,7 @@ tasks.withType<Test> {
 
 dependencies {
     implementation(project(":shared"))
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
     val composeBom = platform("androidx.compose:compose-bom:2024.05.00")
     implementation(composeBom)

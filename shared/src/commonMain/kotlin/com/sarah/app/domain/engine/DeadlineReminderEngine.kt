@@ -3,18 +3,18 @@ package com.sarah.app.domain.engine
 import com.sarah.app.domain.model.Reminder
 import com.sarah.app.domain.model.ReminderType
 import com.sarah.app.domain.model.Task
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class DeadlineReminderEngine(
-    private val zoneId: ZoneId = ZoneId.systemDefault()
+    private val timeZone: TimeZone = TimeZone.currentSystemDefault()
 ) {
-    private val timeFormatter = DateTimeFormatter.ofPattern("h:mm a")
 
     fun generateDeadlineReminders(
         task: Task,
-        nowEpochMs: Long = System.currentTimeMillis()
+        nowEpochMs: Long = Clock.System.now().toEpochMilliseconds()
     ): List<Reminder> {
         val deadline = task.deadlineEpochMs
         val timeUntilDeadline = deadline - nowEpochMs
@@ -27,9 +27,16 @@ class DeadlineReminderEngine(
         val oneDayMs = 24 * 60 * 60 * 1000L
         val twoHoursMs = 2 * 60 * 60 * 1000L
 
-        val formattedDeadlineTime = Instant.ofEpochMilli(deadline)
-            .atZone(zoneId)
-            .format(timeFormatter)
+        val localDateTime = Instant.fromEpochMilliseconds(deadline).toLocalDateTime(timeZone)
+        val hour24 = localDateTime.hour
+        val minute = localDateTime.minute
+        val hour12 = when (val h = hour24 % 12) {
+            0 -> 12
+            else -> h
+        }
+        val amPm = if (hour24 < 12) "AM" else "PM"
+        val minStr = if (minute < 10) "0$minute" else "$minute"
+        val formattedDeadlineTime = "$hour12:$minStr $amPm"
 
         val subjectSuffix = if (!task.subjectName.isNullOrBlank()) " (${task.subjectName})" else ""
 

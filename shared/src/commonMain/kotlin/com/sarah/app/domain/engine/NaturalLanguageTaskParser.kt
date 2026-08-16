@@ -7,10 +7,9 @@ import com.sarah.app.domain.model.ExtractedTaskDraft
 import com.sarah.app.domain.model.Subject
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskType
-import java.time.LocalDate
-import java.time.ZoneId
-import java.util.Locale
-import java.util.regex.Pattern
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 
 class NaturalLanguageTaskParser {
 
@@ -18,11 +17,11 @@ class NaturalLanguageTaskParser {
         rawText: String,
         availableSubjects: List<Subject>,
         sourceType: CaptureSourceType = CaptureSourceType.NATURAL_LANGUAGE,
-        currentDate: LocalDate = LocalDate.now(),
-        zoneId: ZoneId = ZoneId.systemDefault()
+        currentDate: LocalDate? = null,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
     ): ExtractedTaskDraft {
         val cleanInput = rawText.trim()
-        val lower = cleanInput.lowercase(Locale.US)
+        val lower = cleanInput.lowercase()
 
         // 1. Identify Subject
         val matchedSubject = findMatchingSubject(lower, availableSubjects)
@@ -31,8 +30,8 @@ class NaturalLanguageTaskParser {
         val taskType = detectTaskType(lower)
 
         // 3. Identify Deadline
-        val parsedDeadline = DateTimeParserHelper.parseDeadline(lower, currentDate, zoneId)
-            ?: (System.currentTimeMillis() + 24 * 60 * 60 * 1000) // Default to tomorrow
+        val parsedDeadline = DateTimeParserHelper.parseDeadline(lower, currentDate, timeZone)
+            ?: (Clock.System.now().toEpochMilliseconds() + 24 * 60 * 60 * 1000L) // Default to tomorrow
 
         // 4. Identify Estimated Duration
         val estimatedMinutes = parseDurationMinutes(lower) ?: when (taskType) {
@@ -84,8 +83,8 @@ class NaturalLanguageTaskParser {
 
     private fun findMatchingSubject(lowerText: String, subjects: List<Subject>): Subject? {
         for (subject in subjects) {
-            val nameLower = subject.name.lowercase(Locale.US)
-            val codeLower = subject.code.lowercase(Locale.US)
+            val nameLower = subject.name.lowercase()
+            val codeLower = subject.code.lowercase()
 
             // Direct substring match
             if (nameLower.isNotBlank() && lowerText.contains(nameLower)) return subject
@@ -94,8 +93,8 @@ class NaturalLanguageTaskParser {
             // Split name into words (e.g. "Java & OOP" -> "java", "oop")
             val words = nameLower.split(Regex("[^a-zA-Z0-9]+")).filter { it.length > 2 }
             for (w in words) {
-                val wordRegex = Pattern.compile("\\b$w\\b")
-                if (wordRegex.matcher(lowerText).find()) {
+                val wordRegex = Regex("\\b$w\\b")
+                if (wordRegex.containsMatchIn(lowerText)) {
                     return subject
                 }
             }
@@ -118,15 +117,15 @@ class NaturalLanguageTaskParser {
 
     private fun parseDurationMinutes(lower: String): Int? {
         // e.g. "1 hour", "2 hours", "1.5 hrs", "90 mins", "45 min"
-        val hourMatch = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*(?:hours?|hrs?|h)\\b").matcher(lower)
-        if (hourMatch.find()) {
-            val h = hourMatch.group(1)?.toFloatOrNull() ?: 1f
+        val hourMatch = Regex("(\\d+(?:\\.\\d+)?)\\s*(?:hours?|hrs?|h)\\b").find(lower)
+        if (hourMatch != null) {
+            val h = hourMatch.groupValues[1].toFloatOrNull() ?: 1f
             return (h * 60).toInt()
         }
 
-        val minMatch = Pattern.compile("(\\d+)\\s*(?:mins?|minutes?|m)\\b").matcher(lower)
-        if (minMatch.find()) {
-            return minMatch.group(1)?.toIntOrNull()
+        val minMatch = Regex("(\\d+)\\s*(?:mins?|minutes?|m)\\b").find(lower)
+        if (minMatch != null) {
+            return minMatch.groupValues[1].toIntOrNull()
         }
 
         return null
@@ -160,7 +159,7 @@ class NaturalLanguageTaskParser {
         }
 
         // Capitalize first letter
-        result = result.trim().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+        result = result.trim().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 
         if (result.length < 5) {
             val subjName = subject?.name ?: "Academic"
