@@ -200,4 +200,53 @@ class SharedDomainEngineTest {
         assertTrue(plan.items.isNotEmpty())
         assertTrue(plan.items.any { it.taskTitle.contains("Study Process Synchronization") })
     }
+
+    @Test
+    fun testPreferencesDefaultsAndMutation() {
+        val prefs = FakeSarahPreferences()
+
+        // Verify default values
+        assertEquals(EnergyLevel.NORMAL, prefs.currentEnergyLevel)
+        kotlin.test.assertFalse(prefs.isOnboardingCompleted)
+        assertTrue(prefs.isDeadlineRemindersEnabled)
+        assertTrue(prefs.isCustomRemindersEnabled)
+
+        // Mutate and verify
+        prefs.currentEnergyLevel = EnergyLevel.HIGH
+        prefs.isOnboardingCompleted = true
+        prefs.isDeadlineRemindersEnabled = false
+        prefs.isCustomRemindersEnabled = false
+
+        assertEquals(EnergyLevel.HIGH, prefs.currentEnergyLevel)
+        assertTrue(prefs.isOnboardingCompleted)
+        kotlin.test.assertFalse(prefs.isDeadlineRemindersEnabled)
+        kotlin.test.assertFalse(prefs.isCustomRemindersEnabled)
+    }
 }
+
+private class FakeSarahPreferences : com.sarah.app.domain.preferences.SarahPreferences {
+    private val _energy = kotlinx.coroutines.flow.MutableStateFlow(EnergyLevel.NORMAL)
+    override var currentEnergyLevel: EnergyLevel
+        get() = _energy.value
+        set(value) { _energy.value = value }
+    override val energyLevelFlow: kotlinx.coroutines.flow.Flow<EnergyLevel> = _energy
+
+    private val _onboarding = kotlinx.coroutines.flow.MutableStateFlow(false)
+    override var isOnboardingCompleted: Boolean
+        get() = _onboarding.value
+        set(value) { _onboarding.value = value }
+    override val onboardingCompletedFlow: kotlinx.coroutines.flow.Flow<Boolean> = _onboarding
+
+    private val _deadlineReminders = kotlinx.coroutines.flow.MutableStateFlow(true)
+    override var isDeadlineRemindersEnabled: Boolean
+        get() = _deadlineReminders.value
+        set(value) { _deadlineReminders.value = value }
+    override val deadlineRemindersEnabledFlow: kotlinx.coroutines.flow.Flow<Boolean> = _deadlineReminders
+
+    private val _customReminders = kotlinx.coroutines.flow.MutableStateFlow(true)
+    override var isCustomRemindersEnabled: Boolean
+        get() = _customReminders.value
+        set(value) { _customReminders.value = value }
+    override val customRemindersEnabledFlow: kotlinx.coroutines.flow.Flow<Boolean> = _customReminders
+}
+
