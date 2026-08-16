@@ -31,7 +31,7 @@ class IosDocumentTextExtractor : DocumentTextExtractor {
         val combinedText = StringBuilder()
         // Extract text from all pages
         for (pageIndex in 0 until pageCount) {
-            val page = pdfDoc.pageAtIndex(pageIndex.toLong())
+            val page = pdfDoc.pageAtIndex(pageIndex.toULong())
             val pageText = page?.string?.trim()
             if (!pageText.isNullOrBlank()) {
                 combinedText.appendLine("--- Page ${pageIndex + 1} ---")

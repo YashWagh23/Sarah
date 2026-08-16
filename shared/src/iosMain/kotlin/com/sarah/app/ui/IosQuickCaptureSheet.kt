@@ -68,7 +68,6 @@ import com.sarah.app.domain.model.ExtractedTaskDraft
 import com.sarah.app.domain.model.Subject
 import com.sarah.app.media.IosMediaPickerBridge
 import com.sarah.app.ui.components.ExtractedTaskReviewCard
-import com.sarah.app.ui.screens.quickcapture.QuickCaptureTab
 import com.sarah.app.ui.theme.SarahBackground
 import com.sarah.app.ui.theme.SarahError
 import com.sarah.app.ui.theme.SarahErrorContainer
@@ -88,6 +87,14 @@ import com.sarah.app.ui.theme.SarahTertiaryContainer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+enum class IosQuickAction {
+    TASK,
+    NOTE,
+    REMINDER,
+    PDF,
+    IMAGE
+}
+
 @Composable
 fun IosQuickCaptureSheet(
     container: SarahAppContainer,
@@ -97,7 +104,7 @@ fun IosQuickCaptureSheet(
     val subjects by container.subjectRepository.getActiveSubjects().collectAsState(initial = emptyList())
     val mediaPicker = remember { IosMediaPickerBridge() }
 
-    var selectedAction by remember { mutableStateOf<QuickCaptureTab?>(QuickCaptureTab.TEXT) }
+    var selectedAction by remember { mutableStateOf<IosQuickAction?>(IosQuickAction.TASK) }
     var naturalLanguageInput by remember { mutableStateOf("") }
     var draft by remember { mutableStateOf<ExtractedTaskDraft?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
@@ -206,8 +213,8 @@ fun IosQuickCaptureSheet(
                             sublabel = "NLP Parsed",
                             containerColor = SarahPrimaryFixed,
                             contentColor = SarahPrimary,
-                            isActive = selectedAction == QuickCaptureTab.TEXT,
-                            onClick = { selectedAction = QuickCaptureTab.TEXT },
+                            isActive = selectedAction == IosQuickAction.TASK,
+                            onClick = { selectedAction = IosQuickAction.TASK },
                             modifier = Modifier.weight(1f)
                         )
                         IosQuickActionButton(
@@ -216,8 +223,8 @@ fun IosQuickCaptureSheet(
                             sublabel = "Class Memo",
                             containerColor = SarahTertiaryContainer,
                             contentColor = SarahOnTertiary,
-                            isActive = selectedAction == QuickCaptureTab.NOTE,
-                            onClick = { selectedAction = QuickCaptureTab.NOTE },
+                            isActive = selectedAction == IosQuickAction.NOTE,
+                            onClick = { selectedAction = IosQuickAction.NOTE },
                             modifier = Modifier.weight(1f)
                         )
                         IosQuickActionButton(
@@ -226,8 +233,8 @@ fun IosQuickCaptureSheet(
                             sublabel = "Quick Alert",
                             containerColor = SarahSecondaryContainer,
                             contentColor = SarahSecondary,
-                            isActive = selectedAction == QuickCaptureTab.REMINDER,
-                            onClick = { selectedAction = QuickCaptureTab.REMINDER },
+                            isActive = selectedAction == IosQuickAction.REMINDER,
+                            onClick = { selectedAction = IosQuickAction.REMINDER },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -243,7 +250,7 @@ fun IosQuickCaptureSheet(
                             icon = Icons.Outlined.PictureAsPdf,
                             label = "Import PDF",
                             onClick = {
-                                selectedAction = QuickCaptureTab.PDF
+                                selectedAction = IosQuickAction.PDF
                                 isProcessing = true
                                 processingMessage = "Reading PDF document with PDFKit..."
                                 errorMessage = null
@@ -279,7 +286,7 @@ fun IosQuickCaptureSheet(
                             icon = Icons.Outlined.Image,
                             label = "Import Photo",
                             onClick = {
-                                selectedAction = QuickCaptureTab.IMAGE
+                                selectedAction = IosQuickAction.IMAGE
                                 isProcessing = true
                                 processingMessage = "Scanning image with Vision OCR..."
                                 errorMessage = null
@@ -367,7 +374,7 @@ fun IosQuickCaptureSheet(
                     }
 
                     // Text Input
-                    if (selectedAction == QuickCaptureTab.TEXT || selectedAction == null) {
+                    if (selectedAction == IosQuickAction.TASK || selectedAction == null) {
                         OutlinedTextField(
                             value = naturalLanguageInput,
                             onValueChange = { input ->

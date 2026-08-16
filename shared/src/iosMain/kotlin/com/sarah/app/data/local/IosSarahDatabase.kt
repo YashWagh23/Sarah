@@ -11,9 +11,7 @@ class IosSarahDatabase private constructor() {
         private var INSTANCE: IosSarahDatabase? = null
 
         fun getInstance(): IosSarahDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: IosSarahDatabase().also { INSTANCE = it }
-            }
+            return INSTANCE ?: IosSarahDatabase().also { INSTANCE = it }
         }
     }
 
