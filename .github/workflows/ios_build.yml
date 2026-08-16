@@ -1,0 +1,76 @@
+name: Build Sarah iOS App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'shared/**'
+      - 'iosApp/**'
+      - '.github/workflows/ios_build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build iOS Framework & App
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
+
+      - name: Build KMP iOS Frameworks
+        run: |
+          echo "Building KMP Release Framework for iOS ARM64..."
+          ./gradlew :shared:linkReleaseFrameworkIosArm64 --stacktrace
+          echo "Building KMP Debug Framework for iOS Simulator ARM64..."
+          ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 --stacktrace
+
+      - name: Build iOS Application (Unsigned Release)
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build \
+            SYMROOT="$(pwd)/iosApp/build"
+
+      - name: Package Payload into Unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -r iosApp/build/Release-iphoneos/iosApp.app build/Payload/
+          cd build
+          zip -qr Sarah-unsigned.ipa Payload
+          cd ..
+          ls -la build/
+
+      - name: Upload Unsigned IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sarah-iOS-Unsigned-IPA
+          path: build/Sarah-unsigned.ipa
+          retention-days: 14
+
+      - name: Upload Shared Framework Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sarah-Shared-Framework-Release
+          path: shared/build/bin/iosArm64/releaseFramework/Shared.framework
+          retention-days: 14
