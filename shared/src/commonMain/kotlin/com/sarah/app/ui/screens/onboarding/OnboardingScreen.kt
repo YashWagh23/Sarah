@@ -1,7 +1,11 @@
 package com.sarah.app.ui.screens.onboarding
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import org.jetbrains.compose.resources.painterResource
+import sarah.shared.generated.resources.Res
+import sarah.shared.generated.resources.sarah_logo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -205,24 +209,13 @@ fun StepWelcome(
     onDepartmentChange: (String) -> Unit
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
+        Image(
+            painter = painterResource(Res.drawable.sarah_logo),
+            contentDescription = "Sarah Logo",
             modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(SarahPrimary, SarahPrimaryFixedDim)
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.AutoAwesome,
-                contentDescription = null,
-                tint = SarahBackground,
-                modifier = Modifier.size(38.dp)
-            )
-        }
+                .size(80.dp)
+                .clip(RoundedCornerShape(22.dp))
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
