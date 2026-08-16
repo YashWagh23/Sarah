@@ -50,15 +50,24 @@ import androidx.compose.ui.window.DialogProperties
 import com.sarah.app.domain.model.Subject
 import com.sarah.app.ui.theme.SarahError
 import com.sarah.app.ui.theme.SarahOutlineVariant
-import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
-import com.sarah.app.ui.theme.SarahSurfaceContainer
-import com.sarah.app.ui.theme.SarahPrimary
 import com.sarah.app.ui.theme.SarahPrimary
 import com.sarah.app.ui.theme.SarahSecondary
 import com.sarah.app.ui.theme.SarahOnSurface
 import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahTertiary
 import kotlin.math.roundToInt
+
+private fun parseHexColor(hexString: String): Color {
+    val clean = hexString.removePrefix("#")
+    val colorLong = when (clean.length) {
+        6 -> ("FF$clean").toLongOrNull(16) ?: 0xFF4450B7
+        8 -> clean.toLongOrNull(16) ?: 0xFF4450B7
+        else -> 0xFF4450B7
+    }
+    return Color(colorLong)
+}
 
 @Composable
 fun AddEditSubjectDialog(
@@ -204,7 +213,7 @@ fun AddEditSubjectDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     colorPalette.forEach { hex ->
-                        val color = Color(android.graphics.Color.parseColor(hex))
+                        val color = parseHexColor(hex)
                         val isSelected = hex.equals(selectedColorHex, ignoreCase = true)
                         Box(
                             modifier = Modifier

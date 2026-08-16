@@ -34,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,21 +43,17 @@ import com.sarah.app.domain.model.ExtractedTaskDraft
 import com.sarah.app.domain.model.Subject
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskType
+import com.sarah.app.domain.util.formatDateTime
 import com.sarah.app.ui.theme.SarahError
-import com.sarah.app.ui.theme.SarahPrimaryFixedDim
-import com.sarah.app.ui.theme.SarahOutlineVariant
-import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
-import com.sarah.app.ui.theme.SarahSurfaceContainer
-import com.sarah.app.ui.theme.SarahPrimary
-import com.sarah.app.ui.theme.SarahPrimary
-import com.sarah.app.ui.theme.SarahSecondary
 import com.sarah.app.ui.theme.SarahOnSurface
 import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahTertiary
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
@@ -298,8 +293,7 @@ fun ExtractedTaskReviewCard(
         Spacer(modifier = Modifier.height(6.dp))
 
         // Formatted Deadline Preview
-        val formattedDate = DateTimeFormatter.ofPattern("EEE, MMM d • h:mm a", Locale.US)
-            .format(Instant.ofEpochMilli(draft.deadlineEpochMs).atZone(ZoneId.systemDefault()))
+        val formattedDate = formatDateTime(draft.deadlineEpochMs)
 
         Row(
             modifier = Modifier

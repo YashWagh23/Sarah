@@ -1,6 +1,5 @@
 package com.sarah.app.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -30,22 +29,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.FeasibilityReport
 import com.sarah.app.domain.model.FeasibilityStatus
 import com.sarah.app.ui.theme.SarahError
-import com.sarah.app.ui.theme.SarahPrimaryFixedDim
-import com.sarah.app.ui.theme.SarahOutlineVariant
-import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
-import com.sarah.app.ui.theme.SarahSurfaceContainer
-import com.sarah.app.ui.theme.SarahPrimary
-import com.sarah.app.ui.theme.SarahPrimary
-import com.sarah.app.ui.theme.SarahSecondary
 import com.sarah.app.ui.theme.SarahOnSurface
 import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahTertiary
 
 @Composable
@@ -166,7 +163,7 @@ fun FeasibilityCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Workload Required
+            // Work Required
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -225,7 +222,7 @@ fun FeasibilityCard(
             }
             Spacer(modifier = Modifier.height(6.dp))
             LinearProgressIndicator(
-                progress = progress,
+                progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

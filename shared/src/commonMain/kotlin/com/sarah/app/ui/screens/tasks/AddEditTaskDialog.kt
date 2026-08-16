@@ -57,17 +57,16 @@ import com.sarah.app.domain.model.Subject
 import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskType
+import com.sarah.app.domain.util.currentTimeEpochMs
 import com.sarah.app.ui.theme.SarahError
-import com.sarah.app.ui.theme.SarahPrimaryFixedDim
-import com.sarah.app.ui.theme.SarahBackground
 import com.sarah.app.ui.theme.SarahOutlineVariant
-import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
-import com.sarah.app.ui.theme.SarahSurfaceContainer
 import com.sarah.app.ui.theme.SarahPrimary
-import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
 import com.sarah.app.ui.theme.SarahSecondary
 import com.sarah.app.ui.theme.SarahOnSurface
 import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahTertiary
 import kotlin.math.roundToInt
 
@@ -99,7 +98,7 @@ fun AddEditTaskDialog(
     var selectedDifficulty by remember { mutableStateOf(task?.difficulty ?: Difficulty.MEDIUM) }
     var selectedEnergy by remember { mutableStateOf(task?.energyRequirement ?: EnergyRequirement.MEDIUM) }
     var deadlineEpochMs by remember {
-        mutableLongStateOf(task?.deadlineEpochMs ?: (System.currentTimeMillis() + 24 * 60 * 60 * 1000))
+        mutableLongStateOf(task?.deadlineEpochMs ?: (currentTimeEpochMs() + 24 * 60 * 60 * 1000))
     }
 
     var isSubjectDropdownExpanded by remember { mutableStateOf(false) }

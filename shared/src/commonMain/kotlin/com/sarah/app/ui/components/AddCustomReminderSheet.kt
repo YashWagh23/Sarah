@@ -19,11 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.School
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,27 +48,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.Subject
-import com.sarah.app.ui.theme.SarahPrimaryFixedDim
-import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.domain.util.currentTimeEpochMs
+import com.sarah.app.domain.util.formatDateTime
+import com.sarah.app.domain.util.getStartOfTodayEpochMs
 import com.sarah.app.ui.theme.SarahOutlineVariant
-import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
-import com.sarah.app.ui.theme.SarahSurfaceContainer
 import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
 import com.sarah.app.ui.theme.SarahSecondary
 import com.sarah.app.ui.theme.SarahOnSurface
 import com.sarah.app.ui.theme.SarahOnSurfaceVariant
-import com.sarah.app.ui.theme.SarahTertiary
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 
 enum class ReminderTimePreset(val label: String) {
     TODAY_EVENING("Today 6:30 PM"),
@@ -97,39 +89,34 @@ fun AddCustomReminderSheet(
     var showCustomPicker by remember { mutableStateOf(false) }
 
     fun calculateEpochMs(preset: ReminderTimePreset): Long {
-        val now = LocalDateTime.now()
-        val zone = ZoneId.systemDefault()
+        val startOfToday = getStartOfTodayEpochMs()
+        val now = currentTimeEpochMs()
         return when (preset) {
             ReminderTimePreset.TODAY_EVENING -> {
-                val target = LocalDateTime.of(LocalDate.now(), LocalTime.of(18, 30))
-                if (target.isAfter(now)) target.atZone(zone).toInstant().toEpochMilli()
-                else now.plusHours(2).atZone(zone).toInstant().toEpochMilli()
+                val target = startOfToday + (18 * 3600 + 30 * 60) * 1000L
+                if (target > now) target else now + (2 * 3600 * 1000L)
             }
             ReminderTimePreset.TONIGHT -> {
-                val target = LocalDateTime.of(LocalDate.now(), LocalTime.of(21, 0))
-                if (target.isAfter(now)) target.atZone(zone).toInstant().toEpochMilli()
-                else now.plusHours(1).atZone(zone).toInstant().toEpochMilli()
+                val target = startOfToday + (21 * 3600) * 1000L
+                if (target > now) target else now + (1 * 3600 * 1000L)
             }
             ReminderTimePreset.TOMORROW_MORNING -> {
-                val target = LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.of(8, 0))
-                target.atZone(zone).toInstant().toEpochMilli()
+                startOfToday + (32 * 3600) * 1000L
             }
             ReminderTimePreset.TOMORROW_EVENING -> {
-                val target = LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.of(18, 0))
-                target.atZone(zone).toInstant().toEpochMilli()
+                startOfToday + (42 * 3600) * 1000L
             }
-            ReminderTimePreset.CUSTOM -> customTimeEpochMs ?: (System.currentTimeMillis() + 60 * 60 * 1000L)
+            ReminderTimePreset.CUSTOM -> customTimeEpochMs ?: (now + 60 * 60 * 1000L)
         }
     }
 
     if (showCustomPicker) {
-        val now = LocalDateTime.now()
         val timePickerState = rememberTimePickerState(
-            initialHour = (now.hour + 1) % 24,
+            initialHour = 19,
             initialMinute = 0
         )
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = System.currentTimeMillis()
+            initialSelectedDateMillis = currentTimeEpochMs()
         )
         var isPickingTime by remember { mutableStateOf(false) }
 
@@ -155,13 +142,9 @@ fun AddCustomReminderSheet(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            val selectedDateEpochMs = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                            val localDate = LocalDate.ofEpochDay(selectedDateEpochMs / (24 * 60 * 60 * 1000L))
-                            val chosenDateTime = LocalDateTime.of(
-                                localDate,
-                                LocalTime.of(timePickerState.hour, timePickerState.minute)
-                            )
-                            val targetEpochMs = chosenDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                            val selectedDateEpochMs = datePickerState.selectedDateMillis ?: currentTimeEpochMs()
+                            val startOfDay = (selectedDateEpochMs / (24 * 60 * 60 * 1000L)) * (24 * 60 * 60 * 1000L)
+                            val targetEpochMs = startOfDay + (timePickerState.hour * 3600_000L) + (timePickerState.minute * 60_000L)
                             customTimeEpochMs = targetEpochMs
                             selectedPreset = ReminderTimePreset.CUSTOM
                             showCustomPicker = false
@@ -281,8 +264,7 @@ fun AddCustomReminderSheet(
                     ReminderTimePreset.values().forEach { preset ->
                         val isSelected = selectedPreset == preset
                         val labelText = if (preset == ReminderTimePreset.CUSTOM && customTimeEpochMs != null) {
-                            val dt = Instant.ofEpochMilli(customTimeEpochMs!!).atZone(ZoneId.systemDefault())
-                            dt.format(DateTimeFormatter.ofPattern("MMM d, h:mm a"))
+                            formatDateTime(customTimeEpochMs!!)
                         } else {
                             preset.label
                         }

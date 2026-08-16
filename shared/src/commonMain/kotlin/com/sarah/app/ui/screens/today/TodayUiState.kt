@@ -5,11 +5,10 @@ import com.sarah.app.domain.model.DailyPlan
 import com.sarah.app.domain.model.EnergyLevel
 import com.sarah.app.domain.model.FeasibilityReport
 import com.sarah.app.domain.model.NextAction
+import com.sarah.app.domain.model.Reminder
 import com.sarah.app.domain.model.Subject
 import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.UserProfile
-
-import com.sarah.app.domain.model.Reminder
 
 data class TodayUiState(
     val isLoading: Boolean = true,

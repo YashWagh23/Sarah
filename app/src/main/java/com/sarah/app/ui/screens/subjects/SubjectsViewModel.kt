@@ -16,17 +16,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class SubjectWithTaskCount(
-    val subject: Subject,
-    val pendingTasksCount: Int
-)
 
-data class SubjectsUiState(
-    val isLoading: Boolean = true,
-    val subjectsWithCount: List<SubjectWithTaskCount> = emptyList(),
-    val isAddEditDialogOpen: Boolean = false,
-    val editingSubject: Subject? = null
-)
 
 class SubjectsViewModel(
     private val subjectRepository: SubjectRepository,

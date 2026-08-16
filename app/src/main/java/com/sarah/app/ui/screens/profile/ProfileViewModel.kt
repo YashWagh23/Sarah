@@ -15,13 +15,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ProfileUiState(
-    val isLoading: Boolean = true,
-    val userProfile: UserProfile = UserProfile(),
-    val isDeadlineRemindersEnabled: Boolean = true,
-    val isCustomRemindersEnabled: Boolean = true,
-    val isSaved: Boolean = false
-)
+
 
 class ProfileViewModel(
     private val userRepository: UserRepository,

@@ -44,18 +44,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.Reminder
-import com.sarah.app.ui.theme.SarahPrimaryFixedDim
-import com.sarah.app.ui.theme.SarahOutlineVariant
-import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
-import com.sarah.app.ui.theme.SarahPrimary
-import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.domain.util.currentTimeEpochMs
+import com.sarah.app.domain.util.getStartOfTodayEpochMs
 import com.sarah.app.ui.theme.SarahOnSurface
 import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahTertiary
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,13 +65,12 @@ fun SnoozeReminderDialog(
     var showCustomDateTimePicker by remember { mutableStateOf(false) }
 
     if (showCustomDateTimePicker) {
-        val now = LocalDateTime.now()
         val timePickerState = rememberTimePickerState(
-            initialHour = (now.hour + 1) % 24,
+            initialHour = 19,
             initialMinute = 0
         )
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = System.currentTimeMillis()
+            initialSelectedDateMillis = currentTimeEpochMs()
         )
         var isPickingTime by remember { mutableStateOf(false) }
 
@@ -100,13 +96,9 @@ fun SnoozeReminderDialog(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            val selectedDateEpochMs = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                            val localDate = LocalDate.ofEpochDay(selectedDateEpochMs / (24 * 60 * 60 * 1000L))
-                            val chosenDateTime = LocalDateTime.of(
-                                localDate,
-                                LocalTime.of(timePickerState.hour, timePickerState.minute)
-                            )
-                            val targetEpochMs = chosenDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                            val selectedDateEpochMs = datePickerState.selectedDateMillis ?: currentTimeEpochMs()
+                            val startOfDay = (selectedDateEpochMs / (24 * 60 * 60 * 1000L)) * (24 * 60 * 60 * 1000L)
+                            val targetEpochMs = startOfDay + (timePickerState.hour * 3600_000L) + (timePickerState.minute * 60_000L)
                             onSnoozeUntilEpochMs(targetEpochMs)
                             showCustomDateTimePicker = false
                             onDismiss()
@@ -188,9 +180,10 @@ fun SnoozeReminderDialog(
                         title = "Tonight at 8:00 PM",
                         subtitle = "Evening study session",
                         onClick = {
-                            val target = LocalDateTime.of(LocalDate.now(), LocalTime.of(20, 0))
-                            val epochMs = target.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                            val safeEpochMs = if (epochMs <= System.currentTimeMillis()) System.currentTimeMillis() + (60 * 60 * 1000L) else epochMs
+                            val startOfToday = getStartOfTodayEpochMs()
+                            val target = startOfToday + (20 * 3600 * 1000L)
+                            val now = currentTimeEpochMs()
+                            val safeEpochMs = if (target <= now) now + (60 * 60 * 1000L) else target
                             onSnoozeUntilEpochMs(safeEpochMs)
                             onDismiss()
                         }
@@ -201,9 +194,9 @@ fun SnoozeReminderDialog(
                         title = "Tomorrow at 8:00 AM",
                         subtitle = "Before college begins",
                         onClick = {
-                            val target = LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.of(8, 0))
-                            val epochMs = target.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                            onSnoozeUntilEpochMs(epochMs)
+                            val startOfToday = getStartOfTodayEpochMs()
+                            val target = startOfToday + (32 * 3600 * 1000L)
+                            onSnoozeUntilEpochMs(target)
                             onDismiss()
                         }
                     )

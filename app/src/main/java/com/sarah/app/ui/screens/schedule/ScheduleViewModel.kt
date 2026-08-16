@@ -13,11 +13,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ScheduleUiState(
-    val isLoading: Boolean = true,
-    val schedule: CollegeSchedule = CollegeSchedule(),
-    val isSaved: Boolean = false
-)
+
 
 class ScheduleViewModel(
     private val scheduleRepository: ScheduleRepository

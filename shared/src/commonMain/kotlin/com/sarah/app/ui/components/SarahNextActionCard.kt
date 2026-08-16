@@ -15,13 +15,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.NavigateNext
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Coffee
-import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Fastfood
 import androidx.compose.material.icons.outlined.Navigation
@@ -60,7 +58,6 @@ import com.sarah.app.ui.theme.SarahPrimary
 import com.sarah.app.ui.theme.SarahPrimaryFixed
 import com.sarah.app.ui.theme.SarahSecondary
 import com.sarah.app.ui.theme.SarahSurfaceContainerHigh
-import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahTertiary
 
 @Composable

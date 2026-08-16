@@ -46,6 +46,16 @@ import com.sarah.app.ui.theme.SarahSurfaceContainerLow
 import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahSurfaceVariant
 
+private fun parseHexColor(hexString: String): Color {
+    val clean = hexString.removePrefix("#")
+    val colorLong = when (clean.length) {
+        6 -> ("FF$clean").toLongOrNull(16) ?: 0xFF4450B7
+        8 -> clean.toLongOrNull(16) ?: 0xFF4450B7
+        else -> 0xFF4450B7
+    }
+    return Color(colorLong)
+}
+
 /**
  * Bento-style subject card matching the reference design:
  * - 24dp rounded card on white surface
@@ -62,9 +72,7 @@ fun SubjectCard(
     onClick          : () -> Unit = {},
     modifier         : Modifier   = Modifier
 ) {
-    val subjectColor = runCatching {
-        Color(android.graphics.Color.parseColor(subject.colorHex))
-    }.getOrDefault(SarahPrimary)
+    val subjectColor = parseHexColor(subject.colorHex)
 
     val attendance    = subject.currentAttendancePercentage.coerceIn(0, 100)
     val isLowAttend   = attendance < subject.targetAttendancePercentage

@@ -7,17 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Backpack
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Notifications
@@ -25,7 +20,6 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Snooze
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,12 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sarah.app.domain.model.Reminder
 import com.sarah.app.domain.model.ReminderType
+import com.sarah.app.domain.util.formatReminderTime
 import com.sarah.app.ui.theme.SarahError
 import com.sarah.app.ui.theme.SarahOnSurface
 import com.sarah.app.ui.theme.SarahOnSurfaceVariant
@@ -50,10 +44,6 @@ import com.sarah.app.ui.theme.SarahSurfaceContainerHigh
 import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
 import com.sarah.app.ui.theme.SarahTertiary
 import com.sarah.app.ui.theme.SarahTertiaryFixedDim
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /**
  * Compact mini reminder card — designed for a 2-column grid on the Today screen.
@@ -67,16 +57,7 @@ fun ReminderCard(
     onDeleteClick : (Reminder) -> Unit,
     modifier      : Modifier = Modifier
 ) {
-    val zone        = ZoneId.systemDefault()
-    val reminderZdt = Instant.ofEpochMilli(reminder.reminderTimeEpochMs).atZone(zone)
-    val today       = LocalDate.now(zone)
-    val reminderDate = reminderZdt.toLocalDate()
-
-    val formattedTime = when {
-        reminderDate == today             -> reminderZdt.format(DateTimeFormatter.ofPattern("h:mm a"))
-        reminderDate == today.plusDays(1) -> "Tomorrow"
-        else                              -> reminderZdt.format(DateTimeFormatter.ofPattern("MMM d"))
-    }
+    val formattedTime = formatReminderTime(reminder.reminderTimeEpochMs)
 
     // Icon and accent color by reminder type
     val (icon, iconTint, decorTint) = when (reminder.type) {

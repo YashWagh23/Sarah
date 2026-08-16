@@ -4,26 +4,10 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
-import com.sarah.app.R
 
-// ─── Google Fonts Provider (Manrope) ────────────────────────────────────────
-private val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage   = "com.google.android.gms",
-    certificates      = R.array.com_google_android_gms_fonts_certs
-)
-
-private val ManropeFont = GoogleFont("Manrope")
-
-val ManropeFontFamily = FontFamily(
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = ManropeFont, fontProvider = provider, weight = FontWeight.Bold),
-)
+// ─── Font Family ────────────────────────────────────────────────────────────
+val ManropeFontFamily = FontFamily.Default
 
 // ─── Typography (matches Stitch reference exactly) ──────────────────────────
 //
