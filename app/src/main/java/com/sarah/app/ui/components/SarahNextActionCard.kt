@@ -255,11 +255,12 @@ fun SarahNextActionCard(
             }
 
             // Secondary: mark-done button
-            if (nextAction.taskId != null &&
+            val actionTaskId = nextAction.taskId
+            if (actionTaskId != null &&
                 (nextAction.actionType == NextActionType.START_TASK ||
                  nextAction.actionType == NextActionType.CONTINUE_TASK)) {
                 OutlinedButton(
-                    onClick = { onMarkCompletedClick(nextAction.taskId) },
+                    onClick = { onMarkCompletedClick(actionTaskId) },
                     modifier = Modifier.fillMaxWidth(),
                     shape    = RoundedCornerShape(12.dp),
                     colors   = ButtonDefaults.outlinedButtonColors(contentColor = SarahSecondary),

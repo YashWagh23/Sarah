@@ -236,11 +236,12 @@ class TodayViewModel(
 
     fun dismissReminder(reminder: Reminder) {
         viewModelScope.launch {
-            if (reminder.taskId != null) {
+            val remTaskId = reminder.taskId
+            if (remTaskId != null) {
                 // If it's a task/deadline reminder, mark the task completed too!
-                taskRepository.updateTaskStatus(reminder.taskId, TaskStatus.COMPLETED)
-                reminderRepository.deleteRemindersByTaskId(reminder.taskId)
-                reminderScheduler.cancelTaskReminders(reminder.taskId)
+                taskRepository.updateTaskStatus(remTaskId, TaskStatus.COMPLETED)
+                reminderRepository.deleteRemindersByTaskId(remTaskId)
+                reminderScheduler.cancelTaskReminders(remTaskId)
             } else {
                 reminderRepository.dismissReminder(reminder.id)
                 reminderScheduler.cancelReminder(reminder.id)

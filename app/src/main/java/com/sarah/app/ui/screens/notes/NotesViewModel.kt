@@ -219,9 +219,10 @@ class NotesViewModel(
 
         val cleanQuery = query.trim().lowercase()
         return subjectFiltered.filter { note ->
+            val subName = note.subjectName
             note.title.lowercase().contains(cleanQuery) ||
                 note.content.lowercase().contains(cleanQuery) ||
-                (note.subjectName != null && note.subjectName.lowercase().contains(cleanQuery))
+                (subName != null && subName.lowercase().contains(cleanQuery))
         }
     }
 
