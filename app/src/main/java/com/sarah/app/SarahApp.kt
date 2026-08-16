@@ -21,8 +21,10 @@ import com.sarah.app.domain.repository.SubjectRepository
 import com.sarah.app.domain.repository.TaskRepository
 import com.sarah.app.domain.repository.UserRepository
 
+import com.sarah.app.data.repository.AcademicNoteRepositoryImpl
 import com.sarah.app.data.repository.ReminderRepositoryImpl
 import com.sarah.app.domain.engine.ReminderScheduler
+import com.sarah.app.domain.repository.AcademicNoteRepository
 import com.sarah.app.domain.repository.ReminderRepository
 import com.sarah.app.notification.NotificationHelper
 import com.sarah.app.notification.SarahNotificationScheduler
@@ -39,6 +41,7 @@ class SarahApp : Application() {
     lateinit var dailyPlanRepository: DailyPlanRepository private set
     lateinit var reminderRepository: ReminderRepository private set
     lateinit var reminderScheduler: ReminderScheduler private set
+    lateinit var academicNoteRepository: AcademicNoteRepository private set
 
     val taskPriorityScorer: TaskPriorityScorer by lazy { TaskPriorityScorer() }
     val adaptivePlanner: AdaptivePlanner by lazy { AdaptivePlanner(taskPriorityScorer) }
@@ -60,6 +63,7 @@ class SarahApp : Application() {
         dailyPlanRepository = DailyPlanRepositoryImpl(database.dailyPlanDao(), database.temporaryInterruptionDao())
         reminderRepository = ReminderRepositoryImpl(database.reminderDao())
         reminderScheduler = SarahNotificationScheduler(this)
+        academicNoteRepository = AcademicNoteRepositoryImpl(database.academicNoteDao(), database.subjectDao())
 
         NotificationHelper.createNotificationChannel(this)
     }

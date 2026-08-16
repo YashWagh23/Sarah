@@ -25,6 +25,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sarah.app.SarahApp
+import com.sarah.app.ui.screens.notes.NotesScreen
+import com.sarah.app.ui.screens.notes.NotesViewModel
 import com.sarah.app.ui.screens.onboarding.OnboardingScreen
 import com.sarah.app.ui.screens.onboarding.OnboardingViewModel
 import com.sarah.app.ui.screens.profile.ProfileScreen
@@ -169,7 +171,8 @@ fun AppNavigation(
                 )
                 TodayScreen(
                     viewModel = todayViewModel,
-                    quickCaptureViewModel = quickCaptureViewModel
+                    quickCaptureViewModel = quickCaptureViewModel,
+                    onNavigateToNotes = { navController.navigate(Screen.Notes.route) }
                 )
             }
 
@@ -208,7 +211,28 @@ fun AppNavigation(
                 val profileViewModel: ProfileViewModel = viewModel(
                     factory = ProfileViewModel.Factory(app.userRepository, app.preferencesManager)
                 )
-                ProfileScreen(viewModel = profileViewModel)
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onNavigateToNotes = { navController.navigate(Screen.Notes.route) }
+                )
+            }
+
+            composable(Screen.Notes.route) {
+                val notesViewModel: NotesViewModel = viewModel(
+                    factory = NotesViewModel.Factory(
+                        app.academicNoteRepository,
+                        app.subjectRepository,
+                        app.taskRepository,
+                        app.reminderRepository,
+                        app.reminderScheduler,
+                        app.deadlineReminderEngine,
+                        app.preferencesManager
+                    )
+                )
+                NotesScreen(
+                    viewModel = notesViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
     }

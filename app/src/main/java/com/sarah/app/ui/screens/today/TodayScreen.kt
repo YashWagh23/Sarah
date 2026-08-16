@@ -83,10 +83,13 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+import androidx.compose.material.icons.rounded.Description
+
 @Composable
 fun TodayScreen(
     viewModel: TodayViewModel,
     quickCaptureViewModel: QuickCaptureViewModel,
+    onNavigateToNotes: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -111,6 +114,43 @@ fun TodayScreen(
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        // Academic Notes FAB
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(DarkSurface)
+                                .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                                .clickable {
+                                    isFabMenuExpanded = false
+                                    onNavigateToNotes()
+                                }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "Classroom Notes",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            SmallFloatingActionButton(
+                                onClick = {
+                                    isFabMenuExpanded = false
+                                    onNavigateToNotes()
+                                },
+                                containerColor = MaterialTheme.colorScheme.secondary,
+                                contentColor = DarkBackground,
+                                shape = CircleShape
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Description,
+                                    contentDescription = "Classroom Notes",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
                         // Quick Reminder FAB
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

@@ -84,14 +84,16 @@ enum class ReminderTimePreset(val label: String) {
 @Composable
 fun AddCustomReminderSheet(
     availableSubjects: List<Subject>,
+    initialTitle: String = "",
+    initialSubjectId: Long? = null,
     onDismiss: () -> Unit,
     onSaveReminder: (title: String, message: String, timeEpochMs: Long, subjectId: Long?) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var title by remember { mutableStateOf("") }
+    var title by remember(initialTitle) { mutableStateOf(initialTitle) }
     var selectedPreset by remember { mutableStateOf(ReminderTimePreset.TODAY_EVENING) }
     var customTimeEpochMs by remember { mutableStateOf<Long?>(null) }
-    var selectedSubjectId by remember { mutableStateOf<Long?>(null) }
+    var selectedSubjectId by remember(initialSubjectId) { mutableStateOf(initialSubjectId) }
     var showCustomPicker by remember { mutableStateOf(false) }
 
     fun calculateEpochMs(preset: ReminderTimePreset): Long {

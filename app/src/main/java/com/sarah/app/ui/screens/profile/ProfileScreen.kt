@@ -2,6 +2,7 @@ package com.sarah.app.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,9 +58,13 @@ import com.sarah.app.ui.theme.TextMuted
 import com.sarah.app.ui.theme.TextPrimary
 import com.sarah.app.ui.theme.TextSecondary
 
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Description
+
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
+    onNavigateToNotes: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -338,6 +343,86 @@ fun ProfileScreen(
                             fontSize = 11.sp,
                             lineHeight = 15.sp
                         )
+                    }
+                }
+
+                // Academic Notes & Classroom Memos Entry Card
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(DarkSurface)
+                            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                            .clickable { onNavigateToNotes() }
+                            .padding(18.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(ElectricIndigo.copy(alpha = 0.2f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Description,
+                                        contentDescription = null,
+                                        tint = ElectricIndigo,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Academic Notes & Memos",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Classroom instructions, syllabus & tips",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextMuted
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Button(
+                            onClick = onNavigateToNotes,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = DarkSurfaceVariant,
+                                contentColor = TextPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Open Academic Notes",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
