@@ -1,7 +1,8 @@
 package com.sarah.app.ui.screens.subjects
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,15 +14,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.School
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -34,169 +39,125 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sarah.app.ui.components.SubjectCard
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBackground
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
+import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimaryContainer
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainer
 
 @Composable
 fun SubjectsScreen(
     viewModel: SubjectsViewModel,
-    modifier: Modifier = Modifier
+    modifier : Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.openAddSubjectDialog() },
-                containerColor = ElectricIndigo,
-                contentColor = TextPrimary,
-                shape = CircleShape
+                onClick        = { viewModel.openAddSubjectDialog() },
+                containerColor = SarahPrimaryContainer,
+                contentColor   = SarahPrimary,
+                shape          = RoundedCornerShape(14.dp),
+                elevation      = FloatingActionButtonDefaults.elevation(4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Add,
+                    imageVector        = Icons.Outlined.Add,
                     contentDescription = "Add Subject",
-                    modifier = Modifier.size(24.dp)
+                    modifier           = Modifier.size(24.dp)
                 )
             }
         },
-        containerColor = DarkBackground
+        containerColor = SarahBackground
     ) { innerPadding ->
         if (uiState.isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
+                modifier         = Modifier.fillMaxSize().padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = ElectricIndigo)
+                CircularProgressIndicator(color = SarahPrimary)
             }
         } else {
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+            LazyVerticalGrid(
+                columns         = GridCells.Fixed(2),
+                modifier        = modifier.fillMaxSize().padding(innerPadding),
+                contentPadding  = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement   = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Header
-                item {
-                    Column {
+                // ── Full-span header ─────────────────────────────────────
+                item(span = { GridItemSpan(2) }) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        val subjectCount  = uiState.subjectsWithCount.size
+                        val avgAttendance = if (subjectCount > 0) {
+                            uiState.subjectsWithCount.map {
+                                it.subject.currentAttendancePercentage
+                            }.average().toInt()
+                        } else 0
+
                         Text(
-                            text = "ACADEMIC CURRICULUM",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = ElectricIndigo,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Enrolled Subjects",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = TextPrimary,
+                            text       = "Semester Subjects",
+                            style      = MaterialTheme.typography.headlineMedium,
+                            color      = SarahOnSurface,
                             fontWeight = FontWeight.Bold
                         )
-                        Text(
-                            text = "Track your courses, professors, and attendance status",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
-                        )
-                    }
-                }
-
-                // Summary Stats Row
-                if (uiState.subjectsWithCount.isNotEmpty()) {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            val totalHours = uiState.subjectsWithCount.sumOf { it.subject.weeklyHours }
-                            val avgAttendance = (uiState.subjectsWithCount.map { it.subject.currentAttendancePercentage }.average()).toInt()
-
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(DarkSurface)
-                                    .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = "TOTAL SUBJECTS",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "${uiState.subjectsWithCount.size}",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = CyanAccent,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(DarkSurface)
-                                    .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = "AVG ATTENDANCE",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "$avgAttendance%",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = MintEmerald,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                        if (subjectCount > 0) {
+                            Text(
+                                text  = "$subjectCount Active Courses · $avgAttendance% Avg. Attendance",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = SarahOnSurfaceVariant
+                            )
                         }
                     }
                 }
 
+                // ── Scrollable filter chips ──────────────────────────────
+                item(span = { GridItemSpan(2) }) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SubjectFilterChip(label = "All Subjects", isSelected = true, onClick = {})
+                        SubjectFilterChip(label = "Core",         isSelected = false, onClick = {})
+                        SubjectFilterChip(label = "Elective",     isSelected = false, onClick = {})
+                    }
+                    Spacer(Modifier.height(4.dp))
+                }
+
                 if (uiState.subjectsWithCount.isEmpty()) {
-                    item {
+                    item(span = { GridItemSpan(2) }) {
                         Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 40.dp),
+                            modifier         = Modifier.fillMaxWidth().padding(vertical = 40.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(
-                                    imageVector = Icons.Rounded.School,
+                                    imageVector        = Icons.Outlined.School,
                                     contentDescription = null,
-                                    tint = TextMuted,
-                                    modifier = Modifier.size(48.dp)
+                                    tint               = SarahOutlineVariant,
+                                    modifier           = Modifier.size(48.dp)
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(Modifier.height(12.dp))
                                 Text(
-                                    text = "No subjects added yet",
+                                    text  = "No subjects added yet",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = TextSecondary
+                                    color = SarahSecondary
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(Modifier.height(4.dp))
                                 Text(
-                                    text = "Tap + to add your course subjects",
+                                    text  = "Tap + to add your course subjects",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextMuted
+                                    color = SarahOnSurfaceVariant
                                 )
                             }
                         }
@@ -204,15 +165,16 @@ fun SubjectsScreen(
                 } else {
                     items(uiState.subjectsWithCount, key = { it.subject.id }) { item ->
                         SubjectCard(
-                            subject = item.subject,
+                            subject           = item.subject,
                             pendingTasksCount = item.pendingTasksCount,
-                            onClick = { viewModel.openEditSubjectDialog(item.subject) }
+                            notesCount        = 0, // notes count not available at this level
+                            onClick           = { viewModel.openEditSubjectDialog(item.subject) }
                         )
                     }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(40.dp))
+                item(span = { GridItemSpan(2) }) {
+                    Spacer(Modifier.height(40.dp))
                 }
             }
         }
@@ -220,13 +182,35 @@ fun SubjectsScreen(
         // Add/Edit Dialog
         if (uiState.isAddEditDialogOpen) {
             AddEditSubjectDialog(
-                subject = uiState.editingSubject,
+                subject   = uiState.editingSubject,
                 onDismiss = { viewModel.closeAddEditDialog() },
-                onSave = { name, code, prof, color, hours, targetAtt, currAtt ->
+                onSave    = { name, code, prof, color, hours, targetAtt, currAtt ->
                     viewModel.saveSubject(name, code, prof, color, hours, targetAtt, currAtt)
                 },
-                onDelete = { viewModel.deleteSubject(it) }
+                onDelete  = { viewModel.deleteSubject(it) }
             )
         }
+    }
+}
+
+@Composable
+private fun SubjectFilterChip(
+    label     : String,
+    isSelected: Boolean,
+    onClick   : () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (isSelected) SarahPrimaryContainer else SarahSurfaceContainer)
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text       = label,
+            style      = MaterialTheme.typography.labelSmall,
+            color      = if (isSelected) SarahOnSurface else SarahSecondary,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+        )
     }
 }

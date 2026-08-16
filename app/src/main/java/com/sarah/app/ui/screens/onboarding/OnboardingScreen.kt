@@ -49,16 +49,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.ui.screens.schedule.formatTimeFromMinutes
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBackground
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
 import kotlin.math.roundToInt
 
 @Composable
@@ -78,7 +78,7 @@ fun OnboardingScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(SarahBackground)
             .padding(24.dp)
     ) {
         Column(
@@ -104,9 +104,9 @@ fun OnboardingScreen(
                             .clip(RoundedCornerShape(3.dp))
                             .background(
                                 when {
-                                    isCurrent -> ElectricIndigo
-                                    isPast -> MintEmerald
-                                    else -> DarkBorder
+                                    isCurrent -> SarahPrimary
+                                    isPast -> SarahPrimary
+                                    else -> SarahOutlineVariant
                                 }
                             )
                     )
@@ -150,7 +150,7 @@ fun OnboardingScreen(
             ) {
                 if (uiState.currentStep > 0) {
                     TextButton(onClick = { viewModel.prevStep() }) {
-                        Text("Back", color = TextSecondary)
+                        Text("Back", color = SarahOnSurfaceVariant)
                     }
                 } else {
                     Spacer(modifier = Modifier.width(1.dp))
@@ -165,8 +165,8 @@ fun OnboardingScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ElectricIndigo,
-                        contentColor = TextPrimary
+                        containerColor = SarahPrimary,
+                        contentColor = SarahOnSurface
                     ),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.height(50.dp)
@@ -209,7 +209,7 @@ fun StepWelcome(
                 .clip(RoundedCornerShape(20.dp))
                 .background(
                     Brush.linearGradient(
-                        listOf(ElectricIndigo, CyanAccent)
+                        listOf(SarahPrimary, SarahPrimaryFixedDim)
                     )
                 ),
             contentAlignment = Alignment.Center
@@ -217,7 +217,7 @@ fun StepWelcome(
             Icon(
                 imageVector = Icons.Rounded.AutoAwesome,
                 contentDescription = null,
-                tint = DarkBackground,
+                tint = SarahBackground,
                 modifier = Modifier.size(38.dp)
             )
         }
@@ -227,7 +227,7 @@ fun StepWelcome(
         Text(
             text = "Welcome to Sarah",
             style = MaterialTheme.typography.displayLarge,
-            color = TextPrimary,
+            color = SarahOnSurface,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
@@ -237,7 +237,7 @@ fun StepWelcome(
         Text(
             text = "Your AI-Powered Personal Academic Operating System",
             style = MaterialTheme.typography.bodyLarge,
-            color = CyanAccent,
+            color = SarahPrimaryFixedDim,
             textAlign = TextAlign.Center
         )
 
@@ -247,8 +247,8 @@ fun StepWelcome(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(DarkSurface)
-                .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                .background(SarahSurfaceContainerLowest)
+                .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -259,10 +259,10 @@ fun StepWelcome(
                 placeholder = { Text("e.g. Alex") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ElectricIndigo,
-                    unfocusedBorderColor = DarkBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    focusedBorderColor = SarahPrimary,
+                    unfocusedBorderColor = SarahOutlineVariant,
+                    focusedTextColor = SarahOnSurface,
+                    unfocusedTextColor = SarahOnSurface
                 )
             )
 
@@ -273,10 +273,10 @@ fun StepWelcome(
                 placeholder = { Text("e.g. Stanford / IIT / MIT") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ElectricIndigo,
-                    unfocusedBorderColor = DarkBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    focusedBorderColor = SarahPrimary,
+                    unfocusedBorderColor = SarahOutlineVariant,
+                    focusedTextColor = SarahOnSurface,
+                    unfocusedTextColor = SarahOnSurface
                 )
             )
 
@@ -287,10 +287,10 @@ fun StepWelcome(
                 placeholder = { Text("e.g. Computer Science") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ElectricIndigo,
-                    unfocusedBorderColor = DarkBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    focusedBorderColor = SarahPrimary,
+                    unfocusedBorderColor = SarahOutlineVariant,
+                    focusedTextColor = SarahOnSurface,
+                    unfocusedTextColor = SarahOnSurface
                 )
             )
         }
@@ -313,7 +313,7 @@ fun StepRhythm(
         Icon(
             imageVector = Icons.Rounded.Bedtime,
             contentDescription = null,
-            tint = MintEmerald,
+            tint = SarahPrimary,
             modifier = Modifier.size(44.dp)
         )
 
@@ -322,7 +322,7 @@ fun StepRhythm(
         Text(
             text = "Your Academic Rhythm",
             style = MaterialTheme.typography.headlineMedium,
-            color = TextPrimary,
+            color = SarahOnSurface,
             fontWeight = FontWeight.Bold
         )
 
@@ -331,7 +331,7 @@ fun StepRhythm(
         Text(
             text = "Sarah protects your sleep and calculates realistic study time",
             style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
+            color = SarahOnSurfaceVariant,
             textAlign = TextAlign.Center
         )
 
@@ -341,16 +341,16 @@ fun StepRhythm(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(DarkSurface)
-                .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                .background(SarahSurfaceContainerLowest)
+                .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
                 .padding(18.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Planned Sleep Time", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
-                Text(formatTimeFromMinutes(sleepVal.roundToInt()), color = MintEmerald, fontWeight = FontWeight.Bold)
+                Text("Planned Sleep Time", color = SarahOnSurface, style = MaterialTheme.typography.bodyLarge)
+                Text(formatTimeFromMinutes(sleepVal.roundToInt()), color = SarahPrimary, fontWeight = FontWeight.Bold)
             }
             Slider(
                 value = sleepVal,
@@ -361,9 +361,9 @@ fun StepRhythm(
                 valueRange = 1260f..1440f,
                 steps = 11,
                 colors = SliderDefaults.colors(
-                    thumbColor = MintEmerald,
-                    activeTrackColor = MintEmerald,
-                    inactiveTrackColor = DarkSurfaceVariant
+                    thumbColor = SarahPrimary,
+                    activeTrackColor = SarahPrimary,
+                    inactiveTrackColor = SarahSurfaceContainer
                 )
             )
 
@@ -373,8 +373,8 @@ fun StepRhythm(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("College Start Time", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
-                Text(formatTimeFromMinutes(collegeStartVal.roundToInt()), color = CyanAccent, fontWeight = FontWeight.Bold)
+                Text("College Start Time", color = SarahOnSurface, style = MaterialTheme.typography.bodyLarge)
+                Text(formatTimeFromMinutes(collegeStartVal.roundToInt()), color = SarahPrimaryFixedDim, fontWeight = FontWeight.Bold)
             }
             Slider(
                 value = collegeStartVal,
@@ -385,9 +385,9 @@ fun StepRhythm(
                 valueRange = 480f..720f,
                 steps = 15,
                 colors = SliderDefaults.colors(
-                    thumbColor = CyanAccent,
-                    activeTrackColor = CyanAccent,
-                    inactiveTrackColor = DarkSurfaceVariant
+                    thumbColor = SarahPrimaryFixedDim,
+                    activeTrackColor = SarahPrimaryFixedDim,
+                    inactiveTrackColor = SarahSurfaceContainer
                 )
             )
 
@@ -397,8 +397,8 @@ fun StepRhythm(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("College End Time", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
-                Text(formatTimeFromMinutes(collegeEndVal.roundToInt()), color = CyanAccent, fontWeight = FontWeight.Bold)
+                Text("College End Time", color = SarahOnSurface, style = MaterialTheme.typography.bodyLarge)
+                Text(formatTimeFromMinutes(collegeEndVal.roundToInt()), color = SarahPrimaryFixedDim, fontWeight = FontWeight.Bold)
             }
             Slider(
                 value = collegeEndVal,
@@ -409,9 +409,9 @@ fun StepRhythm(
                 valueRange = 780f..1140f,
                 steps = 23,
                 colors = SliderDefaults.colors(
-                    thumbColor = CyanAccent,
-                    activeTrackColor = CyanAccent,
-                    inactiveTrackColor = DarkSurfaceVariant
+                    thumbColor = SarahPrimaryFixedDim,
+                    activeTrackColor = SarahPrimaryFixedDim,
+                    inactiveTrackColor = SarahSurfaceContainer
                 )
             )
         }
@@ -429,7 +429,7 @@ fun StepSummary(
         Icon(
             imageVector = Icons.Rounded.Psychology,
             contentDescription = null,
-            tint = ElectricIndigo,
+            tint = SarahPrimary,
             modifier = Modifier.size(52.dp)
         )
 
@@ -438,7 +438,7 @@ fun StepSummary(
         Text(
             text = "Ready to Focus",
             style = MaterialTheme.typography.headlineMedium,
-            color = TextPrimary,
+            color = SarahOnSurface,
             fontWeight = FontWeight.Bold
         )
 
@@ -447,7 +447,7 @@ fun StepSummary(
         Text(
             text = "Sarah will now monitor your academic workload and tell you what to do next every evening.",
             style = MaterialTheme.typography.bodyMedium,
-            color = TextSecondary,
+            color = SarahOnSurfaceVariant,
             textAlign = TextAlign.Center
         )
 
@@ -457,8 +457,8 @@ fun StepSummary(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(DarkSurface)
-                .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                .background(SarahSurfaceContainerLowest)
+                .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -477,7 +477,7 @@ fun SummaryItem(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
-        Text(text = value, style = MaterialTheme.typography.titleMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = SarahSecondary)
+        Text(text = value, style = MaterialTheme.typography.titleMedium, color = SarahOnSurface, fontWeight = FontWeight.Bold)
     }
 }

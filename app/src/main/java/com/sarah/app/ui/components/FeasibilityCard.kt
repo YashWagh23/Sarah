@@ -36,17 +36,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.FeasibilityReport
 import com.sarah.app.domain.model.FeasibilityStatus
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 
 @Composable
 fun FeasibilityCard(
@@ -54,10 +54,10 @@ fun FeasibilityCard(
     modifier: Modifier = Modifier
 ) {
     val statusColor = when (report.status) {
-        FeasibilityStatus.OPTIMAL -> MintEmerald
-        FeasibilityStatus.MANAGEABLE -> CyanAccent
-        FeasibilityStatus.TIGHT -> WarmAmber
-        FeasibilityStatus.OVERLOADED -> CoralRed
+        FeasibilityStatus.OPTIMAL -> SarahPrimary
+        FeasibilityStatus.MANAGEABLE -> SarahPrimaryFixedDim
+        FeasibilityStatus.TIGHT -> SarahTertiary
+        FeasibilityStatus.OVERLOADED -> SarahError
     }
 
     val progress = if (report.realisticProductiveMinutes > 0) {
@@ -71,15 +71,15 @@ fun FeasibilityCard(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        DarkSurface,
-                        DarkSurfaceVariant
+                        SarahSurfaceContainerLowest,
+                        SarahSurfaceContainer
                     )
                 )
             )
             .border(
                 1.dp,
                 Brush.verticalGradient(
-                    listOf(statusColor.copy(alpha = 0.5f), DarkBorder)
+                    listOf(statusColor.copy(alpha = 0.5f), SarahOutlineVariant)
                 ),
                 RoundedCornerShape(24.dp)
             )
@@ -112,14 +112,14 @@ fun FeasibilityCard(
                 Icon(
                     imageVector = Icons.Rounded.Bedtime,
                     contentDescription = "Sleep Time",
-                    tint = TextSecondary,
+                    tint = SarahOnSurfaceVariant,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "${formatDuration(report.minutesUntilSleep)} to sleep",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    color = SarahOnSurfaceVariant
                 )
             }
         }
@@ -136,22 +136,22 @@ fun FeasibilityCard(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(DarkSurface)
-                    .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
+                    .background(SarahSurfaceContainerLowest)
+                    .border(1.dp, SarahOutlineVariant, RoundedCornerShape(14.dp))
                     .padding(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Rounded.Bolt,
                         contentDescription = "Productive Capacity",
-                        tint = CyanAccent,
+                        tint = SarahPrimaryFixedDim,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "PRODUCTIVE",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
+                        color = SarahSecondary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -159,7 +159,7 @@ fun FeasibilityCard(
                 Text(
                     text = formatDuration(report.realisticProductiveMinutes),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = TextPrimary,
+                    color = SarahOnSurface,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -171,22 +171,22 @@ fun FeasibilityCard(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(DarkSurface)
-                    .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
+                    .background(SarahSurfaceContainerLowest)
+                    .border(1.dp, SarahOutlineVariant, RoundedCornerShape(14.dp))
                     .padding(12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Rounded.Timer,
                         contentDescription = "Work Required",
-                        tint = if (report.status == FeasibilityStatus.OVERLOADED) CoralRed else WarmAmber,
+                        tint = if (report.status == FeasibilityStatus.OVERLOADED) SarahError else SarahTertiary,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "WORK REQUIRED",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
+                        color = SarahSecondary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -194,7 +194,7 @@ fun FeasibilityCard(
                 Text(
                     text = formatDuration(report.totalRequiredMinutes),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = if (report.status == FeasibilityStatus.OVERLOADED) CoralRed else TextPrimary,
+                    color = if (report.status == FeasibilityStatus.OVERLOADED) SarahError else SarahOnSurface,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -211,7 +211,7 @@ fun FeasibilityCard(
                 Text(
                     text = "Capacity Load",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary
+                    color = SarahOnSurfaceVariant
                 )
                 val loadPercent = if (report.realisticProductiveMinutes > 0) {
                     (report.totalRequiredMinutes * 100) / report.realisticProductiveMinutes
@@ -231,7 +231,7 @@ fun FeasibilityCard(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp)),
                 color = statusColor,
-                trackColor = DarkSurface
+                trackColor = SarahSurfaceContainerLowest
             )
         }
 
@@ -259,7 +259,7 @@ fun FeasibilityCard(
             Text(
                 text = report.guidanceMessage,
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary
+                color = SarahOnSurface
             )
         }
     }

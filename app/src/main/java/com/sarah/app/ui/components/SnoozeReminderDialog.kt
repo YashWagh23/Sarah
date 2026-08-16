@@ -44,14 +44,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.Reminder
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -83,12 +83,12 @@ fun SnoozeReminderDialog(
                 onDismissRequest = { showCustomDateTimePicker = false },
                 confirmButton = {
                     TextButton(onClick = { isPickingTime = true }) {
-                        Text("Next: Set Time", color = CyanAccent)
+                        Text("Next: Set Time", color = SarahPrimaryFixedDim)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showCustomDateTimePicker = false }) {
-                        Text("Cancel", color = TextMuted)
+                        Text("Cancel", color = SarahSecondary)
                     }
                 }
             ) {
@@ -112,34 +112,34 @@ fun SnoozeReminderDialog(
                             onDismiss()
                         }
                     ) {
-                        Text("Set Reminder", color = CyanAccent, fontWeight = FontWeight.Bold)
+                        Text("Set Reminder", color = SarahPrimaryFixedDim, fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { isPickingTime = false }) {
-                        Text("Back", color = TextMuted)
+                        Text("Back", color = SarahSecondary)
                     }
                 },
-                title = { Text("Choose Reminder Time", color = TextPrimary) },
+                title = { Text("Choose Reminder Time", color = SarahOnSurface) },
                 text = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         TimePicker(state = timePickerState)
                     }
                 },
-                containerColor = DarkSurface
+                containerColor = SarahSurfaceContainerLowest
             )
         }
     } else {
         AlertDialog(
             onDismissRequest = onDismiss,
-            containerColor = DarkSurface,
+            containerColor = SarahSurfaceContainerLowest,
             shape = RoundedCornerShape(24.dp),
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Rounded.Snooze,
                         contentDescription = null,
-                        tint = WarmAmber,
+                        tint = SarahTertiary,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -147,7 +147,7 @@ fun SnoozeReminderDialog(
                         text = "Snooze Reminder",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = SarahOnSurface
                     )
                 }
             },
@@ -159,7 +159,7 @@ fun SnoozeReminderDialog(
                     Text(
                         text = "\"${reminder.title}\"",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
+                        color = SarahOnSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -219,7 +219,7 @@ fun SnoozeReminderDialog(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel", color = TextMuted)
+                    Text("Cancel", color = SarahSecondary)
                 }
             }
         )
@@ -237,8 +237,8 @@ private fun SnoozeOptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(DarkSurface)
-            .border(1.dp, DarkBorder, RoundedCornerShape(12.dp))
+            .background(SarahSurfaceContainerLowest)
+            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -246,7 +246,7 @@ private fun SnoozeOptionItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = CyanAccent,
+            tint = SarahPrimaryFixedDim,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -254,13 +254,13 @@ private fun SnoozeOptionItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary,
+                color = SarahOnSurface,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
+                color = SarahSecondary,
                 fontSize = 11.sp
             )
         }

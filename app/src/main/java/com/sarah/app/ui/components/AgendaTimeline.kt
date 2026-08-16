@@ -29,16 +29,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.AgendaItem
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 
 @Composable
 fun AgendaTimeline(
@@ -49,8 +49,8 @@ fun AgendaTimeline(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkSurface)
-            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+            .background(SarahSurfaceContainerLowest)
+            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
         Row(
@@ -61,14 +61,14 @@ fun AgendaTimeline(
             Text(
                 text = "SUGGESTED EVENING AGENDA",
                 style = MaterialTheme.typography.labelSmall,
-                color = ElectricIndigo,
+                color = SarahPrimary,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
             Text(
                 text = "Adaptive Timeline",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextMuted
+                color = SarahSecondary
             )
         }
 
@@ -78,7 +78,7 @@ fun AgendaTimeline(
             Text(
                 text = "No study agenda required tonight! All priority tasks are cleared.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary,
+                color = SarahOnSurfaceVariant,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         } else {
@@ -95,13 +95,13 @@ fun AgendaTimeline(
                         Text(
                             text = item.startTimeFormatted,
                             style = MaterialTheme.typography.labelMedium,
-                            color = TextPrimary,
+                            color = SarahOnSurface,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = item.endTimeFormatted,
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
+                            color = SarahSecondary
                         )
                     }
 
@@ -113,9 +113,9 @@ fun AgendaTimeline(
                         modifier = Modifier.padding(top = 2.dp)
                     ) {
                         val nodeColor = when {
-                            item.title.contains("Sleep") || item.title.contains("Bed") -> MintEmerald
-                            item.isBreak -> WarmAmber
-                            else -> ElectricIndigo
+                            item.title.contains("Sleep") || item.title.contains("Bed") -> SarahPrimary
+                            item.isBreak -> SarahTertiary
+                            else -> SarahPrimary
                         }
                         Box(
                             modifier = Modifier
@@ -129,7 +129,7 @@ fun AgendaTimeline(
                                 modifier = Modifier
                                     .width(2.dp)
                                     .height(38.dp)
-                                    .background(DarkBorder)
+                                    .background(SarahOutlineVariant)
                             )
                         }
                     }
@@ -141,7 +141,7 @@ fun AgendaTimeline(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (item.isBreak) DarkSurfaceVariant.copy(alpha = 0.5f) else DarkSurfaceVariant)
+                            .background(if (item.isBreak) SarahSurfaceContainer.copy(alpha = 0.5f) else SarahSurfaceContainer)
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Row(
@@ -152,13 +152,13 @@ fun AgendaTimeline(
                             Text(
                                 text = item.title,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = if (item.isBreak) TextSecondary else TextPrimary,
+                                color = if (item.isBreak) SarahOnSurfaceVariant else SarahOnSurface,
                                 fontWeight = if (item.isBreak) FontWeight.Normal else FontWeight.SemiBold
                             )
                             Text(
                                 text = "${item.durationMinutes}m",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (item.isBreak) WarmAmber else CyanAccent
+                                color = if (item.isBreak) SarahTertiary else SarahPrimaryFixedDim
                             )
                         }
                         if (item.subtitle.isNotBlank()) {
@@ -166,7 +166,7 @@ fun AgendaTimeline(
                             Text(
                                 text = item.subtitle,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextMuted
+                                color = SarahSecondary
                             )
                         }
                     }

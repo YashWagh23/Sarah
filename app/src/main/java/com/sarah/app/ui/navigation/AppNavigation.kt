@@ -1,11 +1,9 @@
 package com.sarah.app.ui.navigation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -15,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,14 +37,12 @@ import com.sarah.app.ui.screens.tasks.TasksScreen
 import com.sarah.app.ui.screens.tasks.TasksViewModel
 import com.sarah.app.ui.screens.today.TodayScreen
 import com.sarah.app.ui.screens.today.TodayViewModel
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBackground
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainerLow
+import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.ui.theme.SarahOutlineVariant
 
 @Composable
 fun AppNavigation(
@@ -55,7 +50,9 @@ fun AppNavigation(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
-    val isOnboardingDone by app.preferencesManager.onboardingCompletedFlow.collectAsState(initial = app.preferencesManager.isOnboardingCompleted)
+    val isOnboardingDone by app.preferencesManager.onboardingCompletedFlow.collectAsState(
+        initial = app.preferencesManager.isOnboardingCompleted
+    )
 
     val startDestination = if (isOnboardingDone) Screen.Today.route else Screen.Onboarding.route
 
@@ -67,30 +64,30 @@ fun AppNavigation(
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
+                // Frosted-glass bottom nav bar matching the reference design.
+                // Semi-transparent white simulates the backdrop-blur: white/78 in CSS.
                 NavigationBar(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-                        .background(DarkSurface)
-                        .border(1.dp, DarkBorder, RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
-                    containerColor = DarkSurface,
-                    contentColor = TextPrimary
+                    containerColor = SarahSurfaceContainerLowest.copy(alpha = 0.92f),
+                    contentColor   = SarahPrimary,
+                    tonalElevation = 0.dp
                 ) {
                     Screen.bottomNavItems.forEach { screen ->
                         val isSelected = currentRoute == screen.route
                         NavigationBarItem(
                             icon = {
-                                screen.icon?.let { icon ->
-                                    Icon(
-                                        imageVector = icon,
-                                        contentDescription = screen.title,
-                                        tint = if (isSelected) CyanAccent else TextMuted
-                                    )
-                                }
+                                Icon(
+                                    imageVector = if (isSelected) {
+                                        screen.iconFilled ?: screen.icon!!
+                                    } else {
+                                        screen.icon!!
+                                    },
+                                    contentDescription = screen.title,
+                                )
                             },
                             label = {
                                 Text(
-                                    text = screen.title,
-                                    color = if (isSelected) TextPrimary else TextMuted
+                                    text  = screen.title,
+                                    style = MaterialTheme.typography.labelSmall
                                 )
                             },
                             selected = isSelected,
@@ -106,19 +103,24 @@ fun AppNavigation(
                                 }
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = ElectricIndigo.copy(alpha = 0.25f)
+                                selectedIconColor   = SarahPrimary,
+                                selectedTextColor   = SarahPrimary,
+                                unselectedIconColor = SarahSecondary,
+                                unselectedTextColor = SarahSecondary,
+                                // Pill indicator behind active icon
+                                indicatorColor      = SarahSurfaceContainerLow
                             )
                         )
                     }
                 }
             }
         },
-        containerColor = DarkBackground
+        containerColor = SarahBackground
     ) { innerPadding ->
         NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = modifier
+            navController     = navController,
+            startDestination  = startDestination,
+            modifier          = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
@@ -170,9 +172,9 @@ fun AppNavigation(
                     )
                 )
                 TodayScreen(
-                    viewModel = todayViewModel,
+                    viewModel            = todayViewModel,
                     quickCaptureViewModel = quickCaptureViewModel,
-                    onNavigateToNotes = { navController.navigate(Screen.Notes.route) }
+                    onNavigateToNotes    = { navController.navigate(Screen.Notes.route) }
                 )
             }
 
@@ -212,7 +214,7 @@ fun AppNavigation(
                     factory = ProfileViewModel.Factory(app.userRepository, app.preferencesManager)
                 )
                 ProfileScreen(
-                    viewModel = profileViewModel,
+                    viewModel         = profileViewModel,
                     onNavigateToNotes = { navController.navigate(Screen.Notes.route) }
                 )
             }
@@ -230,8 +232,8 @@ fun AppNavigation(
                     )
                 )
                 NotesScreen(
-                    viewModel = notesViewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    viewModel       = notesViewModel,
+                    onNavigateBack  = { navController.popBackStack() }
                 )
             }
         }

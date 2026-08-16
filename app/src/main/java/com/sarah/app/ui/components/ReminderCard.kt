@@ -10,18 +10,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccessTime
-import androidx.compose.material.icons.rounded.Alarm
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Snooze
+import androidx.compose.material.icons.outlined.Backpack
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Snooze
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,201 +33,150 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.Reminder
 import com.sarah.app.domain.model.ReminderType
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahOutline
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainerHigh
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahTertiary
+import com.sarah.app.ui.theme.SarahTertiaryFixedDim
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/**
+ * Compact mini reminder card — designed for a 2-column grid on the Today screen.
+ * Matches the reference design: white card, top-right decorative circle, icon, title, time.
+ */
 @Composable
 fun ReminderCard(
-    reminder: Reminder,
-    onSnoozeClick: (Reminder) -> Unit,
+    reminder      : Reminder,
+    onSnoozeClick : (Reminder) -> Unit,
     onDismissClick: (Reminder) -> Unit,
-    onDeleteClick: (Reminder) -> Unit,
-    modifier: Modifier = Modifier
+    onDeleteClick : (Reminder) -> Unit,
+    modifier      : Modifier = Modifier
 ) {
-    val zone = ZoneId.systemDefault()
+    val zone        = ZoneId.systemDefault()
     val reminderZdt = Instant.ofEpochMilli(reminder.reminderTimeEpochMs).atZone(zone)
-    val today = LocalDate.now(zone)
+    val today       = LocalDate.now(zone)
     val reminderDate = reminderZdt.toLocalDate()
 
     val formattedTime = when {
-        reminderDate == today -> "Today, " + reminderZdt.format(DateTimeFormatter.ofPattern("h:mm a"))
-        reminderDate == today.plusDays(1) -> "Tomorrow, " + reminderZdt.format(DateTimeFormatter.ofPattern("h:mm a"))
-        else -> reminderZdt.format(DateTimeFormatter.ofPattern("MMM d, h:mm a"))
+        reminderDate == today             -> reminderZdt.format(DateTimeFormatter.ofPattern("h:mm a"))
+        reminderDate == today.plusDays(1) -> "Tomorrow"
+        else                              -> reminderZdt.format(DateTimeFormatter.ofPattern("MMM d"))
     }
 
-    val (badgeText, badgeColor) = when (reminder.type) {
-        ReminderType.DEADLINE_REMINDER -> "DEADLINE" to CoralRed
-        ReminderType.TASK_REMINDER -> "STUDY" to CyanAccent
-        ReminderType.CUSTOM_REMINDER -> "REMINDER" to WarmAmber
+    // Icon and accent color by reminder type
+    val (icon, iconTint, decorTint) = when (reminder.type) {
+        ReminderType.DEADLINE_REMINDER -> Triple(Icons.Outlined.Warning,       SarahError,    SarahError.copy(alpha = 0.15f))
+        ReminderType.TASK_REMINDER     -> Triple(Icons.Outlined.Schedule,      SarahPrimary,  SarahPrimaryFixedDim.copy(alpha = 0.2f))
+        ReminderType.CUSTOM_REMINDER   -> Triple(Icons.Outlined.Notifications, SarahTertiary, SarahTertiaryFixedDim.copy(alpha = 0.2f))
     }
 
-    Column(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(DarkSurface)
-            .border(1.dp, DarkBorder, RoundedCornerShape(16.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .background(SarahSurfaceContainerLowest)
+            .border(1.dp, Color.Black.copy(alpha = 0.03f), RoundedCornerShape(16.dp))
     ) {
-        // Top row: Type Badge + Time + Delete
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Decorative quarter-circle in top-right (reference design accent)
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .offset(x = 16.dp, y = (-16).dp)
+                .align(Alignment.TopEnd)
+                .clip(CircleShape)
+                .background(decorTint)
+        )
+
+        Column(
+            modifier            = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // Icon
+            Icon(
+                imageVector        = icon,
+                contentDescription = null,
+                tint               = iconTint,
+                modifier           = Modifier.size(22.dp)
+            )
+
+            // Reminder title
+            Text(
+                text      = reminder.title,
+                style     = MaterialTheme.typography.titleSmall,
+                color     = SarahOnSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines  = 2,
+                overflow  = TextOverflow.Ellipsis
+            )
+
+            // Time
+            Text(
+                text  = if (reminder.isSnoozed) "$formattedTime · Snoozed" else formattedTime,
+                style = MaterialTheme.typography.labelSmall,
+                color = SarahOnSurfaceVariant
+            )
+
+            // Action row: Snooze | Done/Dismiss
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Snooze
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(badgeColor.copy(alpha = 0.15f))
-                        .border(1.dp, badgeColor.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 7.dp, vertical = 2.dp)
+                        .background(SarahSurfaceContainerHigh)
+                        .clickable { onSnoozeClick(reminder) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(
-                        text = badgeText,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = badgeColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 9.sp,
-                        letterSpacing = 0.8.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Rounded.AccessTime,
-                        contentDescription = null,
-                        tint = CyanAccent,
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = formattedTime,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = CyanAccent,
-                        fontWeight = FontWeight.SemiBold
+                        imageVector        = Icons.Outlined.Snooze,
+                        contentDescription = "Snooze",
+                        tint               = SarahSecondary,
+                        modifier           = Modifier.size(14.dp)
                     )
                 }
-
-                if (reminder.isSnoozed) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "• Snoozed",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WarmAmber,
-                        fontSize = 10.sp
+                // Dismiss / Done
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(SarahPrimary.copy(alpha = 0.08f))
+                        .clickable { onDismissClick(reminder) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector        = Icons.Outlined.CheckCircle,
+                        contentDescription = if (reminder.taskId != null) "Done" else "Dismiss",
+                        tint               = SarahPrimary,
+                        modifier           = Modifier.size(14.dp)
                     )
                 }
-            }
-
-            IconButton(
-                onClick = { onDeleteClick(reminder) },
-                modifier = Modifier.size(28.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Delete,
-                    contentDescription = "Delete Reminder",
-                    tint = TextMuted.copy(alpha = 0.7f),
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-
-        // Title and Message
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = reminder.title,
-                style = MaterialTheme.typography.titleSmall,
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold
-            )
-            if (reminder.message.isNotBlank() && reminder.message != reminder.title) {
-                Text(
-                    text = reminder.message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp
-                )
-            }
-        }
-
-        // Action Buttons Row: Snooze & Dismiss / Done
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Snooze Button
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(DarkSurface)
-                    .border(1.dp, DarkBorder, RoundedCornerShape(8.dp))
-                    .clickable { onSnoozeClick(reminder) }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Snooze,
-                    contentDescription = null,
-                    tint = WarmAmber,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "Snooze",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Done / Dismiss Button
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MintEmerald.copy(alpha = 0.15f))
-                    .border(1.dp, MintEmerald.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                    .clickable { onDismissClick(reminder) }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.CheckCircle,
-                    contentDescription = null,
-                    tint = MintEmerald,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = if (reminder.taskId != null) "Done" else "Dismiss",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MintEmerald,
-                    fontWeight = FontWeight.Bold
-                )
+                // Delete
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(SarahSurfaceContainerHigh)
+                        .clickable { onDeleteClick(reminder) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector        = Icons.Outlined.Delete,
+                        contentDescription = "Delete",
+                        tint               = SarahOutline,
+                        modifier           = Modifier.size(14.dp)
+                    )
+                }
             }
         }
     }

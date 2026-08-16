@@ -57,18 +57,18 @@ import com.sarah.app.domain.model.Subject
 import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskType
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBackground
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,8 +112,8 @@ fun AddEditTaskDialog(
             modifier = Modifier
                 .fillMaxWidth(0.94f)
                 .clip(RoundedCornerShape(24.dp))
-                .border(1.dp, DarkBorder, RoundedCornerShape(24.dp)),
-            color = DarkSurface
+                .border(1.dp, SarahOutlineVariant, RoundedCornerShape(24.dp)),
+            color = SarahSurfaceContainerLowest
         ) {
             Column(
                 modifier = Modifier
@@ -129,14 +129,14 @@ fun AddEditTaskDialog(
                     Text(
                         text = if (task == null) "New Academic Task" else "Edit Task",
                         style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
+                        color = SarahOnSurface,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = "Close",
-                            tint = TextMuted
+                            tint = SarahSecondary
                         )
                     }
                 }
@@ -151,12 +151,12 @@ fun AddEditTaskDialog(
                     placeholder = { Text("e.g., Java Practical Programs 1-5") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ElectricIndigo,
-                        unfocusedBorderColor = DarkBorder,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedLabelColor = ElectricIndigo,
-                        unfocusedLabelColor = TextMuted
+                        focusedBorderColor = SarahPrimary,
+                        unfocusedBorderColor = SarahOutlineVariant,
+                        focusedTextColor = SarahOnSurface,
+                        unfocusedTextColor = SarahOnSurface,
+                        focusedLabelColor = SarahPrimary,
+                        unfocusedLabelColor = SarahSecondary
                     ),
                     singleLine = true
                 )
@@ -179,23 +179,23 @@ fun AddEditTaskDialog(
                             .fillMaxWidth()
                             .menuAnchor(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = ElectricIndigo,
-                            unfocusedBorderColor = DarkBorder,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedLabelColor = ElectricIndigo,
-                            unfocusedLabelColor = TextMuted
+                            focusedBorderColor = SarahPrimary,
+                            unfocusedBorderColor = SarahOutlineVariant,
+                            focusedTextColor = SarahOnSurface,
+                            unfocusedTextColor = SarahOnSurface,
+                            focusedLabelColor = SarahPrimary,
+                            unfocusedLabelColor = SarahSecondary
                         )
                     )
 
                     ExposedDropdownMenu(
                         expanded = isSubjectDropdownExpanded,
                         onDismissRequest = { isSubjectDropdownExpanded = false },
-                        modifier = Modifier.background(DarkSurfaceVariant)
+                        modifier = Modifier.background(SarahSurfaceContainer)
                     ) {
                         subjects.forEach { subject ->
                             DropdownMenuItem(
-                                text = { Text(subject.name, color = TextPrimary) },
+                                text = { Text(subject.name, color = SarahOnSurface) },
                                 onClick = {
                                     selectedSubjectId = subject.id
                                     isSubjectDropdownExpanded = false
@@ -211,7 +211,7 @@ fun AddEditTaskDialog(
                 Text(
                     text = "TASK TYPE",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
+                    color = SarahSecondary,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -226,14 +226,14 @@ fun AddEditTaskDialog(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) ElectricIndigo else DarkSurfaceVariant)
+                                .background(if (isSelected) SarahPrimary else SarahSurfaceContainer)
                                 .clickable { selectedType = type }
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = type.displayName,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) TextPrimary else TextSecondary,
+                                color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -250,13 +250,13 @@ fun AddEditTaskDialog(
                     Text(
                         text = "ESTIMATED DURATION",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
+                        color = SarahSecondary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "${estimatedMinutes.roundToInt()} minutes",
                         style = MaterialTheme.typography.labelMedium,
-                        color = CyanAccent,
+                        color = SarahPrimaryFixedDim,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -266,9 +266,9 @@ fun AddEditTaskDialog(
                     valueRange = 15f..180f,
                     steps = 10,
                     colors = SliderDefaults.colors(
-                        thumbColor = ElectricIndigo,
-                        activeTrackColor = ElectricIndigo,
-                        inactiveTrackColor = DarkSurfaceVariant
+                        thumbColor = SarahPrimary,
+                        activeTrackColor = SarahPrimary,
+                        inactiveTrackColor = SarahSurfaceContainer
                     )
                 )
 
@@ -281,15 +281,15 @@ fun AddEditTaskDialog(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (estimatedMinutes.roundToInt() == preset) ElectricIndigo.copy(alpha = 0.3f) else DarkSurfaceVariant)
-                                .border(1.dp, if (estimatedMinutes.roundToInt() == preset) ElectricIndigo else DarkBorder, RoundedCornerShape(8.dp))
+                                .background(if (estimatedMinutes.roundToInt() == preset) SarahPrimary.copy(alpha = 0.3f) else SarahSurfaceContainer)
+                                .border(1.dp, if (estimatedMinutes.roundToInt() == preset) SarahPrimary else SarahOutlineVariant, RoundedCornerShape(8.dp))
                                 .clickable { estimatedMinutes = preset.toFloat() }
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = "${preset}m",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextPrimary
+                                color = SarahOnSurface
                             )
                         }
                     }
@@ -301,7 +301,7 @@ fun AddEditTaskDialog(
                 Text(
                     text = "PRIORITY",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
+                    color = SarahSecondary,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -312,17 +312,17 @@ fun AddEditTaskDialog(
                     TaskPriority.values().forEach { priority ->
                         val isSelected = priority == selectedPriority
                         val color = when (priority) {
-                            TaskPriority.CRITICAL -> CoralRed
-                            TaskPriority.HIGH -> WarmAmber
-                            TaskPriority.MEDIUM -> CyanAccent
-                            TaskPriority.LOW -> TextMuted
+                            TaskPriority.CRITICAL -> SarahError
+                            TaskPriority.HIGH -> SarahTertiary
+                            TaskPriority.MEDIUM -> SarahPrimaryFixedDim
+                            TaskPriority.LOW -> SarahSecondary
                         }
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) color.copy(alpha = 0.25f) else DarkSurfaceVariant)
-                                .border(1.dp, if (isSelected) color else DarkBorder, RoundedCornerShape(10.dp))
+                                .background(if (isSelected) color.copy(alpha = 0.25f) else SarahSurfaceContainer)
+                                .border(1.dp, if (isSelected) color else SarahOutlineVariant, RoundedCornerShape(10.dp))
                                 .clickable { selectedPriority = priority }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
@@ -330,7 +330,7 @@ fun AddEditTaskDialog(
                             Text(
                                 text = priority.displayName,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) TextPrimary else TextSecondary,
+                                color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -343,7 +343,7 @@ fun AddEditTaskDialog(
                 Text(
                     text = "ENERGY REQUIREMENT",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
+                    color = SarahSecondary,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -357,8 +357,8 @@ fun AddEditTaskDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) MintEmerald.copy(alpha = 0.2f) else DarkSurfaceVariant)
-                                .border(1.dp, if (isSelected) MintEmerald else DarkBorder, RoundedCornerShape(10.dp))
+                                .background(if (isSelected) SarahPrimary.copy(alpha = 0.2f) else SarahSurfaceContainer)
+                                .border(1.dp, if (isSelected) SarahPrimary else SarahOutlineVariant, RoundedCornerShape(10.dp))
                                 .clickable { selectedEnergy = req }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
@@ -366,7 +366,7 @@ fun AddEditTaskDialog(
                             Text(
                                 text = req.displayName,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) TextPrimary else TextSecondary,
+                                color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -383,12 +383,12 @@ fun AddEditTaskDialog(
                     placeholder = { Text("e.g. Chapter 3 exercise questions 1 to 5") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ElectricIndigo,
-                        unfocusedBorderColor = DarkBorder,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedLabelColor = ElectricIndigo,
-                        unfocusedLabelColor = TextMuted
+                        focusedBorderColor = SarahPrimary,
+                        unfocusedBorderColor = SarahOutlineVariant,
+                        focusedTextColor = SarahOnSurface,
+                        unfocusedTextColor = SarahOnSurface,
+                        focusedLabelColor = SarahPrimary,
+                        unfocusedLabelColor = SarahSecondary
                     ),
                     maxLines = 3
                 )
@@ -406,7 +406,7 @@ fun AddEditTaskDialog(
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
                                 contentDescription = "Delete Task",
-                                tint = CoralRed
+                                tint = SarahError
                             )
                         }
                     } else {
@@ -415,7 +415,7 @@ fun AddEditTaskDialog(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         TextButton(onClick = onDismiss) {
-                            Text("Cancel", color = TextSecondary)
+                            Text("Cancel", color = SarahOnSurfaceVariant)
                         }
                         Button(
                             onClick = {
@@ -434,8 +434,8 @@ fun AddEditTaskDialog(
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = ElectricIndigo,
-                                contentColor = TextPrimary
+                                containerColor = SarahPrimary,
+                                contentColor = SarahOnSurface
                             ),
                             shape = RoundedCornerShape(12.dp),
                             enabled = title.isNotBlank()

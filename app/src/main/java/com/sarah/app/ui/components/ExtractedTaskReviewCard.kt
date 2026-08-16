@@ -44,17 +44,17 @@ import com.sarah.app.domain.model.ExtractedTaskDraft
 import com.sarah.app.domain.model.Subject
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskType
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -83,8 +83,8 @@ fun ExtractedTaskReviewCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkSurface)
-            .border(1.dp, ElectricIndigo.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+            .background(SarahSurfaceContainerLowest)
+            .border(1.dp, SarahPrimary.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
         // Header with AI extracted pill
@@ -98,13 +98,13 @@ fun ExtractedTaskReviewCard(
                     modifier = Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(ElectricIndigo.copy(alpha = 0.2f)),
+                        .background(SarahPrimary.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.AutoAwesome,
                         contentDescription = null,
-                        tint = CyanAccent,
+                        tint = SarahPrimaryFixedDim,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -112,7 +112,7 @@ fun ExtractedTaskReviewCard(
                 Text(
                     text = "AI PARSED REVIEW",
                     style = MaterialTheme.typography.labelMedium,
-                    color = CyanAccent,
+                    color = SarahPrimaryFixedDim,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -121,13 +121,13 @@ fun ExtractedTaskReviewCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(DarkSurfaceVariant)
+                    .background(SarahSurfaceContainer)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = draft.sourceType.displayName,
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
+                    color = SarahOnSurfaceVariant,
                     fontSize = 10.sp
                 )
             }
@@ -142,10 +142,10 @@ fun ExtractedTaskReviewCard(
             label = { Text("Task Title") },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = ElectricIndigo,
-                unfocusedBorderColor = DarkBorder,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
+                focusedBorderColor = SarahPrimary,
+                unfocusedBorderColor = SarahOutlineVariant,
+                focusedTextColor = SarahOnSurface,
+                unfocusedTextColor = SarahOnSurface
             )
         )
 
@@ -155,7 +155,7 @@ fun ExtractedTaskReviewCard(
         Text(
             text = "SUBJECT",
             style = MaterialTheme.typography.labelSmall,
-            color = TextMuted,
+            color = SarahSecondary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(6.dp))
@@ -170,15 +170,15 @@ fun ExtractedTaskReviewCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) ElectricIndigo else DarkSurfaceVariant)
-                        .border(1.dp, if (isSelected) ElectricIndigo else DarkBorder, RoundedCornerShape(8.dp))
+                        .background(if (isSelected) SarahPrimary else SarahSurfaceContainer)
+                        .border(1.dp, if (isSelected) SarahPrimary else SarahOutlineVariant, RoundedCornerShape(8.dp))
                         .clickable { onUpdateDraft(null, subject.id, null, null, null, null, null, null, null) }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = subject.name,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) TextPrimary else TextSecondary,
+                        color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -191,7 +191,7 @@ fun ExtractedTaskReviewCard(
         Text(
             text = "TASK TYPE",
             style = MaterialTheme.typography.labelSmall,
-            color = TextMuted,
+            color = SarahSecondary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(6.dp))
@@ -206,15 +206,15 @@ fun ExtractedTaskReviewCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) ElectricIndigo else DarkSurfaceVariant)
-                        .border(1.dp, if (isSelected) ElectricIndigo else DarkBorder, RoundedCornerShape(8.dp))
+                        .background(if (isSelected) SarahPrimary else SarahSurfaceContainer)
+                        .border(1.dp, if (isSelected) SarahPrimary else SarahOutlineVariant, RoundedCornerShape(8.dp))
                         .clickable { onUpdateDraft(null, null, type, null, null, null, null, null, null) }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = type.displayName,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) TextPrimary else TextSecondary,
+                        color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -227,7 +227,7 @@ fun ExtractedTaskReviewCard(
         Text(
             text = "PRIORITY",
             style = MaterialTheme.typography.labelSmall,
-            color = TextMuted,
+            color = SarahSecondary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(6.dp))
@@ -238,17 +238,17 @@ fun ExtractedTaskReviewCard(
             TaskPriority.values().forEach { priority ->
                 val isSelected = priority == draft.priority
                 val color = when (priority) {
-                    TaskPriority.CRITICAL -> CoralRed
-                    TaskPriority.HIGH -> WarmAmber
-                    TaskPriority.MEDIUM -> CyanAccent
-                    TaskPriority.LOW -> TextMuted
+                    TaskPriority.CRITICAL -> SarahError
+                    TaskPriority.HIGH -> SarahTertiary
+                    TaskPriority.MEDIUM -> SarahPrimaryFixedDim
+                    TaskPriority.LOW -> SarahSecondary
                 }
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) color.copy(alpha = 0.25f) else DarkSurfaceVariant)
-                        .border(1.dp, if (isSelected) color else DarkBorder, RoundedCornerShape(8.dp))
+                        .background(if (isSelected) color.copy(alpha = 0.25f) else SarahSurfaceContainer)
+                        .border(1.dp, if (isSelected) color else SarahOutlineVariant, RoundedCornerShape(8.dp))
                         .clickable { onUpdateDraft(null, null, null, null, null, null, priority, null, null) }
                         .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center
@@ -256,7 +256,7 @@ fun ExtractedTaskReviewCard(
                     Text(
                         text = priority.displayName,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) TextPrimary else TextSecondary,
+                        color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -273,13 +273,13 @@ fun ExtractedTaskReviewCard(
             Text(
                 text = "ESTIMATED DURATION",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
+                color = SarahSecondary,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "${draft.estimatedMinutes} min",
                 style = MaterialTheme.typography.labelMedium,
-                color = CyanAccent,
+                color = SarahPrimaryFixedDim,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -289,9 +289,9 @@ fun ExtractedTaskReviewCard(
             valueRange = 15f..180f,
             steps = 10,
             colors = SliderDefaults.colors(
-                thumbColor = ElectricIndigo,
-                activeTrackColor = ElectricIndigo,
-                inactiveTrackColor = DarkSurfaceVariant
+                thumbColor = SarahPrimary,
+                activeTrackColor = SarahPrimary,
+                inactiveTrackColor = SarahSurfaceContainer
             )
         )
 
@@ -305,7 +305,7 @@ fun ExtractedTaskReviewCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
-                .background(DarkSurfaceVariant)
+                .background(SarahSurfaceContainer)
                 .padding(horizontal = 10.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -314,20 +314,20 @@ fun ExtractedTaskReviewCard(
                 Icon(
                     imageVector = Icons.Rounded.Schedule,
                     contentDescription = null,
-                    tint = CyanAccent,
+                    tint = SarahPrimaryFixedDim,
                     modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "Deadline:",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted
+                    color = SarahSecondary
                 )
             }
             Text(
                 text = formattedDate,
                 style = MaterialTheme.typography.labelSmall,
-                color = TextPrimary,
+                color = SarahOnSurface,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -341,8 +341,8 @@ fun ExtractedTaskReviewCard(
                 .fillMaxWidth()
                 .height(48.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = ElectricIndigo,
-                contentColor = TextPrimary
+                containerColor = SarahPrimary,
+                contentColor = SarahOnSurface
             ),
             shape = RoundedCornerShape(12.dp)
         ) {

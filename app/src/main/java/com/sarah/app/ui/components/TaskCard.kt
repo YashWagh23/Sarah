@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,191 +31,153 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskStatus
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahOutline
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+/**
+ * Reference-style task row:
+ * [checkbox] [title] [subject chip · date chip · time chip]
+ *
+ * Active: white background, outlined checkbox
+ * Completed: slightly muted, filled primary checkbox, strikethrough title
+ */
 @Composable
 fun TaskCard(
-    task: Task,
+    task          : Task,
     onStatusToggle: (Task) -> Unit,
-    onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onClick       : () -> Unit = {},
+    modifier      : Modifier = Modifier
 ) {
     val isCompleted = task.status == TaskStatus.COMPLETED
+    val zone        = ZoneId.systemDefault()
+
+    val dueDateFormatted = task.deadlineEpochMs?.let { ms ->
+        val dueDate = Instant.ofEpochMilli(ms).atZone(zone).toLocalDate()
+        val today   = LocalDate.now(zone)
+        when {
+            dueDate == today             -> "Today"
+            dueDate == today.plusDays(1) -> "Tomorrow"
+            dueDate.isBefore(today)      -> "Overdue"
+            else                         -> dueDate.format(DateTimeFormatter.ofPattern("MMM d"))
+        }
+    }
+    val isOverdue = task.deadlineEpochMs?.let {
+        Instant.ofEpochMilli(it).atZone(zone).toLocalDate().isBefore(LocalDate.now(zone))
+    } == true
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (isCompleted) DarkSurface.copy(alpha = 0.6f) else DarkSurface)
-            .border(
-                1.dp,
-                if (task.priority == TaskPriority.CRITICAL && !isCompleted) CoralRed.copy(alpha = 0.5f) else DarkBorder,
-                RoundedCornerShape(16.dp)
-            )
+            .background(if (isCompleted) SarahSurfaceContainerLowest.copy(alpha = 0.7f) else SarahSurfaceContainerLowest)
             .clickable { onClick() }
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Complete Checkbox Button
+        // ── Circular checkbox ────────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .size(24.dp)
                 .clip(CircleShape)
-                .background(if (isCompleted) MintEmerald else Color.Transparent)
-                .border(
-                    2.dp,
-                    if (isCompleted) MintEmerald else TextMuted,
-                    CircleShape
+                .then(
+                    if (isCompleted) Modifier.background(SarahPrimary)
+                    else Modifier
+                        .background(Color.Transparent)
+                        .border(2.dp, SarahOutline, CircleShape)
                 )
                 .clickable { onStatusToggle(task) },
             contentAlignment = Alignment.Center
         ) {
             if (isCompleted) {
                 Icon(
-                    imageVector = Icons.Rounded.Check,
+                    imageVector        = Icons.Outlined.Check,
                     contentDescription = "Completed",
-                    tint = DarkSurface,
-                    modifier = Modifier.size(16.dp)
+                    tint               = Color.White,
+                    modifier           = Modifier.size(14.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        // ── Task content ─────────────────────────────────────────────────────
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Title
+            Text(
+                text            = task.title,
+                style           = MaterialTheme.typography.bodyLarge,
+                color           = if (isCompleted) SarahSecondary else SarahOnSurface,
+                fontWeight      = FontWeight.Normal,
+                textDecoration  = if (isCompleted) TextDecoration.LineThrough else null,
+                maxLines        = 2
+            )
 
-        // Task Content
-        Column(modifier = Modifier.weight(1f)) {
-            // Badges Row
+            // Metadata chips row
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment     = Alignment.CenterVertically
             ) {
-                // Subject Badge
+                // Subject chip
                 task.subjectName?.let { subject ->
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(ElectricIndigo.copy(alpha = 0.2f))
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(SarahSurfaceContainer)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = subject,
+                            text  = subject,
                             style = MaterialTheme.typography.labelSmall,
-                            color = ElectricIndigo,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 10.sp
+                            color = SarahOnSurfaceVariant
                         )
                     }
                 }
 
-                // Type Badge
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(DarkSurfaceVariant)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = task.type.displayName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                        fontSize = 10.sp
-                    )
-                }
-
-                // Priority Badge
-                val priorityColor = when (task.priority) {
-                    TaskPriority.CRITICAL -> CoralRed
-                    TaskPriority.HIGH -> WarmAmber
-                    TaskPriority.MEDIUM -> CyanAccent
-                    TaskPriority.LOW -> TextMuted
-                }
-
-                if (task.priority == TaskPriority.CRITICAL || task.priority == TaskPriority.HIGH) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(priorityColor.copy(alpha = 0.2f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
+                // Due date chip
+                dueDateFormatted?.let { date ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Icon(
+                            imageVector        = if (isOverdue) Icons.Outlined.Warning else Icons.Outlined.CalendarToday,
+                            contentDescription = null,
+                            tint               = if (isOverdue) SarahError else SarahSecondary,
+                            modifier           = Modifier.size(12.dp)
+                        )
                         Text(
-                            text = task.priority.displayName.uppercase(),
+                            text  = date,
                             style = MaterialTheme.typography.labelSmall,
-                            color = priorityColor,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp
+                            color = if (isOverdue) SarahError else SarahSecondary
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Title
-            Text(
-                text = task.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (isCompleted) TextMuted else TextPrimary,
-                fontWeight = FontWeight.SemiBold,
-                textDecoration = if (isCompleted) TextDecoration.LineThrough else null
-            )
-
-            if (task.description.isNotBlank() && !isCompleted) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = task.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary,
-                    maxLines = 2
-                )
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Duration & Energy Footer
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Rounded.Schedule,
-                        contentDescription = "Duration",
-                        tint = TextMuted,
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${task.estimatedMinutes} min",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary
-                    )
+                // Duration chip
+                if (task.estimatedMinutes > 0) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Icon(
+                            imageVector        = Icons.Outlined.Timer,
+                            contentDescription = null,
+                            tint               = if (task.subjectName != null) SarahPrimary else SarahSecondary,
+                            modifier           = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text  = "${task.estimatedMinutes} min",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (task.subjectName != null) SarahPrimary else SarahSecondary
+                        )
+                    }
                 }
-
-                Text(
-                    text = "•",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted
-                )
-
-                Text(
-                    text = task.energyRequirement.displayName,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted
-                )
             }
         }
     }

@@ -1,12 +1,7 @@
 package com.sarah.app.ui.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,21 +15,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Bedtime
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Coffee
-import androidx.compose.material.icons.rounded.DoneAll
-import androidx.compose.material.icons.rounded.Fastfood
-import androidx.compose.material.icons.rounded.HourglassTop
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.SelfImprovement
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.NavigateNext
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Bedtime
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Coffee
+import androidx.compose.material.icons.outlined.DoneAll
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Fastfood
+import androidx.compose.material.icons.outlined.Navigation
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.PriorityHigh
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.SelfImprovement
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -43,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -52,223 +50,261 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.NextAction
 import com.sarah.app.domain.model.NextActionType
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahErrorContainer
+import com.sarah.app.ui.theme.SarahOnErrorContainer
+import com.sarah.app.ui.theme.SarahOnPrimary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimaryFixed
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahSurfaceContainerHigh
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahTertiary
 
 @Composable
 fun SarahNextActionCard(
-    nextAction: NextAction,
+    nextAction          : NextAction,
     onPrimaryActionClick: (NextAction) -> Unit,
     onMarkCompletedClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier            : Modifier = Modifier
 ) {
     val (accentColor, icon, buttonLabel) = when (nextAction.actionType) {
         NextActionType.START_TASK -> Triple(
-            ElectricIndigo,
-            Icons.Rounded.PlayArrow,
-            if (nextAction.durationMinutes > 0) "Start Focus (${nextAction.durationMinutes}m)" else "Start Task"
+            SarahPrimary,
+            Icons.Outlined.PlayArrow,
+            if (nextAction.durationMinutes > 0) "Start (${nextAction.durationMinutes}m)" else "Start"
         )
         NextActionType.CONTINUE_TASK -> Triple(
-            CyanAccent,
-            Icons.Rounded.AutoAwesome,
-            if (nextAction.durationMinutes > 0) "Continue (${nextAction.durationMinutes}m)" else "Continue Task"
+            SarahPrimary,
+            Icons.Outlined.AutoAwesome,
+            if (nextAction.durationMinutes > 0) "Continue (${nextAction.durationMinutes}m)" else "Continue"
         )
         NextActionType.TAKE_BREAK -> Triple(
-            MintEmerald,
-            Icons.Rounded.Coffee,
-            if (nextAction.durationMinutes > 0) "Take ${nextAction.durationMinutes}m Break" else "Take Break"
+            SarahTertiary,
+            Icons.Outlined.Coffee,
+            if (nextAction.durationMinutes > 0) "${nextAction.durationMinutes}m Break" else "Take Break"
         )
         NextActionType.MEAL -> Triple(
-            WarmAmber,
-            Icons.Rounded.Fastfood,
-            if (nextAction.durationMinutes > 0) "Dinner Buffer (${nextAction.durationMinutes}m)" else "Enjoy Meal"
+            SarahTertiary,
+            Icons.Outlined.Fastfood,
+            "Enjoy Meal"
         )
         NextActionType.REST -> Triple(
-            ElectricIndigo,
-            Icons.Rounded.SelfImprovement,
+            SarahSecondary,
+            Icons.Outlined.SelfImprovement,
             "Rest & Recover"
         )
         NextActionType.STOP_FOR_TONIGHT -> Triple(
-            if (nextAction.urgencyBadge == "COMPLETE") MintEmerald else TextSecondary,
-            if (nextAction.urgencyBadge == "COMPLETE") Icons.Rounded.DoneAll else Icons.Rounded.Bedtime,
+            SarahSecondary,
+            Icons.Outlined.Bedtime,
             if (nextAction.urgencyBadge == "COMPLETE") "Wrap Up Tonight" else "Rest for Tomorrow"
         )
         NextActionType.RECOVER_FROM_DELAY -> Triple(
-            CoralRed,
-            Icons.Rounded.Refresh,
+            SarahError,
+            Icons.Outlined.Refresh,
             "Recalibrate Plan"
         )
     }
 
-    val gradientBrush = Brush.horizontalGradient(
-        colors = listOf(
-            accentColor.copy(alpha = 0.18f),
-            DarkSurfaceVariant.copy(alpha = 0.85f)
-        )
-    )
-
-    Card(
+    // Glass card — white 70% + gradient overlay
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, accentColor.copy(alpha = 0.45f), RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface)
-    ) {
-        Column(
-            modifier = Modifier
-                .background(gradientBrush)
-                .padding(20.dp)
-        ) {
-            // Header Bar: "SARAH'S NEXT MOVE" + Urgency Pill
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(accentColor.copy(alpha = 0.25f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = accentColor,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "SARAH'S NEXT MOVE",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = accentColor,
-                        letterSpacing = 1.sp
-                    )
-                }
-
-                if (nextAction.urgencyBadge.isNotBlank()) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(accentColor.copy(alpha = 0.20f))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = nextAction.urgencyBadge,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = accentColor,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Action Title
-            Text(
-                text = nextAction.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+            .shadow(
+                elevation      = 4.dp,
+                shape          = RoundedCornerShape(24.dp),
+                ambientColor   = Color.Black.copy(alpha = 0.04f),
+                spotColor      = Color.Black.copy(alpha = 0.06f)
             )
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color.White.copy(alpha = 0.78f))
+            .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(24.dp))
+    ) {
+        // Atmospheric gradient overlay (primaryFixed 30% to transparent)
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            SarahPrimaryFixed.copy(alpha = 0.30f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
 
-            if (nextAction.subtitle.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
+        Column(
+            modifier          = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // ── Label row: "SARAH'S NEXT MOVE" ──────────────────────────
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector        = Icons.Outlined.Navigation,
+                    contentDescription = null,
+                    tint               = SarahPrimary,
+                    modifier           = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(6.dp))
                 Text(
-                    text = nextAction.subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
+                    text          = "SARAH'S NEXT MOVE",
+                    style         = MaterialTheme.typography.labelSmall,
+                    color         = SarahPrimary,
+                    fontWeight    = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
             }
 
-            // Reason Callout
+            // ── Task title ────────────────────────────────────────────────
+            Text(
+                text      = nextAction.title,
+                style     = MaterialTheme.typography.headlineMedium,
+                color     = SarahOnSurface,
+                fontWeight = FontWeight.Bold,
+                maxLines  = 2,
+                overflow  = TextOverflow.Ellipsis
+            )
+
+            // ── Metadata chips row ────────────────────────────────────────
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (nextAction.durationMinutes > 0) {
+                    NextMoveChip(
+                        icon  = Icons.Outlined.Timer,
+                        label = "${nextAction.durationMinutes} min"
+                    )
+                }
+                if (nextAction.subtitle.isNotBlank()) {
+                    NextMoveChip(
+                        icon  = Icons.Outlined.Event,
+                        label = nextAction.subtitle
+                    )
+                }
+                if (nextAction.urgencyBadge.isNotBlank() && nextAction.urgencyBadge != "COMPLETE") {
+                    // Priority chip (error-colored)
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(SarahErrorContainer.copy(alpha = 0.5f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Outlined.PriorityHigh,
+                                contentDescription = null,
+                                tint               = SarahOnErrorContainer,
+                                modifier           = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text       = nextAction.urgencyBadge,
+                                style      = MaterialTheme.typography.labelSmall,
+                                color      = SarahOnErrorContainer,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── Reason callout ─────────────────────────────────────────────
             if (nextAction.reason.isNotBlank()) {
-                Spacer(modifier = Modifier.height(10.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(DarkSurfaceVariant.copy(alpha = 0.6f))
+                        .background(Color.White.copy(alpha = 0.4f))
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "💡 ${nextAction.reason}",
+                        text  = "💡 ${nextAction.reason}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        lineHeight = 16.sp
+                        color = SarahOnSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(4.dp))
 
-            // Action Buttons Row
-            Row(
+            // ── Start button ──────────────────────────────────────────────
+            Button(
+                onClick  = { onPrimaryActionClick(nextAction) },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                shape    = RoundedCornerShape(12.dp),
+                colors   = ButtonDefaults.buttonColors(
+                    containerColor = SarahPrimary,
+                    contentColor   = SarahOnPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
-                Button(
-                    onClick = { onPrimaryActionClick(nextAction) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = accentColor,
-                        contentColor = if (accentColor == CyanAccent || accentColor == MintEmerald || accentColor == WarmAmber) DarkSurface else TextPrimary
-                    )
+                Text(
+                    text       = buttonLabel,
+                    style      = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.width(6.dp))
+                Icon(
+                    imageVector        = Icons.Filled.NavigateNext,
+                    contentDescription = null,
+                    modifier           = Modifier.size(20.dp)
+                )
+            }
+
+            // Secondary: mark-done button
+            if (nextAction.taskId != null &&
+                (nextAction.actionType == NextActionType.START_TASK ||
+                 nextAction.actionType == NextActionType.CONTINUE_TASK)) {
+                OutlinedButton(
+                    onClick = { onMarkCompletedClick(nextAction.taskId) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape    = RoundedCornerShape(12.dp),
+                    colors   = ButtonDefaults.outlinedButtonColors(contentColor = SarahSecondary),
+                    border   = androidx.compose.foundation.BorderStroke(1.dp, SarahSecondary.copy(alpha = 0.4f))
                 ) {
                     Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        imageVector        = Icons.Outlined.Check,
+                        contentDescription = "Mark Complete",
+                        modifier           = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        text = buttonLabel,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        text  = "Mark as done",
+                        style = MaterialTheme.typography.labelMedium
                     )
-                }
-
-                // If associated with a task, allow completing directly
-                if (nextAction.taskId != null && (nextAction.actionType == NextActionType.START_TASK || nextAction.actionType == NextActionType.CONTINUE_TASK)) {
-                    OutlinedButton(
-                        onClick = { onMarkCompletedClick(nextAction.taskId) },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MintEmerald),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MintEmerald.copy(alpha = 0.6f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = "Mark Complete",
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Done",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
-                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun NextMoveChip(icon: ImageVector, label: String) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(SarahSurfaceContainerHigh)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Row(
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector        = icon,
+                contentDescription = null,
+                tint               = SarahOnSurfaceVariant,
+                modifier           = Modifier.size(12.dp)
+            )
+            Text(
+                text       = label,
+                style      = MaterialTheme.typography.labelSmall,
+                color      = SarahOnSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

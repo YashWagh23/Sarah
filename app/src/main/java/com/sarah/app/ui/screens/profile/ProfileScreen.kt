@@ -47,16 +47,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.EnergyLevel
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBackground
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
 
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Description
@@ -75,7 +75,7 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = ElectricIndigo)
+            CircularProgressIndicator(color = SarahPrimary)
         }
     } else {
         val profile = uiState.userProfile
@@ -93,7 +93,7 @@ fun ProfileScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(SarahBackground)
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -106,8 +106,8 @@ fun ProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(24.dp))
-                            .background(DarkSurface)
-                            .border(1.dp, DarkBorder, RoundedCornerShape(24.dp))
+                            .background(SarahSurfaceContainerLowest)
+                            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(24.dp))
                             .padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -115,14 +115,14 @@ fun ProfileScreen(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(ElectricIndigo.copy(alpha = 0.2f))
-                                .border(2.dp, ElectricIndigo, CircleShape),
+                                .background(SarahPrimary.copy(alpha = 0.2f))
+                                .border(2.dp, SarahPrimary, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.AccountCircle,
                                 contentDescription = null,
-                                tint = ElectricIndigo,
+                                tint = SarahPrimary,
                                 modifier = Modifier.size(44.dp)
                             )
                         }
@@ -132,14 +132,14 @@ fun ProfileScreen(
                         Text(
                             text = profile.name.ifBlank { "Student Profile" },
                             style = MaterialTheme.typography.titleLarge,
-                            color = TextPrimary,
+                            color = SarahOnSurface,
                             fontWeight = FontWeight.Bold
                         )
 
                         Text(
                             text = "${profile.department.ifBlank { "Computer Science" }} • ${profile.collegeName.ifBlank { "University" }}",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
+                            color = SarahOnSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -148,20 +148,20 @@ fun ProfileScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(MintEmerald.copy(alpha = 0.15f))
+                                .background(SarahPrimary.copy(alpha = 0.15f))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Verified,
                                 contentDescription = null,
-                                tint = MintEmerald,
+                                tint = SarahPrimary,
                                 modifier = Modifier.size(12.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "SARAH OS ACTIVE",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MintEmerald,
+                                color = SarahPrimary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 10.sp
                             )
@@ -175,15 +175,15 @@ fun ProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
-                            .background(DarkSurface)
-                            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                            .background(SarahSurfaceContainerLowest)
+                            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
                             text = "STUDENT DETAILS",
                             style = MaterialTheme.typography.labelSmall,
-                            color = ElectricIndigo,
+                            color = SarahPrimary,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         )
@@ -194,12 +194,12 @@ fun ProfileScreen(
                             label = { Text("Your Full Name") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ElectricIndigo,
-                                unfocusedBorderColor = DarkBorder,
-                                focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary,
-                                focusedLabelColor = ElectricIndigo,
-                                unfocusedLabelColor = TextMuted
+                                focusedBorderColor = SarahPrimary,
+                                unfocusedBorderColor = SarahOutlineVariant,
+                                focusedTextColor = SarahOnSurface,
+                                unfocusedTextColor = SarahOnSurface,
+                                focusedLabelColor = SarahPrimary,
+                                unfocusedLabelColor = SarahSecondary
                             )
                         )
 
@@ -209,12 +209,12 @@ fun ProfileScreen(
                             label = { Text("College / University") },
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ElectricIndigo,
-                                unfocusedBorderColor = DarkBorder,
-                                focusedTextColor = TextPrimary,
-                                unfocusedTextColor = TextPrimary,
-                                focusedLabelColor = ElectricIndigo,
-                                unfocusedLabelColor = TextMuted
+                                focusedBorderColor = SarahPrimary,
+                                unfocusedBorderColor = SarahOutlineVariant,
+                                focusedTextColor = SarahOnSurface,
+                                unfocusedTextColor = SarahOnSurface,
+                                focusedLabelColor = SarahPrimary,
+                                unfocusedLabelColor = SarahSecondary
                             )
                         )
 
@@ -228,12 +228,12 @@ fun ProfileScreen(
                                 label = { Text("Department / Major") },
                                 modifier = Modifier.weight(1.3f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ElectricIndigo,
-                                    unfocusedBorderColor = DarkBorder,
-                                    focusedTextColor = TextPrimary,
-                                    unfocusedTextColor = TextPrimary,
-                                    focusedLabelColor = ElectricIndigo,
-                                    unfocusedLabelColor = TextMuted
+                                    focusedBorderColor = SarahPrimary,
+                                    unfocusedBorderColor = SarahOutlineVariant,
+                                    focusedTextColor = SarahOnSurface,
+                                    unfocusedTextColor = SarahOnSurface,
+                                    focusedLabelColor = SarahPrimary,
+                                    unfocusedLabelColor = SarahSecondary
                                 )
                             )
 
@@ -243,12 +243,12 @@ fun ProfileScreen(
                                 label = { Text("Year / Sem") },
                                 modifier = Modifier.weight(1f),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = ElectricIndigo,
-                                    unfocusedBorderColor = DarkBorder,
-                                    focusedTextColor = TextPrimary,
-                                    unfocusedTextColor = TextPrimary,
-                                    focusedLabelColor = ElectricIndigo,
-                                    unfocusedLabelColor = TextMuted
+                                    focusedBorderColor = SarahPrimary,
+                                    unfocusedBorderColor = SarahOutlineVariant,
+                                    focusedTextColor = SarahOnSurface,
+                                    unfocusedTextColor = SarahOnSurface,
+                                    focusedLabelColor = SarahPrimary,
+                                    unfocusedLabelColor = SarahSecondary
                                 )
                             )
                         }
@@ -261,15 +261,15 @@ fun ProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
-                            .background(DarkSurface)
-                            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                            .background(SarahSurfaceContainerLowest)
+                            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Text(
                             text = "REMINDERS & NOTIFICATIONS",
                             style = MaterialTheme.typography.labelSmall,
-                            color = CyanAccent,
+                            color = SarahPrimaryFixedDim,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         )
@@ -284,23 +284,23 @@ fun ProfileScreen(
                                 Text(
                                     text = "Deadline Reminders",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextPrimary,
+                                    color = SarahOnSurface,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = "Alerts 1 day and 2 hours before submissions",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted
+                                    color = SarahSecondary
                                 )
                             }
                             androidx.compose.material3.Switch(
                                 checked = uiState.isDeadlineRemindersEnabled,
                                 onCheckedChange = { viewModel.setDeadlineRemindersEnabled(it) },
                                 colors = androidx.compose.material3.SwitchDefaults.colors(
-                                    checkedThumbColor = TextPrimary,
-                                    checkedTrackColor = ElectricIndigo,
-                                    uncheckedThumbColor = TextMuted,
-                                    uncheckedTrackColor = DarkSurfaceVariant
+                                    checkedThumbColor = SarahOnSurface,
+                                    checkedTrackColor = SarahPrimary,
+                                    uncheckedThumbColor = SarahSecondary,
+                                    uncheckedTrackColor = SarahSurfaceContainer
                                 )
                             )
                         }
@@ -315,23 +315,23 @@ fun ProfileScreen(
                                 Text(
                                     text = "Custom Quick Reminders",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = TextPrimary,
+                                    color = SarahOnSurface,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = "Alerts for records, lab manuals, and notes",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted
+                                    color = SarahSecondary
                                 )
                             }
                             androidx.compose.material3.Switch(
                                 checked = uiState.isCustomRemindersEnabled,
                                 onCheckedChange = { viewModel.setCustomRemindersEnabled(it) },
                                 colors = androidx.compose.material3.SwitchDefaults.colors(
-                                    checkedThumbColor = TextPrimary,
-                                    checkedTrackColor = CyanAccent,
-                                    uncheckedThumbColor = TextMuted,
-                                    uncheckedTrackColor = DarkSurfaceVariant
+                                    checkedThumbColor = SarahOnSurface,
+                                    checkedTrackColor = SarahPrimaryFixedDim,
+                                    uncheckedThumbColor = SarahSecondary,
+                                    uncheckedTrackColor = SarahSurfaceContainer
                                 )
                             )
                         }
@@ -339,7 +339,7 @@ fun ProfileScreen(
                         Text(
                             text = "Sarah uses notifications to remind you about assignments, exams, and things your teachers asked you to bring.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
+                            color = SarahOnSurfaceVariant,
                             fontSize = 11.sp,
                             lineHeight = 15.sp
                         )
@@ -352,8 +352,8 @@ fun ProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
-                            .background(DarkSurface)
-                            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                            .background(SarahSurfaceContainerLowest)
+                            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
                             .clickable { onNavigateToNotes() }
                             .padding(18.dp)
                     ) {
@@ -370,13 +370,13 @@ fun ProfileScreen(
                                     modifier = Modifier
                                         .size(38.dp)
                                         .clip(CircleShape)
-                                        .background(ElectricIndigo.copy(alpha = 0.2f)),
+                                        .background(SarahPrimary.copy(alpha = 0.2f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Description,
                                         contentDescription = null,
-                                        tint = ElectricIndigo,
+                                        tint = SarahPrimary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -384,13 +384,13 @@ fun ProfileScreen(
                                     Text(
                                         text = "Academic Notes & Memos",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = TextPrimary,
+                                        color = SarahOnSurface,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
                                         text = "Classroom instructions, syllabus & tips",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = TextMuted
+                                        color = SarahSecondary
                                     )
                                 }
                             }
@@ -402,8 +402,8 @@ fun ProfileScreen(
                             onClick = onNavigateToNotes,
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = DarkSurfaceVariant,
-                                contentColor = TextPrimary
+                                containerColor = SarahSurfaceContainer,
+                                contentColor = SarahOnSurface
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -432,22 +432,22 @@ fun ProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(DarkSurfaceVariant.copy(alpha = 0.5f))
-                            .border(1.dp, DarkBorder, RoundedCornerShape(16.dp))
+                            .background(SarahSurfaceContainer.copy(alpha = 0.5f))
+                            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(16.dp))
                             .padding(14.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Rounded.Info,
                                 contentDescription = null,
-                                tint = CyanAccent,
+                                tint = SarahPrimaryFixedDim,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "About Sarah OS (Phase 4A)",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = CyanAccent,
+                                color = SarahPrimaryFixedDim,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -455,7 +455,7 @@ fun ProfileScreen(
                         Text(
                             text = "Offline-first personal academic intelligence. Local Room database ensures all your academic records, constraints, and tasks remain strictly private on your device.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
+                            color = SarahOnSurfaceVariant
                         )
                     }
                 }
@@ -476,8 +476,8 @@ fun ProfileScreen(
                             .fillMaxWidth()
                             .height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ElectricIndigo,
-                            contentColor = TextPrimary
+                            containerColor = SarahPrimary,
+                            contentColor = SarahOnSurface
                         ),
                         shape = RoundedCornerShape(16.dp)
                     ) {

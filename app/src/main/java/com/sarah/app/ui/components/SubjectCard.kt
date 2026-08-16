@@ -1,5 +1,6 @@
 package com.sarah.app.ui.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,11 +14,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Book
-import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.outlined.AssignmentLate
+import androidx.compose.material.icons.outlined.AssignmentTurnedIn
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,148 +27,238 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.Subject
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahErrorContainer
+import com.sarah.app.ui.theme.SarahOnErrorContainer
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSurfaceContainerHigh
+import com.sarah.app.ui.theme.SarahSurfaceContainerLow
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceVariant
 
+/**
+ * Bento-style subject card matching the reference design:
+ * - 24dp rounded card on white surface
+ * - 6dp left-edge color strip (subject accent color)
+ * - Course code badge, subject name, professor row
+ * - Circular attendance ring via Canvas (right side)
+ * - Bottom divider + stat chips (tasks / notes)
+ */
 @Composable
 fun SubjectCard(
-    subject: Subject,
-    pendingTasksCount: Int = 0,
-    onClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    subject          : Subject,
+    pendingTasksCount: Int    = 0,
+    notesCount       : Int    = 0,
+    onClick          : () -> Unit = {},
+    modifier         : Modifier   = Modifier
 ) {
     val subjectColor = runCatching {
         Color(android.graphics.Color.parseColor(subject.colorHex))
-    }.getOrDefault(ElectricIndigo)
+    }.getOrDefault(SarahPrimary)
 
-    Column(
+    val attendance    = subject.currentAttendancePercentage.coerceIn(0, 100)
+    val isLowAttend   = attendance < subject.targetAttendancePercentage
+    val ringColor     = if (isLowAttend) SarahError else subjectColor
+    val trackColor    = SarahSurfaceContainerHigh
+
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(DarkSurface)
-            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+            .shadow(
+                elevation    = 2.dp,
+                shape        = RoundedCornerShape(24.dp),
+                ambientColor = Color.Black.copy(alpha = 0.03f),
+                spotColor    = Color.Black.copy(alpha = 0.04f)
+            )
+            .clip(RoundedCornerShape(24.dp))
+            .background(SarahSurfaceContainerLowest)
+            .border(1.dp, Color.Black.copy(alpha = 0.04f), RoundedCornerShape(24.dp))
             .clickable { onClick() }
-            .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(subjectColor.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Book,
-                        contentDescription = null,
-                        tint = subjectColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = subject.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    if (subject.code.isNotBlank()) {
-                        Text(
-                            text = subject.code,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
-                        )
-                    }
-                }
-            }
+        // Left color strip (6dp wide full-height)
+        Box(
+            modifier = Modifier
+                .width(6.dp)
+                .matchParentSize()
+                .background(subjectColor.copy(alpha = 0.85f))
+                .align(Alignment.CenterStart)
+        )
 
-            if (pendingTasksCount > 0) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(WarmAmber.copy(alpha = 0.15f))
-                        .border(1.dp, WarmAmber.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "$pendingTasksCount due",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WarmAmber,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        if (subject.professorName.isNotBlank()) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Rounded.Person,
-                    contentDescription = null,
-                    tint = TextMuted,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = subject.professorName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Attendance & Weekly Hours Footer
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(DarkSurfaceVariant)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
         ) {
-            Text(
-                text = "${subject.weeklyHours} hrs / week",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary
-            )
+            // ── Top: badge + title + professor | attendance ring ──────────
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    // Course code badge
+                    if (subject.code.isNotBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(subjectColor.copy(alpha = 0.10f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text          = subject.code,
+                                style         = MaterialTheme.typography.labelSmall,
+                                color         = subjectColor,
+                                fontWeight    = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            )
+                        }
+                        Spacer(Modifier.height(6.dp))
+                    }
+                    // Subject name
+                    Text(
+                        text       = subject.name,
+                        style      = MaterialTheme.typography.headlineSmall,
+                        color      = SarahOnSurface,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 24.sp
+                    )
+                    // Professor
+                    if (subject.professorName.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Outlined.Person,
+                                contentDescription = null,
+                                tint               = SarahOnSurfaceVariant,
+                                modifier           = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text  = subject.professorName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = SarahOnSurfaceVariant
+                            )
+                        }
+                    }
+                }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Attendance: ",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted
-                )
-                val attColor = if (subject.currentAttendancePercentage >= subject.targetAttendancePercentage) MintEmerald else WarmAmber
-                Text(
-                    text = "${subject.currentAttendancePercentage}%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = attColor,
-                    fontWeight = FontWeight.Bold
-                )
+                Spacer(Modifier.width(12.dp))
+
+                // Circular attendance ring
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(52.dp)) {
+                    Canvas(modifier = Modifier.size(52.dp)) {
+                        val strokeWidth = 6.dp.toPx()
+                        val sweep       = (attendance / 100f) * 360f
+                        // Track
+                        drawArc(
+                            color      = trackColor,
+                            startAngle = -90f,
+                            sweepAngle = 360f,
+                            useCenter  = false,
+                            style      = Stroke(strokeWidth)
+                        )
+                        // Progress
+                        drawArc(
+                            color      = ringColor,
+                            startAngle = -90f,
+                            sweepAngle = sweep,
+                            useCenter  = false,
+                            style      = Stroke(strokeWidth, cap = StrokeCap.Round)
+                        )
+                    }
+                    Text(
+                        text       = "$attendance%",
+                        style      = MaterialTheme.typography.labelSmall,
+                        color      = if (isLowAttend) SarahError else SarahOnSurface,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
+
+            Spacer(Modifier.height(12.dp))
+
+            // ── Bottom divider + stat chips ───────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(SarahSurfaceVariant)
+            )
+            Spacer(Modifier.height(10.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Pending tasks chip
+                if (pendingTasksCount > 0) {
+                    StatChip(
+                        icon       = Icons.Outlined.AssignmentLate,
+                        label      = "$pendingTasksCount Tasks",
+                        bg         = SarahErrorContainer.copy(alpha = 0.5f),
+                        iconTint   = SarahOnErrorContainer,
+                        textColor  = SarahOnErrorContainer
+                    )
+                } else {
+                    StatChip(
+                        icon      = Icons.Outlined.AssignmentTurnedIn,
+                        label     = "All clear",
+                        bg        = SarahSurfaceContainerLow,
+                        iconTint  = SarahOnSurface,
+                        textColor = SarahOnSurface
+                    )
+                }
+                if (notesCount > 0) {
+                    StatChip(
+                        icon      = Icons.Outlined.Description,
+                        label     = "$notesCount Notes",
+                        bg        = SarahSurfaceContainerLow,
+                        iconTint  = SarahOnSurface,
+                        textColor = SarahOnSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatChip(
+    icon     : androidx.compose.ui.graphics.vector.ImageVector,
+    label    : String,
+    bg       : Color,
+    iconTint : Color,
+    textColor: Color
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(100.dp))
+            .background(bg)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Row(
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector        = icon,
+                contentDescription = null,
+                tint               = iconTint,
+                modifier           = Modifier.size(13.dp)
+            )
+            Text(
+                text  = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor
+            )
         }
     }
 }

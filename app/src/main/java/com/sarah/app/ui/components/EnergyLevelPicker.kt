@@ -33,16 +33,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.EnergyLevel
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 
 @Composable
 fun EnergyLevelPicker(
@@ -54,8 +54,8 @@ fun EnergyLevelPicker(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkSurface)
-            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+            .background(SarahSurfaceContainerLowest)
+            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
         Row(
@@ -67,7 +67,7 @@ fun EnergyLevelPicker(
                 Text(
                     text = "CURRENT ENERGY",
                     style = MaterialTheme.typography.labelSmall,
-                    color = CyanAccent,
+                    color = SarahPrimaryFixedDim,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -75,7 +75,7 @@ fun EnergyLevelPicker(
                 Text(
                     text = currentEnergy.displayName,
                     style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
+                    color = SarahOnSurface,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -95,7 +95,7 @@ fun EnergyLevelPicker(
         ) {
             EnergyLevel.values().forEach { level ->
                 val isSelected = level == currentEnergy
-                val targetBg = if (isSelected) getEnergyColor(level).copy(alpha = 0.2f) else DarkSurfaceVariant
+                val targetBg = if (isSelected) getEnergyColor(level).copy(alpha = 0.2f) else SarahSurfaceContainer
                 val targetBorder = if (isSelected) getEnergyColor(level) else Color.Transparent
                 val animatedBg by animateColorAsState(targetValue = targetBg, animationSpec = spring(), label = "energyBg")
                 val animatedBorder by animateColorAsState(targetValue = targetBorder, animationSpec = spring(), label = "energyBorder")
@@ -113,7 +113,7 @@ fun EnergyLevelPicker(
                     Icon(
                         imageVector = getEnergyIcon(level),
                         contentDescription = level.displayName,
-                        tint = if (isSelected) getEnergyColor(level) else TextMuted,
+                        tint = if (isSelected) getEnergyColor(level) else SarahSecondary,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
@@ -125,7 +125,7 @@ fun EnergyLevelPicker(
                             EnergyLevel.EXHAUSTED -> "Tired"
                         },
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) TextPrimary else TextSecondary,
+                        color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -136,10 +136,10 @@ fun EnergyLevelPicker(
 
 fun getEnergyColor(level: EnergyLevel): Color {
     return when (level) {
-        EnergyLevel.HIGH -> CyanAccent
-        EnergyLevel.NORMAL -> MintEmerald
-        EnergyLevel.LOW -> WarmAmber
-        EnergyLevel.EXHAUSTED -> CoralRed
+        EnergyLevel.HIGH -> SarahPrimaryFixedDim
+        EnergyLevel.NORMAL -> SarahPrimary
+        EnergyLevel.LOW -> SarahTertiary
+        EnergyLevel.EXHAUSTED -> SarahError
     }
 }
 

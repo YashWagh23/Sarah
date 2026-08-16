@@ -48,16 +48,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.sarah.app.domain.model.Subject
-import com.sarah.app.ui.theme.CoralRed
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahError
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 import kotlin.math.roundToInt
 
 @Composable
@@ -96,8 +96,8 @@ fun AddEditSubjectDialog(
             modifier = Modifier
                 .fillMaxWidth(0.94f)
                 .clip(RoundedCornerShape(24.dp))
-                .border(1.dp, DarkBorder, RoundedCornerShape(24.dp)),
-            color = DarkSurface
+                .border(1.dp, SarahOutlineVariant, RoundedCornerShape(24.dp)),
+            color = SarahSurfaceContainerLowest
         ) {
             Column(
                 modifier = Modifier
@@ -113,14 +113,14 @@ fun AddEditSubjectDialog(
                     Text(
                         text = if (subject == null) "New Subject" else "Edit Subject",
                         style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
+                        color = SarahOnSurface,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
                             contentDescription = "Close",
-                            tint = TextMuted
+                            tint = SarahSecondary
                         )
                     }
                 }
@@ -135,12 +135,12 @@ fun AddEditSubjectDialog(
                     placeholder = { Text("e.g. Operating Systems") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ElectricIndigo,
-                        unfocusedBorderColor = DarkBorder,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedLabelColor = ElectricIndigo,
-                        unfocusedLabelColor = TextMuted
+                        focusedBorderColor = SarahPrimary,
+                        unfocusedBorderColor = SarahOutlineVariant,
+                        focusedTextColor = SarahOnSurface,
+                        unfocusedTextColor = SarahOnSurface,
+                        focusedLabelColor = SarahPrimary,
+                        unfocusedLabelColor = SarahSecondary
                     ),
                     singleLine = true
                 )
@@ -159,12 +159,12 @@ fun AddEditSubjectDialog(
                         placeholder = { Text("CS301") },
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = ElectricIndigo,
-                            unfocusedBorderColor = DarkBorder,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedLabelColor = ElectricIndigo,
-                            unfocusedLabelColor = TextMuted
+                            focusedBorderColor = SarahPrimary,
+                            unfocusedBorderColor = SarahOutlineVariant,
+                            focusedTextColor = SarahOnSurface,
+                            unfocusedTextColor = SarahOnSurface,
+                            focusedLabelColor = SarahPrimary,
+                            unfocusedLabelColor = SarahSecondary
                         ),
                         singleLine = true
                     )
@@ -176,12 +176,12 @@ fun AddEditSubjectDialog(
                         placeholder = { Text("Prof. Sharma") },
                         modifier = Modifier.weight(1.4f),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = ElectricIndigo,
-                            unfocusedBorderColor = DarkBorder,
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedLabelColor = ElectricIndigo,
-                            unfocusedLabelColor = TextMuted
+                            focusedBorderColor = SarahPrimary,
+                            unfocusedBorderColor = SarahOutlineVariant,
+                            focusedTextColor = SarahOnSurface,
+                            unfocusedTextColor = SarahOnSurface,
+                            focusedLabelColor = SarahPrimary,
+                            unfocusedLabelColor = SarahSecondary
                         ),
                         singleLine = true
                     )
@@ -193,7 +193,7 @@ fun AddEditSubjectDialog(
                 Text(
                     text = "ACCENT COLOR",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
+                    color = SarahSecondary,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -213,7 +213,7 @@ fun AddEditSubjectDialog(
                                 .background(color)
                                 .border(
                                     if (isSelected) 3.dp else 1.dp,
-                                    if (isSelected) TextPrimary else Color.Transparent,
+                                    if (isSelected) SarahOnSurface else Color.Transparent,
                                     CircleShape
                                 )
                                 .clickable { selectedColorHex = hex }
@@ -231,13 +231,13 @@ fun AddEditSubjectDialog(
                     Text(
                         text = "WEEKLY HOURS",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
+                        color = SarahSecondary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "${weeklyHours.roundToInt()} hrs / week",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextPrimary,
+                        color = SarahOnSurface,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -247,9 +247,9 @@ fun AddEditSubjectDialog(
                     valueRange = 1f..12f,
                     steps = 10,
                     colors = SliderDefaults.colors(
-                        thumbColor = ElectricIndigo,
-                        activeTrackColor = ElectricIndigo,
-                        inactiveTrackColor = DarkSurfaceVariant
+                        thumbColor = SarahPrimary,
+                        activeTrackColor = SarahPrimary,
+                        inactiveTrackColor = SarahSurfaceContainer
                     )
                 )
 
@@ -263,13 +263,13 @@ fun AddEditSubjectDialog(
                     Text(
                         text = "CURRENT ATTENDANCE",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
+                        color = SarahSecondary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "${currentAttendance.roundToInt()}%",
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (currentAttendance >= targetAttendance) MintEmerald else WarmAmber,
+                        color = if (currentAttendance >= targetAttendance) SarahPrimary else SarahTertiary,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -278,9 +278,9 @@ fun AddEditSubjectDialog(
                     onValueChange = { currentAttendance = it },
                     valueRange = 0f..100f,
                     colors = SliderDefaults.colors(
-                        thumbColor = if (currentAttendance >= targetAttendance) MintEmerald else WarmAmber,
-                        activeTrackColor = if (currentAttendance >= targetAttendance) MintEmerald else WarmAmber,
-                        inactiveTrackColor = DarkSurfaceVariant
+                        thumbColor = if (currentAttendance >= targetAttendance) SarahPrimary else SarahTertiary,
+                        activeTrackColor = if (currentAttendance >= targetAttendance) SarahPrimary else SarahTertiary,
+                        inactiveTrackColor = SarahSurfaceContainer
                     )
                 )
 
@@ -297,7 +297,7 @@ fun AddEditSubjectDialog(
                             Icon(
                                 imageVector = Icons.Rounded.Delete,
                                 contentDescription = "Delete Subject",
-                                tint = CoralRed
+                                tint = SarahError
                             )
                         }
                     } else {
@@ -306,7 +306,7 @@ fun AddEditSubjectDialog(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         TextButton(onClick = onDismiss) {
-                            Text("Cancel", color = TextSecondary)
+                            Text("Cancel", color = SarahOnSurfaceVariant)
                         }
                         Button(
                             onClick = {
@@ -323,8 +323,8 @@ fun AddEditSubjectDialog(
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = ElectricIndigo,
-                                contentColor = TextPrimary
+                                containerColor = SarahPrimary,
+                                contentColor = SarahOnSurface
                             ),
                             shape = RoundedCornerShape(12.dp),
                             enabled = name.isNotBlank()

@@ -48,17 +48,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBackground
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.MintEmerald
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -75,7 +75,7 @@ fun ScheduleScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = ElectricIndigo)
+            CircularProgressIndicator(color = SarahPrimary)
         }
     } else {
         val schedule = uiState.schedule
@@ -97,7 +97,7 @@ fun ScheduleScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(SarahBackground)
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -110,7 +110,7 @@ fun ScheduleScreen(
                         Text(
                             text = "ACADEMIC CONSTRAINTS",
                             style = MaterialTheme.typography.labelMedium,
-                            color = ElectricIndigo,
+                            color = SarahPrimary,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.2.sp
                         )
@@ -118,13 +118,13 @@ fun ScheduleScreen(
                         Text(
                             text = "Daily Rhythm & College Hours",
                             style = MaterialTheme.typography.headlineMedium,
-                            color = TextPrimary,
+                            color = SarahOnSurface,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Sarah uses these constraints to compute your realistic study capacity and protect your sleep",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
+                            color = SarahOnSurfaceVariant
                         )
                     }
                 }
@@ -134,7 +134,7 @@ fun ScheduleScreen(
                     ScheduleCard(
                         title = "SLEEP & WAKE CYCLE",
                         icon = Icons.Rounded.Bedtime,
-                        accentColor = MintEmerald
+                        accentColor = SarahPrimary
                     ) {
                         SliderSettingItem(
                             label = "Wake Time",
@@ -163,7 +163,7 @@ fun ScheduleScreen(
                     ScheduleCard(
                         title = "COLLEGE HOURS & COMMUTE",
                         icon = Icons.Rounded.School,
-                        accentColor = CyanAccent
+                        accentColor = SarahPrimaryFixedDim
                     ) {
                         SliderSettingItem(
                             label = "College Starts",
@@ -203,7 +203,7 @@ fun ScheduleScreen(
                     ScheduleCard(
                         title = "STUDY FOCUS & REST BUFFERS",
                         icon = Icons.Rounded.Timer,
-                        accentColor = WarmAmber
+                        accentColor = SarahTertiary
                     ) {
                         SliderSettingItem(
                             label = "Dinner / Rest Buffer",
@@ -257,8 +257,8 @@ fun ScheduleScreen(
                             .fillMaxWidth()
                             .height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ElectricIndigo,
-                            contentColor = TextPrimary
+                            containerColor = SarahPrimary,
+                            contentColor = SarahOnSurface
                         ),
                         shape = RoundedCornerShape(16.dp)
                     ) {
@@ -294,8 +294,8 @@ fun ScheduleCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DarkSurface)
-            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+            .background(SarahSurfaceContainerLowest)
+            .border(1.dp, SarahOutlineVariant, RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -337,12 +337,12 @@ fun SliderSettingItem(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = TextPrimary
+                color = SarahOnSurface
             )
             Text(
                 text = valueFormatted,
                 style = MaterialTheme.typography.labelLarge,
-                color = CyanAccent,
+                color = SarahPrimaryFixedDim,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -352,9 +352,9 @@ fun SliderSettingItem(
             valueRange = valueRange,
             steps = steps,
             colors = SliderDefaults.colors(
-                thumbColor = ElectricIndigo,
-                activeTrackColor = ElectricIndigo,
-                inactiveTrackColor = DarkSurfaceVariant
+                thumbColor = SarahPrimary,
+                activeTrackColor = SarahPrimary,
+                inactiveTrackColor = SarahSurfaceContainer
             )
         )
     }

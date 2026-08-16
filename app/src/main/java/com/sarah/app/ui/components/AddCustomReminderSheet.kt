@@ -55,16 +55,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sarah.app.domain.model.Subject
-import com.sarah.app.ui.theme.CyanAccent
-import com.sarah.app.ui.theme.DarkBackground
-import com.sarah.app.ui.theme.DarkBorder
-import com.sarah.app.ui.theme.DarkSurface
-import com.sarah.app.ui.theme.DarkSurfaceVariant
-import com.sarah.app.ui.theme.ElectricIndigo
-import com.sarah.app.ui.theme.TextMuted
-import com.sarah.app.ui.theme.TextPrimary
-import com.sarah.app.ui.theme.TextSecondary
-import com.sarah.app.ui.theme.WarmAmber
+import com.sarah.app.ui.theme.SarahPrimaryFixedDim
+import com.sarah.app.ui.theme.SarahBackground
+import com.sarah.app.ui.theme.SarahOutlineVariant
+import com.sarah.app.ui.theme.SarahSurfaceContainerLowest
+import com.sarah.app.ui.theme.SarahSurfaceContainer
+import com.sarah.app.ui.theme.SarahPrimary
+import com.sarah.app.ui.theme.SarahSecondary
+import com.sarah.app.ui.theme.SarahOnSurface
+import com.sarah.app.ui.theme.SarahOnSurfaceVariant
+import com.sarah.app.ui.theme.SarahTertiary
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -138,12 +138,12 @@ fun AddCustomReminderSheet(
                 onDismissRequest = { showCustomPicker = false },
                 confirmButton = {
                     TextButton(onClick = { isPickingTime = true }) {
-                        Text("Next: Time", color = CyanAccent)
+                        Text("Next: Time", color = SarahPrimaryFixedDim)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showCustomPicker = false }) {
-                        Text("Cancel", color = TextMuted)
+                        Text("Cancel", color = SarahSecondary)
                     }
                 }
             ) {
@@ -167,21 +167,21 @@ fun AddCustomReminderSheet(
                             showCustomPicker = false
                         }
                     ) {
-                        Text("Confirm", color = CyanAccent, fontWeight = FontWeight.Bold)
+                        Text("Confirm", color = SarahPrimaryFixedDim, fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { isPickingTime = false }) {
-                        Text("Back", color = TextMuted)
+                        Text("Back", color = SarahSecondary)
                     }
                 },
-                title = { Text("Select Reminder Time", color = TextPrimary) },
+                title = { Text("Select Reminder Time", color = SarahOnSurface) },
                 text = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         TimePicker(state = timePickerState)
                     }
                 },
-                containerColor = DarkSurface
+                containerColor = SarahSurfaceContainerLowest
             )
         }
     }
@@ -189,7 +189,7 @@ fun AddCustomReminderSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = SarahSurfaceContainerLowest,
         dragHandle = null
     ) {
         Column(
@@ -210,13 +210,13 @@ fun AddCustomReminderSheet(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(ElectricIndigo.copy(alpha = 0.2f)),
+                            .background(SarahPrimary.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Alarm,
                             contentDescription = null,
-                            tint = CyanAccent,
+                            tint = SarahPrimaryFixedDim,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -226,12 +226,12 @@ fun AddCustomReminderSheet(
                             text = "New Quick Reminder",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = SarahOnSurface
                         )
                         Text(
                             text = "Sarah remembers so you don't have to",
                             style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
+                            color = SarahSecondary
                         )
                     }
                 }
@@ -239,7 +239,7 @@ fun AddCustomReminderSheet(
                     Icon(
                         imageVector = Icons.Rounded.Close,
                         contentDescription = "Close",
-                        tint = TextMuted
+                        tint = SarahSecondary
                     )
                 }
             }
@@ -253,12 +253,12 @@ fun AddCustomReminderSheet(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ElectricIndigo,
-                    unfocusedBorderColor = DarkBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary,
-                    focusedLabelColor = ElectricIndigo,
-                    unfocusedLabelColor = TextMuted
+                    focusedBorderColor = SarahPrimary,
+                    unfocusedBorderColor = SarahOutlineVariant,
+                    focusedTextColor = SarahOnSurface,
+                    unfocusedTextColor = SarahOnSurface,
+                    focusedLabelColor = SarahPrimary,
+                    unfocusedLabelColor = SarahSecondary
                 )
             )
 
@@ -267,7 +267,7 @@ fun AddCustomReminderSheet(
                 Text(
                     text = "WHEN SHOULD IT RING?",
                     style = MaterialTheme.typography.labelSmall,
-                    color = CyanAccent,
+                    color = SarahPrimaryFixedDim,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -290,10 +290,10 @@ fun AddCustomReminderSheet(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) ElectricIndigo else DarkSurfaceVariant)
+                                .background(if (isSelected) SarahPrimary else SarahSurfaceContainer)
                                 .border(
                                     width = 1.dp,
-                                    color = if (isSelected) CyanAccent else DarkBorder,
+                                    color = if (isSelected) SarahPrimaryFixedDim else SarahOutlineVariant,
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .clickable {
@@ -308,7 +308,7 @@ fun AddCustomReminderSheet(
                             Text(
                                 text = labelText,
                                 style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) TextPrimary else TextSecondary,
+                                color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -322,7 +322,7 @@ fun AddCustomReminderSheet(
                     Text(
                         text = "RELATED SUBJECT (OPTIONAL)",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
+                        color = SarahSecondary,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
@@ -338,10 +338,10 @@ fun AddCustomReminderSheet(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(if (isSelected) ElectricIndigo.copy(alpha = 0.3f) else DarkSurfaceVariant)
+                                    .background(if (isSelected) SarahPrimary.copy(alpha = 0.3f) else SarahSurfaceContainer)
                                     .border(
                                         width = 1.dp,
-                                        color = if (isSelected) ElectricIndigo else DarkBorder,
+                                        color = if (isSelected) SarahPrimary else SarahOutlineVariant,
                                         shape = RoundedCornerShape(10.dp)
                                     )
                                     .clickable {
@@ -354,7 +354,7 @@ fun AddCustomReminderSheet(
                                         Icon(
                                             imageVector = Icons.Rounded.Check,
                                             contentDescription = null,
-                                            tint = CyanAccent,
+                                            tint = SarahPrimaryFixedDim,
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
@@ -362,7 +362,7 @@ fun AddCustomReminderSheet(
                                     Text(
                                         text = subject.name,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (isSelected) TextPrimary else TextSecondary
+                                        color = if (isSelected) SarahOnSurface else SarahOnSurfaceVariant
                                     )
                                 }
                             }
@@ -394,10 +394,10 @@ fun AddCustomReminderSheet(
                     .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ElectricIndigo,
-                    contentColor = TextPrimary,
-                    disabledContainerColor = DarkSurfaceVariant,
-                    disabledContentColor = TextMuted
+                    containerColor = SarahPrimary,
+                    contentColor = SarahOnSurface,
+                    disabledContainerColor = SarahSurfaceContainer,
+                    disabledContentColor = SarahSecondary
                 )
             ) {
                 Text(
