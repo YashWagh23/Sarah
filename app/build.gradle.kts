@@ -54,6 +54,11 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.all {
+            it.systemProperty("file.encoding", "UTF-8")
+            it.systemProperty("sun.jnu.encoding", "UTF-8")
+            it.jvmArgs("-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8")
+        }
     }
 
     packaging {
@@ -64,9 +69,9 @@ android {
 }
 
 tasks.withType<Test> {
-    useJUnit()
     systemProperty("file.encoding", "UTF-8")
-    jvmArgs("-Dfile.encoding=UTF-8")
+    systemProperty("sun.jnu.encoding", "UTF-8")
+    jvmArgs("-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8")
 }
 
 

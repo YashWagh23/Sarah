@@ -17,6 +17,8 @@ import com.sarah.app.data.local.entity.ScheduleEntity
 import com.sarah.app.data.local.entity.SubjectEntity
 import com.sarah.app.data.local.entity.TaskEntity
 import com.sarah.app.data.local.entity.TemporaryInterruptionEntity
+import com.sarah.app.data.local.dao.ReminderDao
+import com.sarah.app.data.local.entity.ReminderEntity
 import com.sarah.app.data.local.entity.UserProfileEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,9 +32,10 @@ import kotlinx.coroutines.launch
         UserProfileEntity::class,
         DailyPlanEntity::class,
         PlanItemEntity::class,
-        TemporaryInterruptionEntity::class
+        TemporaryInterruptionEntity::class,
+        ReminderEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class SarahDatabase : RoomDatabase() {
@@ -43,6 +46,7 @@ abstract class SarahDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
     abstract fun dailyPlanDao(): DailyPlanDao
     abstract fun temporaryInterruptionDao(): TemporaryInterruptionDao
+    abstract fun reminderDao(): ReminderDao
 
     companion object {
         @Volatile

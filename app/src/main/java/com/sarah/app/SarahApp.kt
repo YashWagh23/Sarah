@@ -9,6 +9,7 @@ import com.sarah.app.data.repository.SubjectRepositoryImpl
 import com.sarah.app.data.repository.TaskRepositoryImpl
 import com.sarah.app.data.repository.UserRepositoryImpl
 import com.sarah.app.domain.engine.AdaptivePlanner
+import com.sarah.app.domain.engine.DeadlineReminderEngine
 import com.sarah.app.domain.engine.DocumentTextExtractor
 import com.sarah.app.domain.engine.FeasibilityEngine
 import com.sarah.app.domain.engine.NaturalLanguageTaskParser
@@ -20,6 +21,12 @@ import com.sarah.app.domain.repository.SubjectRepository
 import com.sarah.app.domain.repository.TaskRepository
 import com.sarah.app.domain.repository.UserRepository
 
+import com.sarah.app.data.repository.ReminderRepositoryImpl
+import com.sarah.app.domain.engine.ReminderScheduler
+import com.sarah.app.domain.repository.ReminderRepository
+import com.sarah.app.notification.NotificationHelper
+import com.sarah.app.notification.SarahNotificationScheduler
+
 class SarahApp : Application() {
 
     lateinit var database: SarahDatabase private set
@@ -30,6 +37,8 @@ class SarahApp : Application() {
     lateinit var scheduleRepository: ScheduleRepository private set
     lateinit var userRepository: UserRepository private set
     lateinit var dailyPlanRepository: DailyPlanRepository private set
+    lateinit var reminderRepository: ReminderRepository private set
+    lateinit var reminderScheduler: ReminderScheduler private set
 
     val taskPriorityScorer: TaskPriorityScorer by lazy { TaskPriorityScorer() }
     val adaptivePlanner: AdaptivePlanner by lazy { AdaptivePlanner(taskPriorityScorer) }
@@ -37,6 +46,7 @@ class SarahApp : Application() {
     val feasibilityEngine: FeasibilityEngine by lazy { FeasibilityEngine() }
     val naturalLanguageTaskParser: NaturalLanguageTaskParser by lazy { NaturalLanguageTaskParser() }
     val documentTextExtractor: DocumentTextExtractor by lazy { DocumentTextExtractor() }
+    val deadlineReminderEngine: DeadlineReminderEngine by lazy { DeadlineReminderEngine() }
 
     override fun onCreate() {
         super.onCreate()
@@ -48,5 +58,9 @@ class SarahApp : Application() {
         scheduleRepository = ScheduleRepositoryImpl(database.scheduleDao())
         userRepository = UserRepositoryImpl(database.userProfileDao())
         dailyPlanRepository = DailyPlanRepositoryImpl(database.dailyPlanDao(), database.temporaryInterruptionDao())
+        reminderRepository = ReminderRepositoryImpl(database.reminderDao())
+        reminderScheduler = SarahNotificationScheduler(this)
+
+        NotificationHelper.createNotificationChannel(this)
     }
 }

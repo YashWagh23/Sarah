@@ -250,6 +250,97 @@ fun ProfileScreen(
                     }
                 }
 
+                // Reminders & Notifications Settings Card
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(DarkSurface)
+                            .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Text(
+                            text = "REMINDERS & NOTIFICATIONS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = CyanAccent,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+
+                        // Deadline Reminders Switch Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Deadline Reminders",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Alerts 1 day and 2 hours before submissions",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted
+                                )
+                            }
+                            androidx.compose.material3.Switch(
+                                checked = uiState.isDeadlineRemindersEnabled,
+                                onCheckedChange = { viewModel.setDeadlineRemindersEnabled(it) },
+                                colors = androidx.compose.material3.SwitchDefaults.colors(
+                                    checkedThumbColor = TextPrimary,
+                                    checkedTrackColor = ElectricIndigo,
+                                    uncheckedThumbColor = TextMuted,
+                                    uncheckedTrackColor = DarkSurfaceVariant
+                                )
+                            )
+                        }
+
+                        // Custom Reminders Switch Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Custom Quick Reminders",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Alerts for records, lab manuals, and notes",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted
+                                )
+                            }
+                            androidx.compose.material3.Switch(
+                                checked = uiState.isCustomRemindersEnabled,
+                                onCheckedChange = { viewModel.setCustomRemindersEnabled(it) },
+                                colors = androidx.compose.material3.SwitchDefaults.colors(
+                                    checkedThumbColor = TextPrimary,
+                                    checkedTrackColor = CyanAccent,
+                                    uncheckedThumbColor = TextMuted,
+                                    uncheckedTrackColor = DarkSurfaceVariant
+                                )
+                            )
+                        }
+
+                        Text(
+                            text = "Sarah uses notifications to remind you about assignments, exams, and things your teachers asked you to bring.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+
                 // Architecture & Privacy Info
                 item {
                     Column(
@@ -269,7 +360,7 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "About Sarah OS (Phase 1)",
+                                text = "About Sarah OS (Phase 4A)",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = CyanAccent,
                                 fontWeight = FontWeight.Bold

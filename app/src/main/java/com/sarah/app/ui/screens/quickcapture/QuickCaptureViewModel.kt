@@ -5,14 +5,18 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.sarah.app.data.preferences.SarahPreferences
+import com.sarah.app.domain.engine.DeadlineReminderEngine
 import com.sarah.app.domain.engine.DocumentTextExtractor
 import com.sarah.app.domain.engine.NaturalLanguageTaskParser
+import com.sarah.app.domain.engine.ReminderScheduler
 import com.sarah.app.domain.model.CaptureSourceType
 import com.sarah.app.domain.model.Difficulty
 import com.sarah.app.domain.model.EnergyRequirement
 import com.sarah.app.domain.model.ExtractedTaskDraft
 import com.sarah.app.domain.model.TaskPriority
 import com.sarah.app.domain.model.TaskType
+import com.sarah.app.domain.repository.ReminderRepository
 import com.sarah.app.domain.repository.SubjectRepository
 import com.sarah.app.domain.repository.TaskRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +31,11 @@ class QuickCaptureViewModel(
     private val taskRepository: TaskRepository,
     private val subjectRepository: SubjectRepository,
     private val parser: NaturalLanguageTaskParser,
-    private val textExtractor: DocumentTextExtractor
+    private val textExtractor: DocumentTextExtractor,
+    private val reminderRepository: ReminderRepository,
+    private val reminderScheduler: ReminderScheduler,
+    private val deadlineReminderEngine: DeadlineReminderEngine,
+    private val preferencesManager: SarahPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuickCaptureUiState())
@@ -178,7 +186,17 @@ class QuickCaptureViewModel(
     fun saveDraftToPlan(onSuccess: () -> Unit) {
         val draft = _uiState.value.draft ?: return
         viewModelScope.launch {
-            taskRepository.insertTask(draft.toTask())
+            val task = draft.toTask()
+            val newId = taskRepository.insertTask(task)
+
+            if (preferencesManager.isDeadlineRemindersEnabled) {
+                val reminders = deadlineReminderEngine.generateDeadlineReminders(task.copy(id = newId))
+                reminders.forEach { rem ->
+                    val remId = reminderRepository.insertReminder(rem)
+                    reminderScheduler.scheduleReminder(rem.copy(id = remId))
+                }
+            }
+
             _uiState.update {
                 it.copy(
                     isSavedSuccess = true,
@@ -200,7 +218,11 @@ class QuickCaptureViewModel(
         private val taskRepository: TaskRepository,
         private val subjectRepository: SubjectRepository,
         private val parser: NaturalLanguageTaskParser,
-        private val textExtractor: DocumentTextExtractor
+        private val textExtractor: DocumentTextExtractor,
+        private val reminderRepository: ReminderRepository,
+        private val reminderScheduler: ReminderScheduler,
+        private val deadlineReminderEngine: DeadlineReminderEngine,
+        private val preferencesManager: SarahPreferences
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -208,7 +230,11 @@ class QuickCaptureViewModel(
                 taskRepository,
                 subjectRepository,
                 parser,
-                textExtractor
+                textExtractor,
+                reminderRepository,
+                reminderScheduler,
+                deadlineReminderEngine,
+                preferencesManager
             ) as T
         }
     }

@@ -13,6 +13,10 @@ interface SarahPreferences {
     val energyLevelFlow: Flow<EnergyLevel>
     var isOnboardingCompleted: Boolean
     val onboardingCompletedFlow: Flow<Boolean>
+    var isDeadlineRemindersEnabled: Boolean
+    val deadlineRemindersEnabledFlow: Flow<Boolean>
+    var isCustomRemindersEnabled: Boolean
+    val customRemindersEnabledFlow: Flow<Boolean>
 }
 
 class SarahPreferencesManager(context: Context) : SarahPreferences {
@@ -21,6 +25,8 @@ class SarahPreferencesManager(context: Context) : SarahPreferences {
     companion object {
         private const val KEY_CURRENT_ENERGY = "key_current_energy"
         private const val KEY_ONBOARDING_DONE = "key_onboarding_done"
+        private const val KEY_DEADLINE_REMINDERS = "key_deadline_reminders"
+        private const val KEY_CUSTOM_REMINDERS = "key_custom_reminders"
     }
 
     override var currentEnergyLevel: EnergyLevel
@@ -54,6 +60,36 @@ class SarahPreferencesManager(context: Context) : SarahPreferences {
             }
         }
         trySend(isOnboardingCompleted)
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.distinctUntilChanged()
+
+    override var isDeadlineRemindersEnabled: Boolean
+        get() = prefs.getBoolean(KEY_DEADLINE_REMINDERS, true)
+        set(value) = prefs.edit().putBoolean(KEY_DEADLINE_REMINDERS, value).apply()
+
+    override val deadlineRemindersEnabledFlow: Flow<Boolean> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_DEADLINE_REMINDERS || key == null) {
+                trySend(isDeadlineRemindersEnabled)
+            }
+        }
+        trySend(isDeadlineRemindersEnabled)
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.distinctUntilChanged()
+
+    override var isCustomRemindersEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CUSTOM_REMINDERS, true)
+        set(value) = prefs.edit().putBoolean(KEY_CUSTOM_REMINDERS, value).apply()
+
+    override val customRemindersEnabledFlow: Flow<Boolean> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_CUSTOM_REMINDERS || key == null) {
+                trySend(isCustomRemindersEnabled)
+            }
+        }
+        trySend(isCustomRemindersEnabled)
         prefs.registerOnSharedPreferenceChangeListener(listener)
         awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }.distinctUntilChanged()

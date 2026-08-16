@@ -149,7 +149,10 @@ fun AppNavigation(
                         app.feasibilityEngine,
                         app.dailyPlanRepository,
                         app.adaptivePlanner,
-                        app.nextActionEngine
+                        app.nextActionEngine,
+                        app.reminderRepository,
+                        app.reminderScheduler,
+                        app.deadlineReminderEngine
                     )
                 )
                 val quickCaptureViewModel: QuickCaptureViewModel = viewModel(
@@ -157,7 +160,11 @@ fun AppNavigation(
                         app.taskRepository,
                         app.subjectRepository,
                         app.naturalLanguageTaskParser,
-                        app.documentTextExtractor
+                        app.documentTextExtractor,
+                        app.reminderRepository,
+                        app.reminderScheduler,
+                        app.deadlineReminderEngine,
+                        app.preferencesManager
                     )
                 )
                 TodayScreen(
@@ -170,7 +177,11 @@ fun AppNavigation(
                 val tasksViewModel: TasksViewModel = viewModel(
                     factory = TasksViewModel.Factory(
                         app.taskRepository,
-                        app.subjectRepository
+                        app.subjectRepository,
+                        app.reminderRepository,
+                        app.reminderScheduler,
+                        app.deadlineReminderEngine,
+                        app.preferencesManager
                     )
                 )
                 TasksScreen(viewModel = tasksViewModel)
@@ -195,7 +206,7 @@ fun AppNavigation(
 
             composable(Screen.Profile.route) {
                 val profileViewModel: ProfileViewModel = viewModel(
-                    factory = ProfileViewModel.Factory(app.userRepository)
+                    factory = ProfileViewModel.Factory(app.userRepository, app.preferencesManager)
                 )
                 ProfileScreen(viewModel = profileViewModel)
             }

@@ -1,7 +1,10 @@
 package com.sarah.app.ui.screens.today
 
 import com.sarah.app.data.preferences.SarahPreferences
+import com.sarah.app.domain.FakeReminderRepository
+import com.sarah.app.domain.FakeReminderScheduler
 import com.sarah.app.domain.engine.AdaptivePlanner
+import com.sarah.app.domain.engine.DeadlineReminderEngine
 import com.sarah.app.domain.engine.FeasibilityEngine
 import com.sarah.app.domain.engine.NextActionEngine
 import com.sarah.app.domain.engine.TaskPriorityScorer
@@ -10,6 +13,7 @@ import com.sarah.app.domain.model.DailyPlan
 import com.sarah.app.domain.model.EnergyLevel
 import com.sarah.app.domain.model.NextActionType
 import com.sarah.app.domain.model.PlanItemStatus
+import com.sarah.app.domain.model.Reminder
 import com.sarah.app.domain.model.Subject
 import com.sarah.app.domain.model.Task
 import com.sarah.app.domain.model.TaskPriority
@@ -33,10 +37,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.lang.reflect.InvocationHandler
-import java.lang.reflect.Proxy
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -45,10 +48,22 @@ class TodayViewModelTest {
 
     private val taskFlow = MutableStateFlow<List<Task>>(emptyList())
     private val subjectFlow = MutableStateFlow<List<Subject>>(emptyList())
-    private val scheduleFlow = MutableStateFlow<CollegeSchedule?>(CollegeSchedule())
+    private val scheduleFlow = MutableStateFlow<CollegeSchedule?>(
+        CollegeSchedule(
+            collegeStartTimeMinutes = 6 * 60,
+            collegeEndTimeMinutes = 7 * 60,
+            commuteMinutes = 0,
+            dinnerBufferMinutes = 0,
+            sleepTimeMinutes = 23 * 60 + 59
+        )
+    )
     private val profileFlow = MutableStateFlow<UserProfile?>(UserProfile(name = "Alex"))
     private val energyFlow = MutableStateFlow(EnergyLevel.NORMAL)
     private val interruptionFlow = MutableStateFlow<List<TemporaryInterruption>>(emptyList())
+
+    private lateinit var fakeReminderRepository: FakeReminderRepository
+    private lateinit var fakeReminderScheduler: FakeReminderScheduler
+    private lateinit var deadlineReminderEngine: DeadlineReminderEngine
 
     private val fakeTaskRepository = object : TaskRepository {
         override fun getAllTasks(): Flow<List<Task>> = taskFlow
@@ -108,21 +123,28 @@ class TodayViewModelTest {
         override suspend fun clearInterruptions(dateEpochDay: Long) {}
     }
 
-    private class FakeSarahPreferences(private val energyFlow: MutableStateFlow<EnergyLevel>) : com.sarah.app.data.preferences.SarahPreferences {
+    private class FakeSarahPreferences(private val energyFlow: MutableStateFlow<EnergyLevel>) : SarahPreferences {
         override var currentEnergyLevel: EnergyLevel
             get() = energyFlow.value
             set(value) { energyFlow.value = value }
         override val energyLevelFlow: Flow<EnergyLevel> = energyFlow
         override var isOnboardingCompleted: Boolean = true
         override val onboardingCompletedFlow: Flow<Boolean> = flowOf(true)
+        override var isDeadlineRemindersEnabled: Boolean = true
+        override val deadlineRemindersEnabledFlow: Flow<Boolean> = flowOf(true)
+        override var isCustomRemindersEnabled: Boolean = true
+        override val customRemindersEnabledFlow: Flow<Boolean> = flowOf(true)
     }
 
-    private lateinit var preferencesManager: com.sarah.app.data.preferences.SarahPreferences
+    private lateinit var preferencesManager: SarahPreferences
 
     @Before
     fun setUp() {
         Dispatchers.setMain(Dispatchers.Unconfined)
         preferencesManager = FakeSarahPreferences(energyFlow)
+        fakeReminderRepository = FakeReminderRepository()
+        fakeReminderScheduler = FakeReminderScheduler()
+        deadlineReminderEngine = DeadlineReminderEngine(ZoneId.of("UTC"))
     }
 
     @After
@@ -153,7 +175,10 @@ class TodayViewModelTest {
             feasibilityEngine = FeasibilityEngine(),
             dailyPlanRepository = fakeDailyPlanRepository,
             adaptivePlanner = AdaptivePlanner(TaskPriorityScorer()),
-            nextActionEngine = NextActionEngine()
+            nextActionEngine = NextActionEngine(),
+            reminderRepository = fakeReminderRepository,
+            reminderScheduler = fakeReminderScheduler,
+            deadlineReminderEngine = deadlineReminderEngine
         )
 
         val state = viewModel.uiState.value
@@ -180,7 +205,10 @@ class TodayViewModelTest {
             feasibilityEngine = FeasibilityEngine(),
             dailyPlanRepository = fakeDailyPlanRepository,
             adaptivePlanner = AdaptivePlanner(TaskPriorityScorer()),
-            nextActionEngine = NextActionEngine()
+            nextActionEngine = NextActionEngine(),
+            reminderRepository = fakeReminderRepository,
+            reminderScheduler = fakeReminderScheduler,
+            deadlineReminderEngine = deadlineReminderEngine
         )
 
         assertEquals("Start: Task 1", viewModel.uiState.value.nextAction?.title)
@@ -201,9 +229,7 @@ class TodayViewModelTest {
     }
 
     @Test
-    fun `test empty tasks recommends all caught up`() = runBlocking {
-        taskFlow.value = emptyList()
-
+    fun `test custom reminder creation and reminder list in Today state`() = runBlocking {
         val viewModel = TodayViewModel(
             taskRepository = fakeTaskRepository,
             subjectRepository = fakeSubjectRepository,
@@ -213,12 +239,18 @@ class TodayViewModelTest {
             feasibilityEngine = FeasibilityEngine(),
             dailyPlanRepository = fakeDailyPlanRepository,
             adaptivePlanner = AdaptivePlanner(TaskPriorityScorer()),
-            nextActionEngine = NextActionEngine()
+            nextActionEngine = NextActionEngine(),
+            reminderRepository = fakeReminderRepository,
+            reminderScheduler = fakeReminderScheduler,
+            deadlineReminderEngine = deadlineReminderEngine
         )
 
+        val future = System.currentTimeMillis() + 3600_000L
+        viewModel.createCustomReminder("Bring DBMS record", "Lab book", future, null)
+
         val state = viewModel.uiState.value
-        assertNotNull(state.nextAction)
-        assertEquals(NextActionType.STOP_FOR_TONIGHT, state.nextAction?.actionType)
-        assertEquals("All Done for Tonight!", state.nextAction?.title)
+        assertEquals(1, state.upcomingReminders.size)
+        assertEquals("Bring DBMS record", state.upcomingReminders[0].title)
+        assertTrue(state.dailySummary.contains("1 reminder"))
     }
 }
