@@ -8,6 +8,9 @@ on:
       - 'shared/**'
       - 'iosApp/**'
       - '.github/workflows/ios_build.yml'
+      - 'gradle.properties'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
   workflow_dispatch:
 
 jobs:
@@ -55,7 +58,9 @@ jobs:
       - name: Package Payload into Unsigned IPA
         run: |
           mkdir -p build/Payload
-          cp -r iosApp/build/Release-iphoneos/iosApp.app build/Payload/
+          APP_PATH=$(find iosApp/build -name "iosApp.app" -type d | head -n 1)
+          echo "Found app at: $APP_PATH"
+          cp -r "$APP_PATH" build/Payload/
           cd build
           zip -qr Sarah-unsigned.ipa Payload
           cd ..

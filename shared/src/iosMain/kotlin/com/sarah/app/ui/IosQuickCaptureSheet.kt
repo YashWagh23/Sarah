@@ -408,15 +408,24 @@ fun IosQuickCaptureSheet(
                         ExtractedTaskReviewCard(
                             draft = currentDraft,
                             availableSubjects = subjects,
-                            onTitleChange = { draft = currentDraft.copy(title = it) },
-                            onSubjectChange = { subjId ->
-                                val subj = subjects.find { it.id == subjId }
-                                draft = currentDraft.copy(subjectId = subjId, subjectName = subj?.name ?: currentDraft.subjectName)
+                            onUpdateDraft = { title, subjectId, type, description, deadlineEpochMs, estimatedMinutes, priority, difficulty, energyRequirement ->
+                                val subjName = if (subjectId != null) {
+                                    subjects.find { it.id == subjectId }?.name ?: currentDraft.subjectName
+                                } else currentDraft.subjectName
+                                draft = currentDraft.copy(
+                                    title = title ?: currentDraft.title,
+                                    subjectId = subjectId ?: currentDraft.subjectId,
+                                    subjectName = subjName,
+                                    type = type ?: currentDraft.type,
+                                    description = description ?: currentDraft.description,
+                                    deadlineEpochMs = deadlineEpochMs ?: currentDraft.deadlineEpochMs,
+                                    estimatedMinutes = estimatedMinutes ?: currentDraft.estimatedMinutes,
+                                    priority = priority ?: currentDraft.priority,
+                                    difficulty = difficulty ?: currentDraft.difficulty,
+                                    energyRequirement = energyRequirement ?: currentDraft.energyRequirement
+                                )
                             },
-                            onTypeChange = { draft = currentDraft.copy(type = it) },
-                            onPriorityChange = { draft = currentDraft.copy(priority = it) },
-                            onEstimatedMinutesChange = { draft = currentDraft.copy(estimatedMinutes = it) },
-                            onSave = {
+                            onConfirm = {
                                 coroutineScope.launch {
                                     val task = currentDraft.toTask()
                                     val newId = container.taskRepository.insertTask(task)
@@ -429,10 +438,6 @@ fun IosQuickCaptureSheet(
                                     }
                                     onDismiss()
                                 }
-                            },
-                            onDiscard = {
-                                draft = null
-                                naturalLanguageInput = ""
                             }
                         )
                     }
