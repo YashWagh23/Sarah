@@ -12,12 +12,23 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         google()
         mavenCentral()
+        ivy {
+            name = "KotlinNative"
+            setUrl("https://download.jetbrains.com/kotlin/native/builds/releases")
+            patternLayout {
+                artifact("[revision]/[classifier]/[artifact]-[classifier]-[revision].[ext]")
+            }
+            metadataSources {
+                artifact()
+            }
+        }
     }
 }
 
 rootProject.name = "Sarah"
 include(":app")
+include(":shared")
