@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Smartphone, 
-  Database, 
   Share2, 
   PlusSquare, 
   CheckCircle2, 
-  Bell,
-  BellRing,
-  AlertTriangle
+  Bell, 
+  BellRing, 
+  AlertTriangle, 
+  ShieldCheck, 
+  Sparkles 
 } from 'lucide-react';
 import { initializeAndTrackPersistence, type PersistenceStatus } from '../lib/db';
 import { useReminders } from '../context/RemindersContext';
@@ -35,7 +36,7 @@ export const ProfileScreen: React.FC = () => {
           Profile & Settings
         </h2>
         <p style={{ fontSize: '13px', color: 'var(--sarah-secondary)', margin: 0 }}>
-          Sarah PWA configuration and device status
+          Personal college assistant preferences
         </p>
       </div>
 
@@ -47,7 +48,7 @@ export const ProfileScreen: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '14px',
-          background: 'rgba(255, 255, 255, 0.9)'
+          background: 'rgba(255, 255, 255, 0.92)'
         }}
       >
         <div
@@ -61,7 +62,7 @@ export const ProfileScreen: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '20px',
-            fontWeight: 700
+            fontWeight: 800
           }}
         >
           Y
@@ -79,11 +80,44 @@ export const ProfileScreen: React.FC = () => {
         </div>
       </div>
 
+      {/* Local Storage & Privacy Status */}
+      <div
+        className="surface-card"
+        style={{
+          padding: '16px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShieldCheck size={18} color="var(--sarah-primary)" />
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
+              Local Data & Privacy
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>
+            <CheckCircle2 size={13} />
+            <span>Secure & Offline</span>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', lineHeight: 1.5, margin: 0 }}>
+          Your tasks, notes, reminders, and courses are stored safely on this device. No cloud sync or external tracking required.
+        </p>
+
+        <div style={{ fontSize: '11px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-low)', padding: '6px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
+          <span>Device Sessions: {persistence?.reloadCount ?? 1}</span>
+          <span>Offline Ready ✓</span>
+        </div>
+      </div>
+
       {/* Browser Notifications & Reminders Status Card */}
       <div
         className="surface-card"
         style={{
-          padding: '16px',
+          padding: '16px 18px',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px'
@@ -112,18 +146,18 @@ export const ProfileScreen: React.FC = () => {
           )}
           {notificationPermission === 'default' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--sarah-secondary)', fontWeight: 500 }}>
-              <span>Not Enabled</span>
+              <span>Not Requested</span>
             </div>
           )}
           {notificationPermission === 'unsupported' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--sarah-secondary)', fontWeight: 500 }}>
-              <span>Unsupported</span>
+              <span>In-App Alerts Only</span>
             </div>
           )}
         </div>
 
         <p style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', lineHeight: 1.45, margin: 0 }}>
-          Sarah delivers in-app alerts and browser notifications when reminder times arrive while the app is active.
+          Sarah delivers quiet reminders and alerts when deadlines and study sessions arrive while the app is active.
         </p>
 
         {notificationPermission === 'default' && (
@@ -147,13 +181,13 @@ export const ProfileScreen: React.FC = () => {
             }}
           >
             <BellRing size={15} />
-            <span>Enable Browser Notifications</span>
+            <span>Enable Notifications</span>
           </button>
         )}
 
         {notificationPermission === 'granted' && (
           <div style={{ fontSize: '11.5px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-low)', padding: '8px 12px', borderRadius: '10px' }}>
-            ✓ System notifications are authorized and ready.
+            ✓ Browser notifications are authorized and active.
           </div>
         )}
       </div>
@@ -162,7 +196,7 @@ export const ProfileScreen: React.FC = () => {
       <div
         className="surface-card"
         style={{
-          padding: '16px',
+          padding: '16px 18px',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px'
@@ -171,21 +205,21 @@ export const ProfileScreen: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Smartphone size={18} color="var(--sarah-primary)" />
           <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-            iPhone Safari Home Screen Install
+            Install on iPhone
           </span>
         </div>
 
         <p style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', lineHeight: 1.45, margin: 0 }}>
-          To use Sarah like a native iPhone app without browser address bars:
+          For the full standalone Apple app experience without Safari browser bars:
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: 'var(--sarah-on-background)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', fontSize: '12.5px', color: 'var(--sarah-on-background)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--sarah-surface-container-high)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
               1
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              Tap Safari's <Share2 size={13} color="var(--sarah-primary)" /> <strong>Share</strong> button
+            <div>
+              Open Sarah in <strong>Safari</strong> on your iPhone
             </div>
           </div>
 
@@ -194,7 +228,7 @@ export const ProfileScreen: React.FC = () => {
               2
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              Select <PlusSquare size={13} color="var(--sarah-primary)" /> <strong>Add to Home Screen</strong>
+              Tap Safari's <Share2 size={13} color="var(--sarah-primary)" /> <strong>Share</strong> button
             </div>
           </div>
 
@@ -202,59 +236,39 @@ export const ProfileScreen: React.FC = () => {
             <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--sarah-surface-container-high)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
               3
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              Select <PlusSquare size={13} color="var(--sarah-primary)" /> <strong>Add to Home Screen</strong>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--sarah-surface-container-high)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
+              4
+            </div>
             <div>
-              Launch Sarah from Home Screen in standalone mode
+              Tap <strong>Add</strong> in the top-right corner
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'var(--sarah-primary)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
+              5
+            </div>
+            <div>
+              Launch <strong>Sarah</strong> directly from your Home Screen
             </div>
           </div>
         </div>
       </div>
 
-      {/* IndexedDB Diagnostic Card */}
-      <div
-        className="surface-card"
-        style={{
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Database size={16} color="var(--sarah-primary)" />
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              Storage Diagnostic
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>
-            <CheckCircle2 size={13} />
-            <span>IndexedDB Ready</span>
-          </div>
-        </div>
-
-        <div style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Database:</span>
-            <span style={{ fontWeight: 600, color: 'var(--sarah-on-background)' }}>sarah_pwa_db (v4)</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Stores:</span>
-            <span style={{ fontWeight: 600, color: 'var(--sarah-on-background)' }}>tasks, notes, reminders, key_val</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Session Reload Count:</span>
-            <span style={{ fontWeight: 600, color: 'var(--sarah-primary)' }}>{persistence?.reloadCount ?? 1}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Sarah Info & Milestone Badge */}
+      {/* Sarah Info & Branding */}
       <div style={{ textAlign: 'center', padding: '10px 0', color: 'var(--sarah-secondary)', fontSize: '11px' }}>
-        <div style={{ fontWeight: 600, color: 'var(--sarah-primary)' }}>
-          Sarah PWA • Milestone 4 Reminders & Notifications
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontWeight: 700, color: 'var(--sarah-primary)' }}>
+          <Sparkles size={13} />
+          <span>Sarah • Personal College Assistant</span>
         </div>
         <div style={{ marginTop: '2px' }}>
-          Separate Web Client • Native KMP Core Untouched
+          Apple-Inspired Progressive Web App • Offline Ready
         </div>
       </div>
     </div>

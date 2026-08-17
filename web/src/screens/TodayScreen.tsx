@@ -95,7 +95,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         </h2>
         <p
           style={{
-            fontSize: '14px',
+            fontSize: '13.5px',
             color: 'var(--sarah-on-surface-variant)',
             margin: 0
           }}
@@ -125,8 +125,8 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               position: 'absolute',
               top: '-25px',
               right: '-25px',
-              width: '120px',
-              height: '120px',
+              width: '130px',
+              height: '130px',
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(94, 106, 210, 0.22) 0%, rgba(255,255,255,0) 70%)',
               pointerEvents: 'none'
@@ -233,31 +233,33 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               <span>{nextActionTask.estimatedMinutes} mins session</span>
             </div>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleTaskCompletion(nextActionTask.id);
-              }}
-              className="btn-press"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'var(--sarah-primary)',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(68, 80, 183, 0.3)'
-              }}
-            >
-              <Check size={14} strokeWidth={2.5} />
-              <span>Mark Done</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleTaskCompletion(nextActionTask.id);
+                }}
+                className="btn-press"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'var(--sarah-primary)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(68, 80, 183, 0.3)'
+                }}
+              >
+                <Check size={14} strokeWidth={2.5} />
+                <span>Mark Done</span>
+              </button>
+            </div>
           </div>
         </section>
       ) : (
@@ -265,7 +267,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         <section
           className="glass-card"
           style={{
-            padding: '24px 20px',
+            padding: '22px 20px',
             display: 'flex',
             alignItems: 'center',
             gap: '16px',
@@ -292,7 +294,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               All Caught Up! 🌟
             </div>
             <div style={{ fontSize: '12.5px', color: 'var(--sarah-on-surface-variant)', marginTop: '2px' }}>
-              No active tasks remaining tonight. Rest or capture a new one whenever ready.
+              No active tasks remaining tonight. Enjoy the breathing room.
             </div>
           </div>
         </section>
@@ -437,7 +439,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         </section>
       )}
 
-      {/* 7. Upcoming Reminders Section (Live & Interactive) */}
+      {/* 7. Upcoming Reminders Section */}
       {upcomingRemindersPreview.length > 0 && (
         <section style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
@@ -492,7 +494,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         </section>
       )}
 
-      {/* 8. Pinned Academic Notes Section (Rendered only if pinned notes exist) */}
+      {/* 8. Pinned Academic Notes Section */}
       {previewPinnedNotes.length > 0 && (
         <section style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
@@ -549,7 +551,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         </section>
       )}
 
-      {/* Empty State when no active tasks */}
+      {/* Empty State when zero total active tasks */}
       {activeTasks.length === 0 && (
         <div
           style={{
@@ -577,10 +579,10 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              No Pending Tasks
+              No Pending Tasks for Today
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
-              Tap below or use the floating + button to add an academic task.
+            <div style={{ fontSize: '12.5px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
+              Enjoy the breathing room, or tap below to plan ahead.
             </div>
           </div>
           <button

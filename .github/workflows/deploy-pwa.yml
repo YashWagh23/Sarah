@@ -1,0 +1,63 @@
+name: Deploy Sarah PWA to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy-pwa.yml'
+  workflow_dispatch:
+
+# Permissions for deploying to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy PWA
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+
+      - name: Install Dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Run Automated Persistence Tests
+        working-directory: web
+        run: npm test
+
+      - name: Build Production PWA Bundle
+        working-directory: web
+        run: npm run build
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'web/dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
