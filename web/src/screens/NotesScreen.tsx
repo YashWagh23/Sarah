@@ -7,6 +7,7 @@ import {
   X 
 } from 'lucide-react';
 import { useNotes } from '../context/NotesContext';
+import { useSubjects } from '../context/SubjectsContext';
 import { NoteCard } from '../components/NoteCard';
 
 export const NotesScreen: React.FC = () => {
@@ -18,12 +19,13 @@ export const NotesScreen: React.FC = () => {
     setSelectedSubject, 
     pinnedNotes, 
     unpinnedNotes, 
-    allSubjects, 
     openCreateNoteModal, 
     openEditNoteModal, 
     togglePin, 
     removeNote 
   } = useNotes();
+
+  const { subjects, getSubjectColor } = useSubjects();
 
   const totalFilteredCount = pinnedNotes.length + unpinnedNotes.length;
 
@@ -152,14 +154,15 @@ export const NotesScreen: React.FC = () => {
           All ({notes.length})
         </button>
 
-        {allSubjects.map((sub) => {
-          const isSelected = selectedSubject.toLowerCase() === sub.toLowerCase();
-          const count = notes.filter(n => n.subject.toLowerCase() === sub.toLowerCase()).length;
+        {subjects.map((sub) => {
+          const isSelected = selectedSubject.toLowerCase() === sub.name.toLowerCase();
+          const count = notes.filter(n => n.subject.toLowerCase() === sub.name.toLowerCase()).length;
+          const dotColor = sub.color || getSubjectColor(sub.name);
           return (
             <button
-              key={sub}
+              key={sub.id}
               type="button"
-              onClick={() => setSelectedSubject(sub)}
+              onClick={() => setSelectedSubject(sub.name)}
               className="btn-press"
               style={{
                 border: 'none',
@@ -172,10 +175,14 @@ export const NotesScreen: React.FC = () => {
                 backgroundColor: isSelected ? 'var(--sarah-primary)' : '#FFFFFF',
                 color: isSelected ? '#FFFFFF' : 'var(--sarah-on-surface-variant)',
                 boxShadow: isSelected ? '0 2px 8px rgba(68, 80, 183, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
                 transition: 'all 0.15s ease'
               }}
             >
-              {sub} {count > 0 ? `(${count})` : ''}
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: isSelected ? '#FFFFFF' : dotColor }} />
+              <span>{sub.name} {count > 0 ? `(${count})` : ''}</span>
             </button>
           );
         })}

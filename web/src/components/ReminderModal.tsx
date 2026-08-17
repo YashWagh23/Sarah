@@ -5,14 +5,17 @@ import {
   Bell, 
   Check, 
   AlertCircle,
-  Link as LinkIcon 
+  Link as LinkIcon,
+  BookOpen
 } from 'lucide-react';
 import { useReminders } from '../context/RemindersContext';
 import { useTasks } from '../context/TasksContext';
+import { useSubjects } from '../context/SubjectsContext';
 
 export const ReminderModal: React.FC = () => {
   const { isReminderModalOpen, editingReminder, closeReminderModal, createReminder, modifyReminder, removeReminder } = useReminders();
   const { activeTasks } = useTasks();
+  const { subjects } = useSubjects();
 
   const getLocalDateStr = (d: Date) => {
     const y = d.getFullYear();
@@ -35,6 +38,7 @@ export const ReminderModal: React.FC = () => {
     return getLocalTimeStr(inOneHour);
   });
   const [selectedTaskId, setSelectedTaskId] = useState<string>('');
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -47,6 +51,7 @@ export const ReminderModal: React.FC = () => {
       setDate(getLocalDateStr(d));
       setTime(getLocalTimeStr(d));
       setSelectedTaskId(editingReminder.taskId || '');
+      setSelectedSubject(editingReminder.subject || '');
       setShowDeleteConfirm(false);
     } else {
       // New reminder
@@ -56,6 +61,7 @@ export const ReminderModal: React.FC = () => {
       setDate(getLocalDateStr(inOneHour));
       setTime(getLocalTimeStr(inOneHour));
       setSelectedTaskId(editingReminder?.taskId || '');
+      setSelectedSubject(editingReminder?.subject || '');
       setShowDeleteConfirm(false);
     }
     setErrorMessage('');
@@ -113,6 +119,7 @@ export const ReminderModal: React.FC = () => {
           message: message.trim() || undefined,
           reminderAt,
           taskId: selectedTaskId || undefined,
+          subject: selectedSubject || undefined,
           dismissed: false
         });
       } else {
@@ -121,6 +128,7 @@ export const ReminderModal: React.FC = () => {
           message: message.trim() || undefined,
           reminderAt,
           taskId: selectedTaskId || undefined,
+          subject: selectedSubject || undefined,
           completed: false,
           dismissed: false
         });
@@ -418,7 +426,38 @@ export const ReminderModal: React.FC = () => {
             </div>
           </div>
 
-          {/* 5. Link to Task (Optional) */}
+          {/* 5. Subject Selector (Optional) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <BookOpen size={12} color="var(--sarah-secondary)" />
+              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
+                Subject (Optional)
+              </label>
+            </div>
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '12px',
+                border: '1px solid var(--sarah-outline-variant)',
+                fontSize: '13.5px',
+                backgroundColor: 'var(--sarah-surface-container-low)',
+                color: 'var(--sarah-on-background)',
+                outline: 'none'
+              }}
+            >
+              <option value="">None (No specific subject)</option>
+              {subjects.map(s => (
+                <option key={s.id} value={s.name}>
+                  {s.name} {s.code ? `(${s.code})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 6. Link to Task (Optional) */}
           {activeTasks.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

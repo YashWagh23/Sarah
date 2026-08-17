@@ -2,110 +2,91 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Trash2, 
-  Pin, 
+  BookOpen, 
   Check, 
   AlertCircle 
 } from 'lucide-react';
-import { useNotes } from '../context/NotesContext';
+import { SUBJECT_PALETTE } from '../lib/db';
 import { useSubjects } from '../context/SubjectsContext';
 
-export const NoteModal: React.FC = () => {
-  const { isNoteModalOpen, editingNote, closeNoteModal, createNote, modifyNote, removeNote } = useNotes();
-  const { subjects, getSubjectColor } = useSubjects();
+export const SubjectModal: React.FC = () => {
+  const { 
+    isSubjectModalOpen, 
+    editingSubject, 
+    closeSubjectModal, 
+    createSubject, 
+    modifySubject, 
+    removeSubject 
+  } = useSubjects();
 
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [subject, setSubject] = useState('General');
-  const [customSubject, setCustomSubject] = useState('');
-  const [isCustomSubject, setIsCustomSubject] = useState(false);
-  const [pinned, setPinned] = useState(false);
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [color, setColor] = useState(SUBJECT_PALETTE[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    const subjectNames = subjects.map(s => s.name);
-    const defaultSub = subjectNames.length > 0 ? subjectNames[0] : 'General';
-
-    if (editingNote && editingNote.id) {
-      setTitle(editingNote.title);
-      setContent(editingNote.content);
-      if (subjectNames.includes(editingNote.subject)) {
-        setSubject(editingNote.subject);
-        setIsCustomSubject(false);
-      } else {
-        setSubject('Custom');
-        setCustomSubject(editingNote.subject);
-        setIsCustomSubject(true);
-      }
-      setPinned(editingNote.pinned || false);
+    if (editingSubject && editingSubject.id) {
+      setName(editingSubject.name);
+      setCode(editingSubject.code || '');
+      setColor(editingSubject.color || SUBJECT_PALETTE[0]);
       setShowDeleteConfirm(false);
     } else {
-      // New note
-      setTitle('');
-      setContent('');
-      setSubject(editingNote?.subject || defaultSub);
-      setIsCustomSubject(false);
-      setCustomSubject('');
-      setPinned(false);
+      setName('');
+      setCode('');
+      setColor(SUBJECT_PALETTE[0]);
       setShowDeleteConfirm(false);
     }
     setErrorMessage('');
-  }, [editingNote, isNoteModalOpen, subjects]);
+  }, [editingSubject, isSubjectModalOpen]);
 
-  if (!isNoteModalOpen) return null;
+  if (!isSubjectModalOpen) return null;
 
-  const isEditingExisting = Boolean(editingNote && editingNote.id);
+  const isEditingExisting = Boolean(editingSubject && editingSubject.id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
-      setErrorMessage('Please enter a note title.');
-      return;
-    }
-    if (!content.trim()) {
-      setErrorMessage('Please enter note content.');
+    if (!name.trim()) {
+      setErrorMessage('Please enter a subject name.');
       return;
     }
 
-    const finalSubject = isCustomSubject ? (customSubject.trim() || 'General') : subject;
     setIsSubmitting(true);
 
     try {
-      if (isEditingExisting && editingNote) {
-        await modifyNote({
-          ...editingNote,
-          title: title.trim(),
-          content: content.trim(),
-          subject: finalSubject,
-          pinned
+      if (isEditingExisting && editingSubject) {
+        await modifySubject({
+          ...editingSubject,
+          name: name.trim(),
+          code: code.trim() || undefined,
+          color
         });
       } else {
-        await createNote({
-          title: title.trim(),
-          content: content.trim(),
-          subject: finalSubject,
-          pinned
+        await createSubject({
+          name: name.trim(),
+          code: code.trim() || undefined,
+          color
         });
       }
-      closeNoteModal();
+      closeSubjectModal();
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to save academic note. Please try again.');
+      setErrorMessage('Failed to save subject. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!editingNote || !editingNote.id) return;
+    if (!editingSubject || !editingSubject.id) return;
     setIsSubmitting(true);
     try {
-      await removeNote(editingNote.id);
-      closeNoteModal();
+      await removeSubject(editingSubject.id);
+      closeSubjectModal();
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to delete note.');
+      setErrorMessage('Failed to delete subject.');
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +105,7 @@ export const NoteModal: React.FC = () => {
         alignItems: 'flex-end',
         justifyContent: 'center',
       }}
-      onClick={closeNoteModal}
+      onClick={closeSubjectModal}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -160,12 +141,15 @@ export const NoteModal: React.FC = () => {
             borderBottom: '1px solid var(--sarah-outline-variant)'
           }}
         >
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--sarah-on-background)', margin: 0 }}>
-            {isEditingExisting ? 'Edit Academic Note' : 'Capture Classroom Note'}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <BookOpen size={18} color="var(--sarah-primary)" />
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--sarah-on-background)', margin: 0 }}>
+              {isEditingExisting ? 'Edit Subject' : 'Add New Subject'}
+            </h2>
+          </div>
           <button
             type="button"
-            onClick={closeNoteModal}
+            onClick={closeSubjectModal}
             style={{
               background: 'var(--sarah-surface-container-low)',
               border: 'none',
@@ -183,7 +167,7 @@ export const NoteModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Form Body Scroll Area */}
+        {/* Form Body */}
         <form
           onSubmit={handleSubmit}
           className="scroll-container"
@@ -214,17 +198,17 @@ export const NoteModal: React.FC = () => {
             </div>
           )}
 
-          {/* 1. Title Input */}
+          {/* 1. Name */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Note Title *
+              Subject Name *
             </label>
             <input
               type="text"
               autoFocus
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. ML Lecture 8 — Backpropagation equations"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Distributed Systems"
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -239,138 +223,63 @@ export const NoteModal: React.FC = () => {
             />
           </div>
 
-          {/* 2. Subject Selector */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Subject
-            </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {subjects.map((sub) => {
-                const isSelected = !isCustomSubject && subject.toLowerCase() === sub.name.toLowerCase();
-                const dotColor = sub.color || getSubjectColor(sub.name);
-                return (
-                  <button
-                    key={sub.id}
-                    type="button"
-                    onClick={() => {
-                      setSubject(sub.name);
-                      setIsCustomSubject(false);
-                    }}
-                    className="btn-press"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '6px 12px',
-                      borderRadius: '16px',
-                      border: isSelected ? `1.5px solid var(--sarah-primary)` : '1px solid var(--sarah-outline-variant)',
-                      backgroundColor: isSelected ? 'rgba(68, 80, 183, 0.08)' : 'var(--sarah-surface-container-lowest)',
-                      color: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
-                      fontSize: '12px',
-                      fontWeight: isSelected ? 600 : 500,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dotColor }} />
-                    {sub.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. Note Content */}
+          {/* 2. Course Code */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Note Content *
+              Course Code (Optional)
             </label>
-            <textarea
-              rows={5}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Jot down formulas, exam syllabus, professor hints, or important reminders..."
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="e.g. CS 405"
               style={{
                 width: '100%',
-                padding: '12px 14px',
-                borderRadius: '14px',
+                padding: '10px 12px',
+                borderRadius: '12px',
                 border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '14px',
+                fontSize: '13.5px',
                 outline: 'none',
                 backgroundColor: 'var(--sarah-surface-container-low)',
-                color: 'var(--sarah-on-background)',
-                resize: 'none',
-                fontFamily: 'inherit',
-                lineHeight: 1.5
+                color: 'var(--sarah-on-background)'
               }}
             />
           </div>
 
-          {/* 4. Pin to Top iOS Switch */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 14px',
-              backgroundColor: 'var(--sarah-surface-container-low)',
-              borderRadius: '14px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '10px',
-                  backgroundColor: pinned ? 'rgba(245, 158, 11, 0.15)' : 'var(--sarah-surface-container-high)',
-                  color: pinned ? 'var(--sarah-tertiary)' : 'var(--sarah-secondary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <Pin size={16} fill={pinned ? 'currentColor' : 'none'} />
-              </div>
-              <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--sarah-on-background)' }}>
-                  Pin to Top
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--sarah-secondary)' }}>
-                  Keep prominent on Notes and Today screens
-                </div>
-              </div>
+          {/* 3. Color Selection Swatches */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
+              Color Accent
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '4px 0' }}>
+              {SUBJECT_PALETTE.map((c) => {
+                const isSelected = color.toLowerCase() === c.toLowerCase();
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: c,
+                      border: isSelected ? '3px solid #FFFFFF' : 'none',
+                      outline: isSelected ? `2px solid ${c}` : 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
+                      transition: 'transform 0.15s ease',
+                      transform: isSelected ? 'scale(1.1)' : 'scale(1)'
+                    }}
+                  >
+                    {isSelected && <Check size={16} color="#FFFFFF" strokeWidth={3} />}
+                  </button>
+                );
+              })}
             </div>
-
-            {/* iOS style toggle pill */}
-            <button
-              type="button"
-              onClick={() => setPinned(prev => !prev)}
-              style={{
-                width: '46px',
-                height: '26px',
-                borderRadius: '13px',
-                backgroundColor: pinned ? 'var(--sarah-tertiary)' : 'var(--sarah-outline)',
-                border: 'none',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
-                padding: 0
-              }}
-            >
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '2px',
-                  left: pinned ? '22px' : '2px',
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '50%',
-                  backgroundColor: '#FFFFFF',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
-                  transition: 'left 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}
-              />
-            </button>
           </div>
 
           {/* Actions Bar */}
@@ -397,7 +306,7 @@ export const NoteModal: React.FC = () => {
               }}
             >
               <Check size={18} strokeWidth={2.5} />
-              <span>{isEditingExisting ? 'Save Changes' : 'Save Note'}</span>
+              <span>{isEditingExisting ? 'Save Changes' : 'Save Subject'}</span>
             </button>
 
             {/* Delete button if editing */}
@@ -425,33 +334,32 @@ export const NoteModal: React.FC = () => {
                     }}
                   >
                     <Trash2 size={15} />
-                    <span>Delete Note</span>
+                    <span>Delete Subject</span>
                   </button>
                 ) : (
                   <div
                     style={{
                       display: 'flex',
+                      flexDirection: 'column',
                       gap: '8px',
                       backgroundColor: 'var(--sarah-error-container)',
-                      padding: '8px 12px',
-                      borderRadius: '12px',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
+                      padding: '12px 14px',
+                      borderRadius: '12px'
                     }}
                   >
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sarah-on-error-container)' }}>
-                      Delete this note?
-                    </span>
-                    <div style={{ display: 'flex', gap: '6px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sarah-on-error-container)', lineHeight: 1.4 }}>
+                      ⚠️ Deleting this subject will <strong>NOT</strong> delete your tasks, notes, or reminders. They will safely be moved to "General".
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '2px' }}>
                       <button
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
                         style={{
                           background: '#FFFFFF',
                           border: 'none',
-                          padding: '5px 10px',
+                          padding: '6px 12px',
                           borderRadius: '8px',
-                          fontSize: '11.5px',
+                          fontSize: '12px',
                           fontWeight: 600,
                           cursor: 'pointer'
                         }}
@@ -465,9 +373,9 @@ export const NoteModal: React.FC = () => {
                           background: 'var(--sarah-error)',
                           color: '#FFFFFF',
                           border: 'none',
-                          padding: '5px 12px',
+                          padding: '6px 14px',
                           borderRadius: '8px',
-                          fontSize: '11.5px',
+                          fontSize: '12px',
                           fontWeight: 700,
                           cursor: 'pointer'
                         }}

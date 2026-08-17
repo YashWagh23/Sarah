@@ -32,11 +32,33 @@ export interface Reminder {
   message?: string;
   reminderAt: number; // Unix timestamp epoch in milliseconds
   taskId?: string; // Optional linked task ID
+  subject?: string; // Optional linked subject
   completed: boolean;
   dismissed: boolean;
   createdAt: number;
   updatedAt: number;
 }
+
+export interface Subject {
+  id: string;
+  name: string;
+  code?: string;
+  color: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export const SUBJECT_PALETTE = [
+  '#5E6AD2', // Primary Indigo
+  '#10B981', // Emerald Green
+  '#F59E0B', // Amber
+  '#EC4899', // Rose Pink
+  '#8B5CF6', // Purple
+  '#3B82F6', // Sky Blue
+  '#06B6D4', // Cyan
+  '#64748B', // Slate
+  '#6366F1'  // General Violet
+];
 
 export const SUBJECT_COLORS: Record<string, string> = {
   'Machine Learning': '#5E6AD2',
@@ -44,6 +66,7 @@ export const SUBJECT_COLORS: Record<string, string> = {
   'Algorithms': '#F59E0B',
   'Computer Networks': '#EC4899',
   'Database Systems': '#8B5CF6',
+  'Database Management Systems': '#8B5CF6',
   'General': '#6366F1'
 };
 
@@ -90,10 +113,18 @@ interface SarahPwaDB extends DBSchema {
       'by-createdAt': number;
     };
   };
+  subjects: {
+    key: string;
+    value: Subject;
+    indexes: {
+      'by-name': string;
+      'by-createdAt': number;
+    };
+  };
 }
 
 const DB_NAME = 'sarah_pwa_db';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 let dbPromise: Promise<IDBPDatabase<SarahPwaDB>> | null = null;
 
@@ -124,6 +155,11 @@ export function getDB(): Promise<IDBPDatabase<SarahPwaDB>> {
           reminderStore.createIndex('by-taskId', 'taskId');
           reminderStore.createIndex('by-createdAt', 'createdAt');
         }
+        if (!db.objectStoreNames.contains('subjects')) {
+          const subjectStore = db.createObjectStore('subjects', { keyPath: 'id' });
+          subjectStore.createIndex('by-name', 'name');
+          subjectStore.createIndex('by-createdAt', 'createdAt');
+        }
       },
     });
   }
@@ -148,6 +184,39 @@ function getTomorrowDateStr(): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+const INITIAL_SEED_SUBJECTS: Omit<Subject, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  {
+    name: 'Machine Learning',
+    code: 'CS 401',
+    color: '#5E6AD2'
+  },
+  {
+    name: 'Operating Systems',
+    code: 'CS 302',
+    color: '#10B981'
+  },
+  {
+    name: 'Algorithms',
+    code: 'CS 204',
+    color: '#F59E0B'
+  },
+  {
+    name: 'Computer Networks',
+    code: 'CS 350',
+    color: '#EC4899'
+  },
+  {
+    name: 'Database Systems',
+    code: 'CS 310',
+    color: '#8B5CF6'
+  },
+  {
+    name: 'General',
+    code: 'GEN 100',
+    color: '#6366F1'
+  }
+];
 
 const INITIAL_SEED_TASKS: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
@@ -226,6 +295,7 @@ function getInitialReminders(): Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>
       title: 'Submit Lab Assignment PDF',
       message: 'Upload compiled PDF to college portal before portal lock.',
       reminderAt: now + 3600000 * 2, // 2 hours from now
+      subject: 'Computer Networks',
       completed: false,
       dismissed: false
     },
@@ -233,10 +303,101 @@ function getInitialReminders(): Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>
       title: 'Review Chapter 4 Graph Algorithms',
       message: 'Quick 15 min revision before tomorrow\'s morning lecture.',
       reminderAt: now + 3600000 * 14, // tomorrow morning
+      subject: 'Algorithms',
       completed: false,
       dismissed: false
     }
   ];
+}
+
+// ─── Subjects CRUD Operations ───────────────────────────────────────────────
+
+export async function getSubjects(): Promise<Subject[]> {
+  const db = await getDB();
+  let allSubjects = await db.getAll('subjects');
+
+  if (allSubjects.length === 0) {
+    const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_subjects');
+    if (!isSeeded) {
+      const seeded: Subject[] = [];
+      const now = Date.now();
+      for (let i = 0; i < INITIAL_SEED_SUBJECTS.length; i++) {
+        const item = INITIAL_SEED_SUBJECTS[i];
+        const subject: Subject = {
+          ...item,
+          id: `subject_${now}_${i + 1}`,
+          createdAt: now - (INITIAL_SEED_SUBJECTS.length - i) * 60000,
+          updatedAt: now - (INITIAL_SEED_SUBJECTS.length - i) * 60000
+        };
+        await db.put('subjects', subject);
+        seeded.push(subject);
+      }
+      await db.put('key_val', true, 'sarah_has_seeded_initial_subjects');
+      allSubjects = seeded;
+    }
+  }
+
+  return allSubjects.sort((a, b) => a.createdAt - b.createdAt);
+}
+
+export async function getSubject(id: string): Promise<Subject | undefined> {
+  const db = await getDB();
+  return db.get('subjects', id);
+}
+
+export async function addSubject(subjectData: Omit<Subject, 'id' | 'createdAt' | 'updatedAt'>): Promise<Subject> {
+  const db = await getDB();
+  const now = Date.now();
+  const newSubject: Subject = {
+    ...subjectData,
+    id: `subject_${now}_${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: now,
+    updatedAt: now
+  };
+  await db.put('subjects', newSubject);
+  return newSubject;
+}
+
+export async function updateSubject(subject: Subject): Promise<Subject> {
+  const db = await getDB();
+  const updated: Subject = {
+    ...subject,
+    updatedAt: Date.now()
+  };
+  await db.put('subjects', updated);
+  return updated;
+}
+
+export async function deleteSubject(id: string): Promise<void> {
+  const db = await getDB();
+  const subjectToDelete = await db.get('subjects', id);
+  if (!subjectToDelete) return;
+
+  // Gracefully fallback all tasks, notes, and reminders from deleted subject to 'General'
+  const subjectName = subjectToDelete.name;
+  
+  const allTasks = await db.getAll('tasks');
+  for (const task of allTasks) {
+    if (task.subject === subjectName) {
+      await db.put('tasks', { ...task, subject: 'General', updatedAt: Date.now() });
+    }
+  }
+
+  const allNotes = await db.getAll('notes');
+  for (const note of allNotes) {
+    if (note.subject === subjectName) {
+      await db.put('notes', { ...note, subject: 'General', updatedAt: Date.now() });
+    }
+  }
+
+  const allReminders = await db.getAll('reminders');
+  for (const reminder of allReminders) {
+    if (reminder.subject === subjectName) {
+      await db.put('reminders', { ...reminder, subject: 'General', updatedAt: Date.now() });
+    }
+  }
+
+  await db.delete('subjects', id);
 }
 
 // ─── Task CRUD Operations ───────────────────────────────────────────────────
@@ -424,7 +585,6 @@ export async function getReminders(): Promise<Reminder[]> {
     }
   }
 
-  // Sort chronologically by reminderAt ascending
   return allReminders.sort((a, b) => a.reminderAt - b.reminderAt);
 }
 

@@ -7,11 +7,13 @@ import {
   Check, 
   AlertCircle 
 } from 'lucide-react';
-import { type TaskPriority, DEFAULT_SUBJECTS, SUBJECT_COLORS } from '../lib/db';
+import { type TaskPriority } from '../lib/db';
 import { useTasks } from '../context/TasksContext';
+import { useSubjects } from '../context/SubjectsContext';
 
 export const TaskModal: React.FC = () => {
   const { isTaskModalOpen, editingTask, closeTaskModal, createTask, modifyTask, removeTask } = useTasks();
+  const { subjects, getSubjectColor } = useSubjects();
 
   const getTodayStr = () => {
     const d = new Date();
@@ -42,7 +44,7 @@ export const TaskModal: React.FC = () => {
   // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [subject, setSubject] = useState(DEFAULT_SUBJECTS[0]);
+  const [subject, setSubject] = useState('General');
   const [customSubject, setCustomSubject] = useState('');
   const [isCustomSubject, setIsCustomSubject] = useState(false);
   const [deadline, setDeadline] = useState(getTodayStr());
@@ -54,10 +56,13 @@ export const TaskModal: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    const subjectNames = subjects.map(s => s.name);
+    const defaultSub = subjectNames.length > 0 ? subjectNames[0] : 'General';
+
     if (editingTask) {
       setTitle(editingTask.title);
       setDescription(editingTask.description || '');
-      if (DEFAULT_SUBJECTS.includes(editingTask.subject)) {
+      if (subjectNames.includes(editingTask.subject)) {
         setSubject(editingTask.subject);
         setIsCustomSubject(false);
       } else {
@@ -74,7 +79,7 @@ export const TaskModal: React.FC = () => {
       // Reset for new task
       setTitle('');
       setDescription('');
-      setSubject(DEFAULT_SUBJECTS[0]);
+      setSubject(defaultSub);
       setIsCustomSubject(false);
       setCustomSubject('');
       setDeadline(getTodayStr());
@@ -84,7 +89,7 @@ export const TaskModal: React.FC = () => {
       setShowDeleteConfirm(false);
     }
     setErrorMessage('');
-  }, [editingTask, isTaskModalOpen]);
+  }, [editingTask, isTaskModalOpen, subjects]);
 
   if (!isTaskModalOpen) return null;
 
@@ -145,8 +150,6 @@ export const TaskModal: React.FC = () => {
     }
   };
 
-  const durationPresets = [15, 30, 45, 60, 90];
-
   return (
     <div
       style={{
@@ -186,7 +189,7 @@ export const TaskModal: React.FC = () => {
           <div style={{ width: '36px', height: '4px', borderRadius: '2px', backgroundColor: 'var(--sarah-surface-container-high)' }} />
         </div>
 
-        {/* Modal Header */}
+        {/* Header */}
         <div
           style={{
             display: 'flex',
@@ -281,15 +284,15 @@ export const TaskModal: React.FC = () => {
               Subject
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {DEFAULT_SUBJECTS.map((sub) => {
-                const isSelected = !isCustomSubject && subject === sub;
-                const dotColor = SUBJECT_COLORS[sub] || '#6366F1';
+              {subjects.map((sub) => {
+                const isSelected = !isCustomSubject && subject.toLowerCase() === sub.name.toLowerCase();
+                const dotColor = sub.color || getSubjectColor(sub.name);
                 return (
                   <button
-                    key={sub}
+                    key={sub.id}
                     type="button"
                     onClick={() => {
-                      setSubject(sub);
+                      setSubject(sub.name);
                       setIsCustomSubject(false);
                     }}
                     className="btn-press"
@@ -308,7 +311,7 @@ export const TaskModal: React.FC = () => {
                     }}
                   >
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: dotColor }} />
-                    {sub}
+                    {sub.name}
                   </button>
                 );
               })}
@@ -335,22 +338,23 @@ export const TaskModal: React.FC = () => {
                 onClick={() => setPriority('must')}
                 className="btn-press"
                 style={{
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '9px 4px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '4px',
-                  padding: '8px 0',
-                  borderRadius: '11px',
-                  border: 'none',
                   backgroundColor: priority === 'must' ? '#FFFFFF' : 'transparent',
-                  color: priority === 'must' ? 'var(--sarah-error)' : 'var(--sarah-secondary)',
-                  fontWeight: priority === 'must' ? 700 : 500,
+                  color: priority === 'must' ? 'var(--sarah-error)' : 'var(--sarah-on-surface-variant)',
+                  boxShadow: priority === 'must' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   fontSize: '12.5px',
-                  boxShadow: priority === 'must' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  fontWeight: priority === 'must' ? 700 : 500,
                   cursor: 'pointer'
                 }}
               >
-                <Flame size={13} /> Must Do
+                <Flame size={14} color={priority === 'must' ? 'var(--sarah-error)' : 'currentColor'} />
+                <span>Must Do</span>
               </button>
 
               <button
@@ -358,22 +362,23 @@ export const TaskModal: React.FC = () => {
                 onClick={() => setPriority('should')}
                 className="btn-press"
                 style={{
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '9px 4px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '4px',
-                  padding: '8px 0',
-                  borderRadius: '11px',
-                  border: 'none',
                   backgroundColor: priority === 'should' ? '#FFFFFF' : 'transparent',
-                  color: priority === 'should' ? 'var(--sarah-tertiary)' : 'var(--sarah-secondary)',
-                  fontWeight: priority === 'should' ? 700 : 500,
+                  color: priority === 'should' ? 'var(--sarah-tertiary)' : 'var(--sarah-on-surface-variant)',
+                  boxShadow: priority === 'should' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   fontSize: '12.5px',
-                  boxShadow: priority === 'should' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  fontWeight: priority === 'should' ? 700 : 500,
                   cursor: 'pointer'
                 }}
               >
-                <BookOpen size={13} /> Should Do
+                <BookOpen size={14} color={priority === 'should' ? 'var(--sarah-tertiary)' : 'currentColor'} />
+                <span>Should Do</span>
               </button>
 
               <button
@@ -381,107 +386,107 @@ export const TaskModal: React.FC = () => {
                 onClick={() => setPriority('later')}
                 className="btn-press"
                 style={{
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '9px 4px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '4px',
-                  padding: '8px 0',
-                  borderRadius: '11px',
-                  border: 'none',
                   backgroundColor: priority === 'later' ? '#FFFFFF' : 'transparent',
-                  color: priority === 'later' ? 'var(--sarah-on-background)' : 'var(--sarah-secondary)',
-                  fontWeight: priority === 'later' ? 700 : 500,
+                  color: priority === 'later' ? 'var(--sarah-on-background)' : 'var(--sarah-on-surface-variant)',
+                  boxShadow: priority === 'later' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   fontSize: '12.5px',
-                  boxShadow: priority === 'later' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  fontWeight: priority === 'later' ? 700 : 500,
                   cursor: 'pointer'
                 }}
               >
-                Later
+                <span>Later</span>
               </button>
             </div>
           </div>
 
-          {/* 4. Deadline Date & Quick Buttons */}
+          {/* 4. Deadline Presets & Date Input */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-                Deadline
-              </label>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button
-                  type="button"
-                  onClick={() => setDeadline(getTodayStr())}
-                  style={{
-                    border: 'none',
-                    background: deadline === getTodayStr() ? 'var(--sarah-primary-fixed)' : 'var(--sarah-surface-container-low)',
-                    color: deadline === getTodayStr() ? 'var(--sarah-primary)' : 'var(--sarah-secondary)',
-                    padding: '3px 8px',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Today
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeadline(getTomorrowStr())}
-                  style={{
-                    border: 'none',
-                    background: deadline === getTomorrowStr() ? 'var(--sarah-primary-fixed)' : 'var(--sarah-surface-container-low)',
-                    color: deadline === getTomorrowStr() ? 'var(--sarah-primary)' : 'var(--sarah-secondary)',
-                    padding: '3px 8px',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Tomorrow
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeadline(getNextWeekStr())}
-                  style={{
-                    border: 'none',
-                    background: deadline === getNextWeekStr() ? 'var(--sarah-primary-fixed)' : 'var(--sarah-surface-container-low)',
-                    color: deadline === getNextWeekStr() ? 'var(--sarah-primary)' : 'var(--sarah-secondary)',
-                    padding: '3px 8px',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  +7 Days
-                </button>
-              </div>
+            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
+              Deadline
+            </label>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                type="button"
+                onClick={() => setDeadline(getTodayStr())}
+                className="btn-press"
+                style={{
+                  flex: 1,
+                  padding: '7px 4px',
+                  borderRadius: '10px',
+                  border: deadline === getTodayStr() ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
+                  backgroundColor: deadline === getTodayStr() ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  color: deadline === getTodayStr() ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeadline(getTomorrowStr())}
+                className="btn-press"
+                style={{
+                  flex: 1,
+                  padding: '7px 4px',
+                  borderRadius: '10px',
+                  border: deadline === getTomorrowStr() ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
+                  backgroundColor: deadline === getTomorrowStr() ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  color: deadline === getTomorrowStr() ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Tomorrow
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeadline(getNextWeekStr())}
+                className="btn-press"
+                style={{
+                  flex: 1,
+                  padding: '7px 4px',
+                  borderRadius: '10px',
+                  border: deadline === getNextWeekStr() ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
+                  backgroundColor: deadline === getNextWeekStr() ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  color: deadline === getNextWeekStr() ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Next Week
+              </button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '8px' }}>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="date"
-                  value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--sarah-outline-variant)',
-                    fontSize: '13.5px',
-                    backgroundColor: 'var(--sarah-surface-container-low)',
-                    color: 'var(--sarah-on-background)',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--sarah-outline-variant)',
+                  fontSize: '13.5px',
+                  backgroundColor: 'var(--sarah-surface-container-low)',
+                  color: 'var(--sarah-on-background)',
+                  outline: 'none'
+                }}
+              />
               <input
                 type="time"
                 value={deadlineTime}
                 onChange={(e) => setDeadlineTime(e.target.value)}
-                placeholder="23:59"
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -496,60 +501,57 @@ export const TaskModal: React.FC = () => {
             </div>
           </div>
 
-          {/* 5. Estimated Duration */}
+          {/* 5. Estimated Time Duration */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-                Estimated Duration
+                Estimated Session
               </label>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sarah-primary)' }}>
-                {estimatedMinutes} minutes
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--sarah-primary)' }}>
+                {estimatedMinutes} mins
               </span>
             </div>
             <div style={{ display: 'flex', gap: '6px' }}>
-              {durationPresets.map((mins) => {
-                const isSelected = estimatedMinutes === mins;
-                return (
-                  <button
-                    key={mins}
-                    type="button"
-                    onClick={() => setEstimatedMinutes(mins)}
-                    className="btn-press"
-                    style={{
-                      flex: 1,
-                      padding: '8px 0',
-                      borderRadius: '12px',
-                      border: isSelected ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
-                      backgroundColor: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-surface-container-low)',
-                      color: isSelected ? '#FFFFFF' : 'var(--sarah-on-surface)',
-                      fontSize: '12px',
-                      fontWeight: isSelected ? 700 : 500,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {mins}m
-                  </button>
-                );
-              })}
+              {[15, 30, 45, 60, 90].map((mins) => (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => setEstimatedMinutes(mins)}
+                  className="btn-press"
+                  style={{
+                    flex: 1,
+                    padding: '6px 2px',
+                    borderRadius: '10px',
+                    border: estimatedMinutes === mins ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
+                    backgroundColor: estimatedMinutes === mins ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                    color: estimatedMinutes === mins ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {mins}m
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* 6. Description / Notes */}
+          {/* 6. Optional Description */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Notes (Optional)
+              Description / Notes (Optional)
             </label>
             <textarea
-              rows={2}
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add extra instructions, rubric details or resources..."
+              placeholder="e.g. Chapter 4 review, exercises 4.1 to 4.5"
               style={{
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: '12px',
                 border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '13px',
+                fontSize: '13.5px',
                 outline: 'none',
                 backgroundColor: 'var(--sarah-surface-container-low)',
                 color: 'var(--sarah-on-background)',
@@ -583,7 +585,7 @@ export const TaskModal: React.FC = () => {
               }}
             >
               <Check size={18} strokeWidth={2.5} />
-              <span>{editingTask ? 'Save Changes' : 'Add Task'}</span>
+              <span>{editingTask ? 'Save Changes' : 'Create Task'}</span>
             </button>
 
             {/* Delete button if editing */}
@@ -626,7 +628,7 @@ export const TaskModal: React.FC = () => {
                     }}
                   >
                     <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sarah-on-error-container)' }}>
-                      Are you sure?
+                      Delete this task?
                     </span>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button
