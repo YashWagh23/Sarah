@@ -256,12 +256,15 @@ export const ProfileScreen: React.FC = () => {
       </div>
 
       {/* Sarah Info & Branding */}
-      <div style={{ textAlign: 'center', padding: '10px 0', color: 'var(--sarah-secondary)', fontSize: '11px' }}>
+      <div style={{ textAlign: 'center', padding: '10px 0', color: 'var(--sarah-secondary)', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+        <div style={{ width: '36px', height: '36px', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(68, 80, 183, 0.15)' }}>
+          <img src="./sarah_logo.png" alt="Sarah Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontWeight: 700, color: 'var(--sarah-primary)' }}>
           <Sparkles size={13} />
           <span>Sarah • Personal College Assistant</span>
         </div>
-        <div style={{ marginTop: '2px' }}>
+        <div>
           Apple-Inspired Progressive Web App • Offline Ready
         </div>
       </div>
