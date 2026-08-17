@@ -8,8 +8,10 @@ import { SubjectsScreen } from './screens/SubjectsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { TasksProvider, useTasks } from './context/TasksContext';
 import { NotesProvider } from './context/NotesContext';
+import { RemindersProvider } from './context/RemindersContext';
 import { TaskModal } from './components/TaskModal';
 import { NoteModal } from './components/NoteModal';
+import { ReminderModal } from './components/ReminderModal';
 import { QuickAddMenu } from './components/QuickAddMenu';
 
 const AppContent: React.FC = () => {
@@ -46,6 +48,9 @@ const AppContent: React.FC = () => {
       {/* Global Note Modal (Add & Edit Bottom Sheet) */}
       <NoteModal />
 
+      {/* Global Reminder Modal (Add & Edit Bottom Sheet) */}
+      <ReminderModal />
+
       {/* Global Toast Notification */}
       {toastMessage && (
         <div
@@ -80,7 +85,9 @@ export const App: React.FC = () => {
   return (
     <TasksProvider>
       <NotesProvider>
-        <AppContent />
+        <RemindersProvider>
+          <AppContent />
+        </RemindersProvider>
       </NotesProvider>
     </TasksProvider>
   );

@@ -26,6 +26,18 @@ export interface AcademicNote {
   updatedAt: number;
 }
 
+export interface Reminder {
+  id: string;
+  title: string;
+  message?: string;
+  reminderAt: number; // Unix timestamp epoch in milliseconds
+  taskId?: string; // Optional linked task ID
+  completed: boolean;
+  dismissed: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export const SUBJECT_COLORS: Record<string, string> = {
   'Machine Learning': '#5E6AD2',
   'Operating Systems': '#10B981',
@@ -67,10 +79,21 @@ interface SarahPwaDB extends DBSchema {
       'by-createdAt': number;
     };
   };
+  reminders: {
+    key: string;
+    value: Reminder;
+    indexes: {
+      'by-reminderAt': number;
+      'by-dismissed': number;
+      'by-completed': number;
+      'by-taskId': string;
+      'by-createdAt': number;
+    };
+  };
 }
 
 const DB_NAME = 'sarah_pwa_db';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 let dbPromise: Promise<IDBPDatabase<SarahPwaDB>> | null = null;
 
@@ -93,13 +116,21 @@ export function getDB(): Promise<IDBPDatabase<SarahPwaDB>> {
           noteStore.createIndex('by-pinned', 'pinned');
           noteStore.createIndex('by-createdAt', 'createdAt');
         }
+        if (!db.objectStoreNames.contains('reminders')) {
+          const reminderStore = db.createObjectStore('reminders', { keyPath: 'id' });
+          reminderStore.createIndex('by-reminderAt', 'reminderAt');
+          reminderStore.createIndex('by-dismissed', 'dismissed');
+          reminderStore.createIndex('by-completed', 'completed');
+          reminderStore.createIndex('by-taskId', 'taskId');
+          reminderStore.createIndex('by-createdAt', 'createdAt');
+        }
       },
     });
   }
   return dbPromise;
 }
 
-// ─── Default Initial Tasks & Notes ───────────────────────────────────────────
+// ─── Default Initial Data ───────────────────────────────────────────────────
 
 function getTodayDateStr(): string {
   const d = new Date();
@@ -188,13 +219,32 @@ const INITIAL_SEED_NOTES: Omit<AcademicNote, 'id' | 'createdAt' | 'updatedAt'>[]
   }
 ];
 
+function getInitialReminders(): Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>[] {
+  const now = Date.now();
+  return [
+    {
+      title: 'Submit Lab Assignment PDF',
+      message: 'Upload compiled PDF to college portal before portal lock.',
+      reminderAt: now + 3600000 * 2, // 2 hours from now
+      completed: false,
+      dismissed: false
+    },
+    {
+      title: 'Review Chapter 4 Graph Algorithms',
+      message: 'Quick 15 min revision before tomorrow\'s morning lecture.',
+      reminderAt: now + 3600000 * 14, // tomorrow morning
+      completed: false,
+      dismissed: false
+    }
+  ];
+}
+
 // ─── Task CRUD Operations ───────────────────────────────────────────────────
 
 export async function getTasks(): Promise<Task[]> {
   const db = await getDB();
   let allTasks = await db.getAll('tasks');
 
-  // Seed default tasks if store is brand new
   if (allTasks.length === 0) {
     const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_tasks');
     if (!isSeeded) {
@@ -216,7 +266,6 @@ export async function getTasks(): Promise<Task[]> {
     }
   }
 
-  // Sort by createdAt descending
   return allTasks.sort((a, b) => b.createdAt - a.createdAt);
 }
 
@@ -272,7 +321,6 @@ export async function getNotes(): Promise<AcademicNote[]> {
   const db = await getDB();
   let allNotes = await db.getAll('notes');
 
-  // Seed default notes if store is brand new
   if (allNotes.length === 0) {
     const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_notes');
     if (!isSeeded) {
@@ -294,7 +342,6 @@ export async function getNotes(): Promise<AcademicNote[]> {
     }
   }
 
-  // Sort: Pinned first, then newest createdAt
   return allNotes.sort((a, b) => {
     if (a.pinned !== b.pinned) {
       return a.pinned ? -1 : 1;
@@ -346,6 +393,98 @@ export async function toggleNotePinned(id: string, pinned: boolean): Promise<Aca
     updatedAt: Date.now()
   };
   await db.put('notes', updated);
+  return updated;
+}
+
+// ─── Reminders CRUD Operations ──────────────────────────────────────────────
+
+export async function getReminders(): Promise<Reminder[]> {
+  const db = await getDB();
+  let allReminders = await db.getAll('reminders');
+
+  if (allReminders.length === 0) {
+    const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_reminders');
+    if (!isSeeded) {
+      const seeded: Reminder[] = [];
+      const now = Date.now();
+      const initialSeed = getInitialReminders();
+      for (let i = 0; i < initialSeed.length; i++) {
+        const item = initialSeed[i];
+        const reminder: Reminder = {
+          ...item,
+          id: `reminder_${now}_${i + 1}`,
+          createdAt: now - (initialSeed.length - i) * 60000,
+          updatedAt: now - (initialSeed.length - i) * 60000
+        };
+        await db.put('reminders', reminder);
+        seeded.push(reminder);
+      }
+      await db.put('key_val', true, 'sarah_has_seeded_initial_reminders');
+      allReminders = seeded;
+    }
+  }
+
+  // Sort chronologically by reminderAt ascending
+  return allReminders.sort((a, b) => a.reminderAt - b.reminderAt);
+}
+
+export async function getReminder(id: string): Promise<Reminder | undefined> {
+  const db = await getDB();
+  return db.get('reminders', id);
+}
+
+export async function addReminder(reminderData: Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>): Promise<Reminder> {
+  const db = await getDB();
+  const now = Date.now();
+  const newReminder: Reminder = {
+    ...reminderData,
+    id: `reminder_${now}_${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: now,
+    updatedAt: now
+  };
+  await db.put('reminders', newReminder);
+  return newReminder;
+}
+
+export async function updateReminder(reminder: Reminder): Promise<Reminder> {
+  const db = await getDB();
+  const updated: Reminder = {
+    ...reminder,
+    updatedAt: Date.now()
+  };
+  await db.put('reminders', updated);
+  return updated;
+}
+
+export async function deleteReminder(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('reminders', id);
+}
+
+export async function dismissReminder(id: string): Promise<Reminder | undefined> {
+  const db = await getDB();
+  const existing = await db.get('reminders', id);
+  if (!existing) return undefined;
+  const updated: Reminder = {
+    ...existing,
+    dismissed: true,
+    updatedAt: Date.now()
+  };
+  await db.put('reminders', updated);
+  return updated;
+}
+
+export async function snoozeReminder(id: string, newTimeEpochMs: number): Promise<Reminder | undefined> {
+  const db = await getDB();
+  const existing = await db.get('reminders', id);
+  if (!existing) return undefined;
+  const updated: Reminder = {
+    ...existing,
+    reminderAt: newTimeEpochMs,
+    dismissed: false,
+    updatedAt: Date.now()
+  };
+  await db.put('reminders', updated);
   return updated;
 }
 

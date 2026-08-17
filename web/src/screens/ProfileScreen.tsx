@@ -4,12 +4,17 @@ import {
   Database, 
   Share2, 
   PlusSquare, 
-  CheckCircle2 
+  CheckCircle2, 
+  Bell,
+  BellRing,
+  AlertTriangle
 } from 'lucide-react';
 import { initializeAndTrackPersistence, type PersistenceStatus } from '../lib/db';
+import { useReminders } from '../context/RemindersContext';
 
 export const ProfileScreen: React.FC = () => {
   const [persistence, setPersistence] = useState<PersistenceStatus | null>(null);
+  const { notificationPermission, requestNotificationPermission } = useReminders();
 
   useEffect(() => {
     initializeAndTrackPersistence().then(setPersistence);
@@ -19,7 +24,7 @@ export const ProfileScreen: React.FC = () => {
     <div 
       className="animate-fade-in"
       style={{
-        padding: '16px 18px 80px 18px',
+        padding: '16px 18px 90px 18px',
         display: 'flex',
         flexDirection: 'column',
         gap: '18px'
@@ -72,6 +77,85 @@ export const ProfileScreen: React.FC = () => {
             Semester 6 • College Schedule Active
           </div>
         </div>
+      </div>
+
+      {/* Browser Notifications & Reminders Status Card */}
+      <div
+        className="surface-card"
+        style={{
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Bell size={17} color="var(--sarah-primary)" />
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
+              Notifications & Alerts
+            </span>
+          </div>
+
+          {/* Status Chip */}
+          {notificationPermission === 'granted' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>
+              <CheckCircle2 size={13} />
+              <span>Enabled</span>
+            </div>
+          )}
+          {notificationPermission === 'denied' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--sarah-error)', fontWeight: 600 }}>
+              <AlertTriangle size={13} />
+              <span>Blocked</span>
+            </div>
+          )}
+          {notificationPermission === 'default' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--sarah-secondary)', fontWeight: 500 }}>
+              <span>Not Enabled</span>
+            </div>
+          )}
+          {notificationPermission === 'unsupported' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--sarah-secondary)', fontWeight: 500 }}>
+              <span>Unsupported</span>
+            </div>
+          )}
+        </div>
+
+        <p style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', lineHeight: 1.45, margin: 0 }}>
+          Sarah delivers in-app alerts and browser notifications when reminder times arrive while the app is active.
+        </p>
+
+        {notificationPermission === 'default' && (
+          <button
+            type="button"
+            onClick={() => requestNotificationPermission()}
+            className="btn-press"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              backgroundColor: 'rgba(68, 80, 183, 0.1)',
+              color: 'var(--sarah-primary)',
+              border: '1px solid rgba(68, 80, 183, 0.2)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <BellRing size={15} />
+            <span>Enable Browser Notifications</span>
+          </button>
+        )}
+
+        {notificationPermission === 'granted' && (
+          <div style={{ fontSize: '11.5px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-low)', padding: '8px 12px', borderRadius: '10px' }}>
+            ✓ System notifications are authorized and ready.
+          </div>
+        )}
       </div>
 
       {/* iPhone Safari Install Guide Card */}
@@ -151,11 +235,11 @@ export const ProfileScreen: React.FC = () => {
         <div style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Database:</span>
-            <span style={{ fontWeight: 600, color: 'var(--sarah-on-background)' }}>sarah_pwa_db (v1)</span>
+            <span style={{ fontWeight: 600, color: 'var(--sarah-on-background)' }}>sarah_pwa_db (v4)</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Object Store:</span>
-            <span style={{ fontWeight: 600, color: 'var(--sarah-on-background)' }}>key_val</span>
+            <span>Stores:</span>
+            <span style={{ fontWeight: 600, color: 'var(--sarah-on-background)' }}>tasks, notes, reminders, key_val</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Session Reload Count:</span>
@@ -167,7 +251,7 @@ export const ProfileScreen: React.FC = () => {
       {/* Sarah Info & Milestone Badge */}
       <div style={{ textAlign: 'center', padding: '10px 0', color: 'var(--sarah-secondary)', fontSize: '11px' }}>
         <div style={{ fontWeight: 600, color: 'var(--sarah-primary)' }}>
-          Sarah PWA • Milestone 1 Foundation
+          Sarah PWA • Milestone 4 Reminders & Notifications
         </div>
         <div style={{ marginTop: '2px' }}>
           Separate Web Client • Native KMP Core Untouched

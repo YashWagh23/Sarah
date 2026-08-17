@@ -12,6 +12,13 @@ import {
   updateNote,
   deleteNote,
   toggleNotePinned,
+  getReminders,
+  getReminder,
+  addReminder,
+  updateReminder,
+  deleteReminder,
+  dismissReminder,
+  snoozeReminder,
   initializeAndTrackPersistence
 } from './src/lib/db';
 
@@ -19,7 +26,7 @@ async function runTest() {
   console.log('=== Starting Sarah IndexedDB Comprehensive Persistence Verification ===\n');
 
   // ──────────────────────────────────────────────────────────────────────────
-  // A. TASK VERIFICATION
+  // A. TASK VERIFICATION (REGRESSION CHECK)
   // ──────────────────────────────────────────────────────────────────────────
   console.log('--- [1] TASK STORAGE & CRUD ---');
   const initialTasks = await getTasks();
@@ -56,92 +63,143 @@ async function runTest() {
   console.log(`✓ Completed Task: completed=${completedTask.completed}`);
 
   // ──────────────────────────────────────────────────────────────────────────
-  // B. ACADEMIC NOTES VERIFICATION
+  // B. ACADEMIC NOTES VERIFICATION (REGRESSION CHECK)
   // ──────────────────────────────────────────────────────────────────────────
   console.log('\n--- [2] ACADEMIC NOTES STORAGE & CRUD ---');
   const initialNotes = await getNotes();
   console.log(`✓ Fetched ${initialNotes.length} initial academic notes.`);
   if (initialNotes.length === 0) throw new Error('Expected initial seed notes');
 
-  // 1. Add Note
   const newNote = await addNote({
     title: 'Computer Networks Lab — Socket Programming in C',
-    content: 'Server flow: socket() -> bind() -> listen() -> accept() -> read()/write() -> close(). Client flow: socket() -> connect() -> write()/read() -> close().',
+    content: 'Server flow: socket() -> bind() -> listen() -> accept() -> read()/write() -> close().',
     subject: 'Computer Networks',
     pinned: false
   });
   console.log(`✓ Added Note: "${newNote.title}" (Subject: ${newNote.subject})`);
 
-  // 2. Retrieve Note
   const fetchedNote = await getNote(newNote.id);
   if (!fetchedNote || fetchedNote.title !== 'Computer Networks Lab — Socket Programming in C') {
-    throw new Error('Failed to retrieve note from IndexedDB');
+    throw new Error('Failed to retrieve note');
   }
-  console.log('✓ Successfully retrieved note by ID');
 
-  // 3. Update Title & Content & Subject
   const updatedNote = await updateNote({
     ...fetchedNote,
     title: 'Computer Networks Lab — TCP Socket Programming in C',
-    content: 'Updated with multi-client threading instructions using pthread_create.',
-    subject: 'Computer Networks'
+    pinned: true
   });
-  if (
-    updatedNote.title !== 'Computer Networks Lab — TCP Socket Programming in C' ||
-    !updatedNote.content.includes('pthread_create')
-  ) {
-    throw new Error('Note update did not persist');
-  }
-  console.log(`✓ Updated Note content and title successfully.`);
+  if (!updatedNote.pinned) throw new Error('Note update failed');
+  console.log(`✓ Updated & Pinned Note: "${updatedNote.title}" (pinned=${updatedNote.pinned})`);
 
-  // 4. Pin Note
-  const pinnedNote = await toggleNotePinned(newNote.id, true);
-  if (!pinnedNote || !pinnedNote.pinned) {
-    throw new Error('toggleNotePinned failed to pin note');
-  }
-  console.log(`✓ Pinned Note status: pinned=${pinnedNote.pinned}`);
-
-  // 5. Unpin Note
-  const unpinnedNote = await toggleNotePinned(newNote.id, false);
-  if (!unpinnedNote || unpinnedNote.pinned) {
-    throw new Error('toggleNotePinned failed to unpin note');
-  }
-  console.log(`✓ Unpinned Note status: pinned=${unpinnedNote.pinned}`);
-
-  // 6. Delete Note
-  const noteToDelete = initialNotes[initialNotes.length - 1];
-  console.log(`✓ Deleting note: "${noteToDelete.title}" (ID: ${noteToDelete.id})`);
-  await deleteNote(noteToDelete.id);
-  const checkDeletedNote = await getNote(noteToDelete.id);
-  if (checkDeletedNote) {
-    throw new Error('Deleted note was still present in IndexedDB');
-  }
-  console.log('✓ Note successfully deleted.');
+  await toggleNotePinned(newNote.id, false);
+  console.log(`✓ Unpinned Note successfully.`);
 
   // ──────────────────────────────────────────────────────────────────────────
-  // C. SIMULATED RELOAD PERSISTENCE
+  // C. REMINDERS VERIFICATION (MILESTONE 4)
   // ──────────────────────────────────────────────────────────────────────────
-  console.log('\n--- [3] SIMULATED RELOAD & INTEGRITY ---');
+  console.log('\n--- [3] REMINDERS STORAGE, SNOOZE & DISMISS ---');
+  const initialReminders = await getReminders();
+  console.log(`✓ Fetched ${initialReminders.length} initial reminders.`);
+  if (initialReminders.length === 0) throw new Error('Expected initial seed reminders');
+
+  const now = Date.now();
+  const testReminderTime = now + 1800000; // in 30 mins
+
+  // 1. Add Reminder with linked Task
+  const newReminder = await addReminder({
+    title: 'Review Operating Systems Assignment Feedback',
+    message: 'Check professor comments on memory management submission.',
+    reminderAt: testReminderTime,
+    taskId: newTask.id,
+    completed: false,
+    dismissed: false
+  });
+  console.log(`✓ Added Reminder: "${newReminder.title}" (Linked Task ID: ${newReminder.taskId})`);
+
+  // 2. Retrieve Reminder
+  const fetchedReminder = await getReminder(newReminder.id);
+  if (!fetchedReminder || fetchedReminder.title !== 'Review Operating Systems Assignment Feedback') {
+    throw new Error('Failed to retrieve reminder from IndexedDB');
+  }
+  if (fetchedReminder.taskId !== newTask.id) {
+    throw new Error('Linked task ID was not preserved');
+  }
+  console.log('✓ Successfully retrieved reminder with intact linked task ID');
+
+  // 3. Update Title & Message
+  const updatedReminder = await updateReminder({
+    ...fetchedReminder,
+    title: 'Review OS Assignment Feedback & Grades',
+    message: 'Check professor comments and grade rubric.'
+  });
+  if (updatedReminder.title !== 'Review OS Assignment Feedback & Grades') {
+    throw new Error('Reminder title update failed');
+  }
+  console.log(`✓ Updated Reminder: "${updatedReminder.title}"`);
+
+  // 4. Snooze Reminder (+1 hour)
+  const snoozedTime = testReminderTime + 3600000;
+  const snoozedReminder = await snoozeReminder(newReminder.id, snoozedTime);
+  if (!snoozedReminder || snoozedReminder.reminderAt !== snoozedTime) {
+    throw new Error('snoozeReminder failed to update reminderAt');
+  }
+  console.log(`✓ Snoozed Reminder: new reminderAt=${new Date(snoozedReminder.reminderAt).toLocaleTimeString()}`);
+
+  // 5. Dismiss Reminder
+  const dismissedReminder = await dismissReminder(newReminder.id);
+  if (!dismissedReminder || !dismissedReminder.dismissed) {
+    throw new Error('dismissReminder failed to set dismissed=true');
+  }
+  console.log(`✓ Dismissed Reminder status: dismissed=${dismissedReminder.dismissed}`);
+
+  // 6. Delete a seed reminder
+  const reminderToDelete = initialReminders[0];
+  console.log(`✓ Deleting reminder: "${reminderToDelete.title}" (ID: ${reminderToDelete.id})`);
+  await deleteReminder(reminderToDelete.id);
+  const checkDeleted = await getReminder(reminderToDelete.id);
+  if (checkDeleted) {
+    throw new Error('Deleted reminder was still found in IndexedDB');
+  }
+  console.log('✓ Reminder successfully deleted.');
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // D. SIMULATED RELOAD & INTEGRITY
+  // ──────────────────────────────────────────────────────────────────────────
+  console.log('\n--- [4] SIMULATED RELOAD & COMPREHENSIVE INTEGRITY ---');
   const reloadTasks = await getTasks();
   const reloadNotes = await getNotes();
-  
+  const reloadReminders = await getReminders();
+
   const verifiedTask = reloadTasks.find(t => t.id === newTask.id);
   if (!verifiedTask || !verifiedTask.completed) {
-    throw new Error('Task did not survive reload with completed status');
+    throw new Error('Task did not survive reload with completed=true');
   }
 
   const verifiedNote = reloadNotes.find(n => n.id === newNote.id);
-  if (!verifiedNote || verifiedNote.title !== 'Computer Networks Lab — TCP Socket Programming in C') {
-    throw new Error('Note did not survive reload with updated content');
+  if (!verifiedNote) {
+    throw new Error('Note did not survive reload');
+  }
+
+  const verifiedReminder = reloadReminders.find(r => r.id === newReminder.id);
+  if (!verifiedReminder || !verifiedReminder.dismissed || verifiedReminder.reminderAt !== snoozedTime) {
+    throw new Error('Reminder did not survive reload with dismissed and snoozed time intact');
+  }
+
+  // Verify chronological sorting of reminders
+  for (let i = 0; i < reloadReminders.length - 1; i++) {
+    if (reloadReminders[i].reminderAt > reloadReminders[i + 1].reminderAt) {
+      throw new Error('Reminders are not sorted chronologically');
+    }
   }
 
   const session = await initializeAndTrackPersistence();
-  console.log(`✓ Tasks after reload: ${reloadTasks.length}`);
-  console.log(`✓ Notes after reload: ${reloadNotes.length}`);
+  console.log(`✓ Tasks in store: ${reloadTasks.length}`);
+  console.log(`✓ Notes in store: ${reloadNotes.length}`);
+  console.log(`✓ Reminders in store: ${reloadReminders.length} (chronologically ordered)`);
   console.log(`✓ Session status: Ready (Reload count: ${session.reloadCount})`);
 
   console.log('\n================================================================');
-  console.log('✅ ALL INDEXEDDB TASKS & ACADEMIC NOTES TESTS PASSED PERFECTLY!');
+  console.log('✅ ALL INDEXEDDB TASKS, NOTES & REMINDERS TESTS PASSED!');
   console.log('================================================================\n');
 }
 

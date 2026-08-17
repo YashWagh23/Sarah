@@ -6,15 +6,18 @@ import {
   Plus, 
   Flame, 
   BookOpen, 
-  Coffee,
-  Check,
-  Pin,
-  ArrowRight
+  Coffee, 
+  Check, 
+  Pin, 
+  ArrowRight,
+  Bell
 } from 'lucide-react';
 import { useTasks } from '../context/TasksContext';
 import { useNotes } from '../context/NotesContext';
+import { useReminders } from '../context/RemindersContext';
 import { TaskCard } from '../components/TaskCard';
 import { NoteCard } from '../components/NoteCard';
+import { ReminderCard } from '../components/ReminderCard';
 import { SUBJECT_COLORS } from '../lib/db';
 
 interface TodayScreenProps {
@@ -42,6 +45,15 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
     removeNote
   } = useNotes();
 
+  const {
+    activeReminders,
+    dismiss,
+    snooze,
+    openEditReminderModal,
+    openCreateReminderModal,
+    removeReminder
+  } = useReminders();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -55,6 +67,8 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
 
   // Take up to 3 pinned notes for Today preview
   const previewPinnedNotes = pinnedNotes.slice(0, 3);
+  // Take top active reminders for Today
+  const upcomingRemindersPreview = activeReminders.slice(0, 4);
 
   return (
     <div 
@@ -423,7 +437,62 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         </section>
       )}
 
-      {/* 7. Pinned Academic Notes Section (Rendered only if pinned notes exist) */}
+      {/* 7. Upcoming Reminders Section (Live & Interactive) */}
+      {upcomingRemindersPreview.length > 0 && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Bell size={13} color="var(--sarah-primary)" />
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--sarah-primary)'
+                }}
+              >
+                Upcoming Reminders ({activeReminders.length})
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => openCreateReminderModal()}
+              style={{
+                background: 'none',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: 'var(--sarah-primary)',
+                cursor: 'pointer',
+                padding: '2px 4px'
+              }}
+            >
+              <Plus size={13} />
+              <span>Add Reminder</span>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {upcomingRemindersPreview.map((reminder) => (
+              <ReminderCard
+                key={reminder.id}
+                reminder={reminder}
+                onDismiss={dismiss}
+                onSnooze={snooze}
+                onEdit={openEditReminderModal}
+                onDelete={removeReminder}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 8. Pinned Academic Notes Section (Rendered only if pinned notes exist) */}
       {previewPinnedNotes.length > 0 && (
         <section style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>

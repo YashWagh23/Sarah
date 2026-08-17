@@ -7,10 +7,12 @@ import {
 } from 'lucide-react';
 import { useTasks } from '../context/TasksContext';
 import { useNotes } from '../context/NotesContext';
+import { useReminders } from '../context/RemindersContext';
 
 export const QuickAddMenu: React.FC = () => {
-  const { isQuickAddOpen, openQuickAdd, closeQuickAdd, openCreateTaskModal, showToast } = useTasks();
+  const { isQuickAddOpen, openQuickAdd, closeQuickAdd, openCreateTaskModal } = useTasks();
   const { openCreateNoteModal } = useNotes();
+  const { openCreateReminderModal } = useReminders();
 
   const handleCreateTask = () => {
     closeQuickAdd();
@@ -22,9 +24,9 @@ export const QuickAddMenu: React.FC = () => {
     openCreateNoteModal();
   };
 
-  const handlePlaceholderReminder = () => {
+  const handleSetReminder = () => {
     closeQuickAdd();
-    showToast('⏰ Reminder scheduling coming in Milestone 4');
+    openCreateReminderModal();
   };
 
   return (
@@ -142,10 +144,10 @@ export const QuickAddMenu: React.FC = () => {
             </div>
           </button>
 
-          {/* Action 3: Reminder (Placeholder) */}
+          {/* Action 3: Reminder */}
           <button
             type="button"
-            onClick={handlePlaceholderReminder}
+            onClick={handleSetReminder}
             className="btn-press"
             style={{
               display: 'flex',
@@ -167,8 +169,8 @@ export const QuickAddMenu: React.FC = () => {
                 width: '28px',
                 height: '28px',
                 borderRadius: '8px',
-                backgroundColor: 'var(--sarah-surface-container-high)',
-                color: 'var(--sarah-secondary)',
+                backgroundColor: 'rgba(68, 80, 183, 0.12)',
+                color: 'var(--sarah-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -177,8 +179,8 @@ export const QuickAddMenu: React.FC = () => {
               <Bell size={16} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>Reminder</span>
-              <span style={{ fontSize: '9.5px', color: 'var(--sarah-secondary)', fontWeight: 400 }}>Milestone 3</span>
+              <span>Set Reminder</span>
+              <span style={{ fontSize: '9.5px', color: 'var(--sarah-secondary)', fontWeight: 400 }}>Time Alert</span>
             </div>
           </button>
         </div>
