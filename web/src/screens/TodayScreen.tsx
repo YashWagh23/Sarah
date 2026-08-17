@@ -1,3 +1,4 @@
+import React from 'react';
 import { 
   Sparkles, 
   Clock, 
@@ -6,13 +7,21 @@ import {
   Flame, 
   BookOpen, 
   Coffee,
-  Check
+  Check,
+  Pin,
+  ArrowRight
 } from 'lucide-react';
 import { useTasks } from '../context/TasksContext';
+import { useNotes } from '../context/NotesContext';
 import { TaskCard } from '../components/TaskCard';
+import { NoteCard } from '../components/NoteCard';
 import { SUBJECT_COLORS } from '../lib/db';
 
-export const TodayScreen: React.FC = () => {
+interface TodayScreenProps {
+  onNavigateToNotes?: () => void;
+}
+
+export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) => {
   const { 
     activeTasks, 
     completedTasks, 
@@ -25,6 +34,14 @@ export const TodayScreen: React.FC = () => {
     openCreateTaskModal 
   } = useTasks();
 
+  const {
+    pinnedNotes,
+    notes,
+    openEditNoteModal,
+    togglePin,
+    removeNote
+  } = useNotes();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -35,6 +52,9 @@ export const TodayScreen: React.FC = () => {
   const todayStr = new Date().toISOString().split('T')[0];
   const dueTodayCount = activeTasks.filter(t => t.deadline <= todayStr).length;
   const totalEstMinutes = activeTasks.reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
+
+  // Take up to 3 pinned notes for Today preview
+  const previewPinnedNotes = pinnedNotes.slice(0, 3);
 
   return (
     <div 
@@ -397,6 +417,63 @@ export const TodayScreen: React.FC = () => {
                 task={t}
                 onToggle={toggleTaskCompletion}
                 onEdit={openEditTaskModal}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 7. Pinned Academic Notes Section (Rendered only if pinned notes exist) */}
+      {previewPinnedNotes.length > 0 && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Pin size={13} fill="var(--sarah-tertiary)" color="var(--sarah-tertiary)" />
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--sarah-tertiary)'
+                }}
+              >
+                Pinned Academic Notes ({pinnedNotes.length})
+              </span>
+            </div>
+
+            {onNavigateToNotes && (
+              <button
+                type="button"
+                onClick={onNavigateToNotes}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  color: 'var(--sarah-primary)',
+                  cursor: 'pointer',
+                  padding: '2px 4px'
+                }}
+              >
+                <span>View All ({notes.length})</span>
+                <ArrowRight size={12} />
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {previewPinnedNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                compact={true}
+                onEdit={openEditNoteModal}
+                onTogglePin={togglePin}
+                onDelete={removeNote}
               />
             ))}
           </div>

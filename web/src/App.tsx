@@ -7,7 +7,9 @@ import { NotesScreen } from './screens/NotesScreen';
 import { SubjectsScreen } from './screens/SubjectsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { TasksProvider, useTasks } from './context/TasksContext';
+import { NotesProvider } from './context/NotesContext';
 import { TaskModal } from './components/TaskModal';
+import { NoteModal } from './components/NoteModal';
 import { QuickAddMenu } from './components/QuickAddMenu';
 
 const AppContent: React.FC = () => {
@@ -17,7 +19,7 @@ const AppContent: React.FC = () => {
   const renderActiveScreen = () => {
     switch (activeTab) {
       case 'today':
-        return <TodayScreen key="today" />;
+        return <TodayScreen key="today" onNavigateToNotes={() => setActiveTab('notes')} />;
       case 'tasks':
         return <TasksScreen key="tasks" />;
       case 'notes':
@@ -27,7 +29,7 @@ const AppContent: React.FC = () => {
       case 'profile':
         return <ProfileScreen key="profile" />;
       default:
-        return <TodayScreen key="today" />;
+        return <TodayScreen key="today" onNavigateToNotes={() => setActiveTab('notes')} />;
     }
   };
 
@@ -40,6 +42,9 @@ const AppContent: React.FC = () => {
 
       {/* Global Task Modal (Add & Edit Bottom Sheet) */}
       <TaskModal />
+
+      {/* Global Note Modal (Add & Edit Bottom Sheet) */}
+      <NoteModal />
 
       {/* Global Toast Notification */}
       {toastMessage && (
@@ -74,7 +79,9 @@ const AppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <TasksProvider>
-      <AppContent />
+      <NotesProvider>
+        <AppContent />
+      </NotesProvider>
     </TasksProvider>
   );
 };

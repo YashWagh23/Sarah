@@ -16,6 +16,16 @@ export interface Task {
   updatedAt: number;
 }
 
+export interface AcademicNote {
+  id: string;
+  title: string;
+  content: string;
+  subject: string;
+  pinned: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export const SUBJECT_COLORS: Record<string, string> = {
   'Machine Learning': '#5E6AD2',
   'Operating Systems': '#10B981',
@@ -48,10 +58,19 @@ interface SarahPwaDB extends DBSchema {
       'by-priority': string;
     };
   };
+  notes: {
+    key: string;
+    value: AcademicNote;
+    indexes: {
+      'by-subject': string;
+      'by-pinned': number;
+      'by-createdAt': number;
+    };
+  };
 }
 
 const DB_NAME = 'sarah_pwa_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBPDatabase<SarahPwaDB>> | null = null;
 
@@ -68,13 +87,19 @@ export function getDB(): Promise<IDBPDatabase<SarahPwaDB>> {
           taskStore.createIndex('by-deadline', 'deadline');
           taskStore.createIndex('by-priority', 'priority');
         }
+        if (!db.objectStoreNames.contains('notes')) {
+          const noteStore = db.createObjectStore('notes', { keyPath: 'id' });
+          noteStore.createIndex('by-subject', 'subject');
+          noteStore.createIndex('by-pinned', 'pinned');
+          noteStore.createIndex('by-createdAt', 'createdAt');
+        }
       },
     });
   }
   return dbPromise;
 }
 
-// ─── Default Initial Tasks ───────────────────────────────────────────────────
+// ─── Default Initial Tasks & Notes ───────────────────────────────────────────
 
 function getTodayDateStr(): string {
   const d = new Date();
@@ -133,6 +158,33 @@ const INITIAL_SEED_TASKS: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>[] = [
     priority: 'later',
     estimatedMinutes: 60,
     completed: false
+  }
+];
+
+const INITIAL_SEED_NOTES: Omit<AcademicNote, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  {
+    title: 'ML Lecture 8 — Backpropagation & Gradient Descent',
+    content: 'Key equations: chain rule applied to multi-layer perceptron cost function dE/dW = dE/dOut * dOut/dNet * dNet/dW. Don\'t forget to normalize input feature vectors.',
+    subject: 'Machine Learning',
+    pinned: true
+  },
+  {
+    title: 'OS Process Synchronization & Semaphores',
+    content: 'Dining philosophers problem: prevent deadlock by requiring odd philosophers to pick left fork first and even philosophers right fork first. Compare mutex vs binary semaphore.',
+    subject: 'Operating Systems',
+    pinned: true
+  },
+  {
+    title: 'Algorithms — Dijkstra vs Bellman-Ford',
+    content: 'Dijkstra: greedy, O((V+E)logV) with Fibonacci heap, cannot handle negative weight edges. Bellman-Ford: dynamic programming, O(V*E), detects negative weight cycles.',
+    subject: 'Algorithms',
+    pinned: false
+  },
+  {
+    title: 'DBMS ACID Properties & Normalization Rules',
+    content: '1NF (atomic attributes), 2NF (no partial dependency), 3NF (no transitive dependency), BCNF (every determinant is a candidate key). Isolation levels: Read Uncommitted, Read Committed, Repeatable Read, Serializable.',
+    subject: 'Database Systems',
+    pinned: false
   }
 ];
 
@@ -214,7 +266,90 @@ export async function completeTask(id: string, completed: boolean): Promise<Task
   return updated;
 }
 
-// ─── Diagnostics & Legacy Persistence Status ────────────────────────────────
+// ─── Academic Notes CRUD Operations ─────────────────────────────────────────
+
+export async function getNotes(): Promise<AcademicNote[]> {
+  const db = await getDB();
+  let allNotes = await db.getAll('notes');
+
+  // Seed default notes if store is brand new
+  if (allNotes.length === 0) {
+    const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_notes');
+    if (!isSeeded) {
+      const seededNotes: AcademicNote[] = [];
+      const now = Date.now();
+      for (let i = 0; i < INITIAL_SEED_NOTES.length; i++) {
+        const item = INITIAL_SEED_NOTES[i];
+        const note: AcademicNote = {
+          ...item,
+          id: `note_${now}_${i + 1}`,
+          createdAt: now - (INITIAL_SEED_NOTES.length - i) * 60000,
+          updatedAt: now - (INITIAL_SEED_NOTES.length - i) * 60000
+        };
+        await db.put('notes', note);
+        seededNotes.push(note);
+      }
+      await db.put('key_val', true, 'sarah_has_seeded_initial_notes');
+      allNotes = seededNotes;
+    }
+  }
+
+  // Sort: Pinned first, then newest createdAt
+  return allNotes.sort((a, b) => {
+    if (a.pinned !== b.pinned) {
+      return a.pinned ? -1 : 1;
+    }
+    return b.createdAt - a.createdAt;
+  });
+}
+
+export async function getNote(id: string): Promise<AcademicNote | undefined> {
+  const db = await getDB();
+  return db.get('notes', id);
+}
+
+export async function addNote(noteData: Omit<AcademicNote, 'id' | 'createdAt' | 'updatedAt'>): Promise<AcademicNote> {
+  const db = await getDB();
+  const now = Date.now();
+  const newNote: AcademicNote = {
+    ...noteData,
+    id: `note_${now}_${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: now,
+    updatedAt: now
+  };
+  await db.put('notes', newNote);
+  return newNote;
+}
+
+export async function updateNote(note: AcademicNote): Promise<AcademicNote> {
+  const db = await getDB();
+  const updated: AcademicNote = {
+    ...note,
+    updatedAt: Date.now()
+  };
+  await db.put('notes', updated);
+  return updated;
+}
+
+export async function deleteNote(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('notes', id);
+}
+
+export async function toggleNotePinned(id: string, pinned: boolean): Promise<AcademicNote | undefined> {
+  const db = await getDB();
+  const existing = await db.get('notes', id);
+  if (!existing) return undefined;
+  const updated: AcademicNote = {
+    ...existing,
+    pinned,
+    updatedAt: Date.now()
+  };
+  await db.put('notes', updated);
+  return updated;
+}
+
+// ─── Diagnostics & Session Persistence ──────────────────────────────────────
 
 const TEST_KEY = 'sarah_persistence_test_val';
 const RELOAD_COUNT_KEY = 'sarah_session_reload_count';
@@ -230,19 +365,16 @@ export interface PersistenceStatus {
 export async function initializeAndTrackPersistence(): Promise<PersistenceStatus> {
   const db = await getDB();
   
-  // 1. Get or initialize reload counter
   const existingCount = (await db.get('key_val', RELOAD_COUNT_KEY)) as number | undefined;
   const newCount = (existingCount ?? 0) + 1;
   await db.put('key_val', newCount, RELOAD_COUNT_KEY);
 
-  // 2. Get or set default test value
   let testVal = (await db.get('key_val', TEST_KEY)) as string | undefined;
   if (!testVal) {
     testVal = 'Sarah PWA Local Storage Active';
     await db.put('key_val', testVal, TEST_KEY);
   }
 
-  // 3. Set timestamp
   const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   await db.put('key_val', nowStr, LAST_SAVED_KEY);
 

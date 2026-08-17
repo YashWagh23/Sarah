@@ -6,23 +6,25 @@ import {
   Bell 
 } from 'lucide-react';
 import { useTasks } from '../context/TasksContext';
+import { useNotes } from '../context/NotesContext';
 
 export const QuickAddMenu: React.FC = () => {
   const { isQuickAddOpen, openQuickAdd, closeQuickAdd, openCreateTaskModal, showToast } = useTasks();
+  const { openCreateNoteModal } = useNotes();
 
   const handleCreateTask = () => {
     closeQuickAdd();
     openCreateTaskModal();
   };
 
-  const handlePlaceholderNote = () => {
+  const handleCaptureNote = () => {
     closeQuickAdd();
-    showToast('📝 Note capture coming in Milestone 3');
+    openCreateNoteModal();
   };
 
   const handlePlaceholderReminder = () => {
     closeQuickAdd();
-    showToast('⏰ Reminder scheduling coming in Milestone 3');
+    showToast('⏰ Reminder scheduling coming in Milestone 4');
   };
 
   return (
@@ -100,10 +102,10 @@ export const QuickAddMenu: React.FC = () => {
             <span>New Task</span>
           </button>
 
-          {/* Action 2: Note (Placeholder) */}
+          {/* Action 2: Note */}
           <button
             type="button"
-            onClick={handlePlaceholderNote}
+            onClick={handleCaptureNote}
             className="btn-press"
             style={{
               display: 'flex',
@@ -125,8 +127,8 @@ export const QuickAddMenu: React.FC = () => {
                 width: '28px',
                 height: '28px',
                 borderRadius: '8px',
-                backgroundColor: 'var(--sarah-surface-container-high)',
-                color: 'var(--sarah-secondary)',
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                color: 'var(--sarah-tertiary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -135,8 +137,8 @@ export const QuickAddMenu: React.FC = () => {
               <FileText size={16} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>New Note</span>
-              <span style={{ fontSize: '9.5px', color: 'var(--sarah-secondary)', fontWeight: 400 }}>Milestone 3</span>
+              <span>Capture Note</span>
+              <span style={{ fontSize: '9.5px', color: 'var(--sarah-secondary)', fontWeight: 400 }}>Classroom Notes</span>
             </div>
           </button>
 
