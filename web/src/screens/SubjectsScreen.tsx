@@ -419,7 +419,7 @@ export const SubjectsScreen: React.FC = () => {
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              No Subjects Added
+              No subjects yet.
             </div>
             <div style={{ fontSize: '12px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
               Add your courses to organize tasks, academic notes, and reminders.
@@ -444,7 +444,7 @@ export const SubjectsScreen: React.FC = () => {
             }}
           >
             <Plus size={15} />
-            <span>Create First Subject</span>
+            <span>New Subject</span>
           </button>
         </div>
       )}

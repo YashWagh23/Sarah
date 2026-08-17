@@ -71,11 +71,6 @@ export const SUBJECT_COLORS: Record<string, string> = {
 };
 
 export const DEFAULT_SUBJECTS = [
-  'Machine Learning',
-  'Operating Systems',
-  'Algorithms',
-  'Computer Networks',
-  'Database Systems',
   'General'
 ];
 
@@ -166,177 +161,96 @@ export function getDB(): Promise<IDBPDatabase<SarahPwaDB>> {
   return dbPromise;
 }
 
-// ─── Default Initial Data ───────────────────────────────────────────────────
+// ─── Targeted Production Demo Data Cleanup Migration ────────────────────────
 
-function getTodayDateStr(): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+const DEMO_TASK_TITLES = new Set([
+  'Complete ML Assignment 3',
+  'Review OS Synchronization Notes',
+  'Read Graph Algorithms Chapter 4',
+  'Configure TCP Socket Client Lab'
+]);
 
-function getTomorrowDateStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+const DEMO_NOTE_TITLES = new Set([
+  'ML Lecture 8 — Backpropagation & Gradient Descent',
+  'OS Process Synchronization & Semaphores',
+  'Algorithms — Dijkstra vs Bellman-Ford',
+  'DBMS ACID Properties & Normalization Rules'
+]);
 
-const INITIAL_SEED_SUBJECTS: Omit<Subject, 'id' | 'createdAt' | 'updatedAt'>[] = [
-  {
-    name: 'Machine Learning',
-    code: 'CS 401',
-    color: '#5E6AD2'
-  },
-  {
-    name: 'Operating Systems',
-    code: 'CS 302',
-    color: '#10B981'
-  },
-  {
-    name: 'Algorithms',
-    code: 'CS 204',
-    color: '#F59E0B'
-  },
-  {
-    name: 'Computer Networks',
-    code: 'CS 350',
-    color: '#EC4899'
-  },
-  {
-    name: 'Database Systems',
-    code: 'CS 310',
-    color: '#8B5CF6'
-  },
-  {
-    name: 'General',
-    code: 'GEN 100',
-    color: '#6366F1'
-  }
-];
+const DEMO_REMINDER_TITLES = new Set([
+  'Submit Lab Assignment PDF',
+  'Review Chapter 4 Graph Algorithms'
+]);
 
-const INITIAL_SEED_TASKS: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>[] = [
-  {
-    title: 'Complete ML Assignment 3',
-    description: 'Solve neural network backpropagation equations and train model.',
-    subject: 'Machine Learning',
-    deadline: getTodayDateStr(),
-    deadlineTime: '23:59',
-    priority: 'must',
-    estimatedMinutes: 45,
-    completed: false
-  },
-  {
-    title: 'Review OS Synchronization Notes',
-    description: 'Semaphores, mutex locks, and Dining Philosophers problem solution.',
-    subject: 'Operating Systems',
-    deadline: getTodayDateStr(),
-    deadlineTime: '21:00',
-    priority: 'must',
-    estimatedMinutes: 30,
-    completed: false
-  },
-  {
-    title: 'Read Graph Algorithms Chapter 4',
-    description: 'Dijkstra and Bellman-Ford shortest path proofs.',
-    subject: 'Algorithms',
-    deadline: getTomorrowDateStr(),
-    deadlineTime: '18:00',
-    priority: 'should',
-    estimatedMinutes: 40,
-    completed: false
-  },
-  {
-    title: 'Configure TCP Socket Client Lab',
-    description: 'Implement multi-threaded client connection handler.',
-    subject: 'Computer Networks',
-    deadline: getTomorrowDateStr(),
-    deadlineTime: '20:00',
-    priority: 'later',
-    estimatedMinutes: 60,
-    completed: false
-  }
-];
+const DEMO_SUBJECT_NAMES = new Set([
+  'Machine Learning',
+  'Operating Systems',
+  'Algorithms',
+  'Computer Networks',
+  'Database Systems'
+]);
 
-const INITIAL_SEED_NOTES: Omit<AcademicNote, 'id' | 'createdAt' | 'updatedAt'>[] = [
-  {
-    title: 'ML Lecture 8 — Backpropagation & Gradient Descent',
-    content: 'Key equations: chain rule applied to multi-layer perceptron cost function dE/dW = dE/dOut * dOut/dNet * dNet/dW. Don\'t forget to normalize input feature vectors.',
-    subject: 'Machine Learning',
-    pinned: true
-  },
-  {
-    title: 'OS Process Synchronization & Semaphores',
-    content: 'Dining philosophers problem: prevent deadlock by requiring odd philosophers to pick left fork first and even philosophers right fork first. Compare mutex vs binary semaphore.',
-    subject: 'Operating Systems',
-    pinned: true
-  },
-  {
-    title: 'Algorithms — Dijkstra vs Bellman-Ford',
-    content: 'Dijkstra: greedy, O((V+E)logV) with Fibonacci heap, cannot handle negative weight edges. Bellman-Ford: dynamic programming, O(V*E), detects negative weight cycles.',
-    subject: 'Algorithms',
-    pinned: false
-  },
-  {
-    title: 'DBMS ACID Properties & Normalization Rules',
-    content: '1NF (atomic attributes), 2NF (no partial dependency), 3NF (no transitive dependency), BCNF (every determinant is a candidate key). Isolation levels: Read Uncommitted, Read Committed, Repeatable Read, Serializable.',
-    subject: 'Database Systems',
-    pinned: false
-  }
-];
+let migrationRan = false;
 
-function getInitialReminders(): Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>[] {
-  const now = Date.now();
-  return [
-    {
-      title: 'Submit Lab Assignment PDF',
-      message: 'Upload compiled PDF to college portal before portal lock.',
-      reminderAt: now + 3600000 * 2, // 2 hours from now
-      subject: 'Computer Networks',
-      completed: false,
-      dismissed: false
-    },
-    {
-      title: 'Review Chapter 4 Graph Algorithms',
-      message: 'Quick 15 min revision before tomorrow\'s morning lecture.',
-      reminderAt: now + 3600000 * 14, // tomorrow morning
-      subject: 'Algorithms',
-      completed: false,
-      dismissed: false
+export async function runProductionCleanupMigration(): Promise<void> {
+  if (migrationRan) return;
+  migrationRan = true;
+
+  try {
+    const db = await getDB();
+    const isCleaned = await db.get('key_val', 'sarah_production_cleaned_v1');
+    if (isCleaned) return;
+
+    // 1. Remove only demo tasks
+    const allTasks = await db.getAll('tasks');
+    for (const task of allTasks) {
+      if (DEMO_TASK_TITITIES_MATCH(task)) {
+        await db.delete('tasks', task.id);
+      }
     }
-  ];
+
+    // 2. Remove only demo notes
+    const allNotes = await db.getAll('notes');
+    for (const note of allNotes) {
+      if (DEMO_NOTE_TITLES.has(note.title) || note.id.startsWith('note_1786978')) {
+        await db.delete('notes', note.id);
+      }
+    }
+
+    // 3. Remove only demo reminders
+    const allReminders = await db.getAll('reminders');
+    for (const reminder of allReminders) {
+      if (DEMO_REMINDER_TITLES.has(reminder.title) || reminder.id.startsWith('reminder_1786978')) {
+        await db.delete('reminders', reminder.id);
+      }
+    }
+
+    // 4. Remove only demo subjects (preserve user-created subjects)
+    const allSubjects = await db.getAll('subjects');
+    for (const subject of allSubjects) {
+      if (DEMO_SUBJECT_NAMES.has(subject.name) && subject.id.startsWith('subject_1786978')) {
+        await db.delete('subjects', subject.id);
+      }
+    }
+
+    await db.put('key_val', true, 'sarah_production_cleaned_v1');
+  } catch (err) {
+    console.warn('Production cleanup migration note:', err);
+  }
+}
+
+function DEMO_TASK_TITITIES_MATCH(task: Task): boolean {
+  if (DEMO_TASK_TITLES.has(task.title)) return true;
+  if (task.id.startsWith('task_1786978') && DEMO_TASK_TITLES.has(task.title)) return true;
+  return false;
 }
 
 // ─── Subjects CRUD Operations ───────────────────────────────────────────────
 
 export async function getSubjects(): Promise<Subject[]> {
+  await runProductionCleanupMigration();
   const db = await getDB();
-  let allSubjects = await db.getAll('subjects');
-
-  if (allSubjects.length === 0) {
-    const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_subjects');
-    if (!isSeeded) {
-      const seeded: Subject[] = [];
-      const now = Date.now();
-      for (let i = 0; i < INITIAL_SEED_SUBJECTS.length; i++) {
-        const item = INITIAL_SEED_SUBJECTS[i];
-        const subject: Subject = {
-          ...item,
-          id: `subject_${now}_${i + 1}`,
-          createdAt: now - (INITIAL_SEED_SUBJECTS.length - i) * 60000,
-          updatedAt: now - (INITIAL_SEED_SUBJECTS.length - i) * 60000
-        };
-        await db.put('subjects', subject);
-        seeded.push(subject);
-      }
-      await db.put('key_val', true, 'sarah_has_seeded_initial_subjects');
-      allSubjects = seeded;
-    }
-  }
-
+  const allSubjects = await db.getAll('subjects');
   return allSubjects.sort((a, b) => a.createdAt - b.createdAt);
 }
 
@@ -403,30 +317,9 @@ export async function deleteSubject(id: string): Promise<void> {
 // ─── Task CRUD Operations ───────────────────────────────────────────────────
 
 export async function getTasks(): Promise<Task[]> {
+  await runProductionCleanupMigration();
   const db = await getDB();
-  let allTasks = await db.getAll('tasks');
-
-  if (allTasks.length === 0) {
-    const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_tasks');
-    if (!isSeeded) {
-      const seededTasks: Task[] = [];
-      const now = Date.now();
-      for (let i = 0; i < INITIAL_SEED_TASKS.length; i++) {
-        const item = INITIAL_SEED_TASKS[i];
-        const task: Task = {
-          ...item,
-          id: `task_${now}_${i + 1}`,
-          createdAt: now - (INITIAL_SEED_TASKS.length - i) * 60000,
-          updatedAt: now - (INITIAL_SEED_TASKS.length - i) * 60000
-        };
-        await db.put('tasks', task);
-        seededTasks.push(task);
-      }
-      await db.put('key_val', true, 'sarah_has_seeded_initial_tasks');
-      allTasks = seededTasks;
-    }
-  }
-
+  const allTasks = await db.getAll('tasks');
   return allTasks.sort((a, b) => b.createdAt - a.createdAt);
 }
 
@@ -479,29 +372,9 @@ export async function completeTask(id: string, completed: boolean): Promise<Task
 // ─── Academic Notes CRUD Operations ─────────────────────────────────────────
 
 export async function getNotes(): Promise<AcademicNote[]> {
+  await runProductionCleanupMigration();
   const db = await getDB();
-  let allNotes = await db.getAll('notes');
-
-  if (allNotes.length === 0) {
-    const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_notes');
-    if (!isSeeded) {
-      const seededNotes: AcademicNote[] = [];
-      const now = Date.now();
-      for (let i = 0; i < INITIAL_SEED_NOTES.length; i++) {
-        const item = INITIAL_SEED_NOTES[i];
-        const note: AcademicNote = {
-          ...item,
-          id: `note_${now}_${i + 1}`,
-          createdAt: now - (INITIAL_SEED_NOTES.length - i) * 60000,
-          updatedAt: now - (INITIAL_SEED_NOTES.length - i) * 60000
-        };
-        await db.put('notes', note);
-        seededNotes.push(note);
-      }
-      await db.put('key_val', true, 'sarah_has_seeded_initial_notes');
-      allNotes = seededNotes;
-    }
-  }
+  const allNotes = await db.getAll('notes');
 
   return allNotes.sort((a, b) => {
     if (a.pinned !== b.pinned) {
@@ -560,31 +433,11 @@ export async function toggleNotePinned(id: string, pinned: boolean): Promise<Aca
 // ─── Reminders CRUD Operations ──────────────────────────────────────────────
 
 export async function getReminders(): Promise<Reminder[]> {
+  await runProductionCleanupMigration();
   const db = await getDB();
-  let allReminders = await db.getAll('reminders');
+  const allReminders = await db.getAll('reminders');
 
-  if (allReminders.length === 0) {
-    const isSeeded = await db.get('key_val', 'sarah_has_seeded_initial_reminders');
-    if (!isSeeded) {
-      const seeded: Reminder[] = [];
-      const now = Date.now();
-      const initialSeed = getInitialReminders();
-      for (let i = 0; i < initialSeed.length; i++) {
-        const item = initialSeed[i];
-        const reminder: Reminder = {
-          ...item,
-          id: `reminder_${now}_${i + 1}`,
-          createdAt: now - (initialSeed.length - i) * 60000,
-          updatedAt: now - (initialSeed.length - i) * 60000
-        };
-        await db.put('reminders', reminder);
-        seeded.push(reminder);
-      }
-      await db.put('key_val', true, 'sarah_has_seeded_initial_reminders');
-      allReminders = seeded;
-    }
-  }
-
+  // Sort chronologically by reminderAt ascending
   return allReminders.sort((a, b) => a.reminderAt - b.reminderAt);
 }
 
@@ -648,52 +501,16 @@ export async function snoozeReminder(id: string, newTimeEpochMs: number): Promis
   return updated;
 }
 
-// ─── Diagnostics & Session Persistence ──────────────────────────────────────
-
-const TEST_KEY = 'sarah_persistence_test_val';
-const RELOAD_COUNT_KEY = 'sarah_session_reload_count';
-const LAST_SAVED_KEY = 'sarah_last_saved_timestamp';
+// ─── Local Data Initialization ──────────────────────────────────────────────
 
 export interface PersistenceStatus {
-  testValue: string;
-  reloadCount: number;
-  lastSavedAt: string;
   isReady: boolean;
 }
 
 export async function initializeAndTrackPersistence(): Promise<PersistenceStatus> {
-  const db = await getDB();
-  
-  const existingCount = (await db.get('key_val', RELOAD_COUNT_KEY)) as number | undefined;
-  const newCount = (existingCount ?? 0) + 1;
-  await db.put('key_val', newCount, RELOAD_COUNT_KEY);
-
-  let testVal = (await db.get('key_val', TEST_KEY)) as string | undefined;
-  if (!testVal) {
-    testVal = 'Sarah PWA Local Storage Active';
-    await db.put('key_val', testVal, TEST_KEY);
-  }
-
-  const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  await db.put('key_val', nowStr, LAST_SAVED_KEY);
-
+  await getDB();
+  await runProductionCleanupMigration();
   return {
-    testValue: testVal,
-    reloadCount: newCount,
-    lastSavedAt: nowStr,
     isReady: true
   };
-}
-
-export async function updateTestValue(newVal: string): Promise<void> {
-  const db = await getDB();
-  await db.put('key_val', newVal, TEST_KEY);
-  const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  await db.put('key_val', nowStr, LAST_SAVED_KEY);
-}
-
-export async function getTestValue(): Promise<string> {
-  const db = await getDB();
-  const val = await db.get('key_val', TEST_KEY);
-  return (val as string) || '';
 }

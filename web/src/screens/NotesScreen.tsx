@@ -281,12 +281,12 @@ export const NotesScreen: React.FC = () => {
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              {searchQuery || selectedSubject !== 'all' ? 'No matching notes found' : 'No academic notes yet'}
+              {searchQuery || selectedSubject !== 'all' ? 'No matching notes found' : 'No notes yet.'}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
               {searchQuery || selectedSubject !== 'all' 
                 ? 'Try adjusting your search query or subject filter.' 
-                : 'Capture important lecture points, exam syllabi, or lab guidelines.'}
+                : 'Capture classroom lecture notes, formulas, or reminders.'}
             </div>
           </div>
           {searchQuery || selectedSubject !== 'all' ? (
@@ -330,7 +330,7 @@ export const NotesScreen: React.FC = () => {
               }}
             >
               <Plus size={15} />
-              <span>Capture First Note</span>
+              <span>New Note</span>
             </button>
           )}
         </div>

@@ -366,12 +366,12 @@ export const TasksScreen: React.FC = () => {
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              {searchQuery || selectedSubjectFilter !== 'all' ? 'No matching tasks found' : 'All Caught Up!'}
+              {searchQuery || selectedSubjectFilter !== 'all' ? 'No matching tasks found' : 'No tasks yet.'}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
               {searchQuery || selectedSubjectFilter !== 'all' 
                 ? 'Try adjusting your search query or subject filter.' 
-                : 'No pending tasks. Tap below to create your next assignment or study session.'}
+                : 'Start by adding your first task or study session.'}
             </div>
           </div>
           {searchQuery || selectedSubjectFilter !== 'all' ? (

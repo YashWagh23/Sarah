@@ -24,168 +24,178 @@ import {
   addSubject,
   updateSubject,
   deleteSubject,
+  runProductionCleanupMigration,
   initializeAndTrackPersistence
 } from './src/lib/db';
 
-async function runTest() {
-  console.log('=== Starting Sarah IndexedDB Comprehensive Persistence Verification (Milestone 5) ===\n');
+async function runHardeningTest() {
+  console.log('=== Starting Sarah PWA Production Hardening & Clean State Verification ===\n');
 
   // ──────────────────────────────────────────────────────────────────────────
-  // A. SUBJECTS STORAGE & CRUD (MILESTONE 5)
+  // 1. FRESH INSTALLATION: ZERO DEMO DATA
   // ──────────────────────────────────────────────────────────────────────────
-  console.log('--- [1] SUBJECTS STORAGE & CRUD ---');
-  const initialSubjects = await getSubjects();
-  console.log(`✓ Fetched ${initialSubjects.length} initial subjects.`);
-  if (initialSubjects.length === 0) throw new Error('Expected initial seed subjects');
+  console.log('--- [1] FRESH INSTALL CLEAN STATE (ZERO DEMO DATA) ---');
+  
+  await initializeAndTrackPersistence();
+  const freshTasks = await getTasks();
+  const freshNotes = await getNotes();
+  const freshReminders = await getReminders();
+  const freshSubjects = await getSubjects();
 
-  // 1. Add Subject
-  const newSubject = await addSubject({
-    name: 'Distributed Systems & Cloud',
-    code: 'CS 405',
+  console.log(`✓ Fresh Tasks Count: ${freshTasks.length} (Expected: 0)`);
+  console.log(`✓ Fresh Notes Count: ${freshNotes.length} (Expected: 0)`);
+  console.log(`✓ Fresh Reminders Count: ${freshReminders.length} (Expected: 0)`);
+  console.log(`✓ Fresh Subjects Count: ${freshSubjects.length} (Expected: 0)`);
+
+  if (freshTasks.length !== 0 || freshNotes.length !== 0 || freshReminders.length !== 0 || freshSubjects.length !== 0) {
+    throw new Error('Fresh installation must have zero demo records');
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 2. REAL USER DATA CREATION & SUBJECT LINKING
+  // ──────────────────────────────────────────────────────────────────────────
+  console.log('\n--- [2] REAL USER DATA CREATION & LINKING ---');
+
+  // User creates their own subject
+  const userSubject = await addSubject({
+    name: 'Embedded Systems',
+    code: 'ECE 320',
     color: '#06B6D4'
   });
-  console.log(`✓ Added Subject: "${newSubject.name}" (${newSubject.code}, Color: ${newSubject.color})`);
+  console.log(`✓ Created User Subject: "${userSubject.name}" (${userSubject.code})`);
 
-  // 2. Retrieve Subject
-  const fetchedSubject = await getSubject(newSubject.id);
-  if (!fetchedSubject || fetchedSubject.name !== 'Distributed Systems & Cloud') {
-    throw new Error('Failed to retrieve subject from IndexedDB');
-  }
-  console.log('✓ Successfully retrieved subject by ID');
-
-  // 3. Update Subject
-  const updatedSubject = await updateSubject({
-    ...fetchedSubject,
-    name: 'Distributed Systems & Cloud Computing',
-    code: 'CS 405A',
-    color: '#3B82F6'
-  });
-  if (updatedSubject.code !== 'CS 405A') {
-    throw new Error('Subject update failed');
-  }
-  console.log(`✓ Updated Subject: "${updatedSubject.name}" (${updatedSubject.code})`);
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // B. CROSS-ENTITY SUBJECT LINKING
-  // ──────────────────────────────────────────────────────────────────────────
-  console.log('\n--- [2] CROSS-ENTITY SUBJECT LINKING ---');
-  
-  // Link Task to new Subject
-  const linkedTask = await addTask({
-    title: 'Implement Raft Leader Election in Go',
-    description: 'Implement heartbeat RPCs and election timeouts.',
-    subject: updatedSubject.name,
-    deadline: '2026-08-25',
-    deadlineTime: '23:59',
+  // User creates a task linked to that subject
+  const userTask = await addTask({
+    title: 'Design UART Communication Driver',
+    description: 'Implement baud rate generator and ring buffer FIFO.',
+    subject: userSubject.name,
+    deadline: '2026-08-30',
+    deadlineTime: '22:00',
     priority: 'must',
-    estimatedMinutes: 60,
+    estimatedMinutes: 45,
     completed: false
   });
-  console.log(`✓ Created Task linked to subject "${linkedTask.subject}" (ID: ${linkedTask.id})`);
+  console.log(`✓ Created User Task: "${userTask.title}" (ID: ${userTask.id})`);
 
-  // Link Note to new Subject
-  const linkedNote = await addNote({
-    title: 'Raft Consensus Protocol Summary',
-    content: 'Leader election, log replication, and safety guarantees.',
-    subject: updatedSubject.name,
+  // User creates a note linked to that subject
+  const userNote = await addNote({
+    title: 'ARM Cortex Interrupt Handlers (NVIC)',
+    content: 'Priority grouping, tail-chaining latency, and SysTick registers.',
+    subject: userSubject.name,
     pinned: true
   });
-  console.log(`✓ Created Note linked to subject "${linkedNote.subject}" (ID: ${linkedNote.id})`);
+  console.log(`✓ Created User Note: "${userNote.title}" (ID: ${userNote.id})`);
 
-  // Link Reminder to new Subject
-  const linkedReminder = await addReminder({
-    title: 'Submit Raft Design Document',
-    message: 'Upload architectural flowcharts.',
-    reminderAt: Date.now() + 3600000 * 3,
-    subject: updatedSubject.name,
+  // User creates a reminder linked to that subject
+  const userReminder = await addReminder({
+    title: 'Microcontroller Lab Viva',
+    message: 'Bring circuit diagram and breadboard.',
+    reminderAt: Date.now() + 7200000,
+    subject: userSubject.name,
     completed: false,
     dismissed: false
   });
-  console.log(`✓ Created Reminder linked to subject "${linkedReminder.subject}" (ID: ${linkedReminder.id})`);
+  console.log(`✓ Created User Reminder: "${userReminder.title}" (ID: ${userReminder.id})`);
 
   // ──────────────────────────────────────────────────────────────────────────
-  // C. SAFE SUBJECT DELETION & FALLBACK
+  // 3. TARGETED MIGRATION TEST: USER DATA SURVIVAL
   // ──────────────────────────────────────────────────────────────────────────
-  console.log('\n--- [3] SAFE SUBJECT DELETION & FALLBACK INTEGRITY ---');
-  console.log(`✓ Deleting subject "${updatedSubject.name}" (ID: ${updatedSubject.id})`);
-  await deleteSubject(updatedSubject.id);
+  console.log('\n--- [3] TARGETED CLEANUP MIGRATION & USER DATA PRESERVATION ---');
 
-  const checkDeletedSubject = await getSubject(updatedSubject.id);
-  if (checkDeletedSubject) {
-    throw new Error('Deleted subject still present in store');
+  // Run migration again — ensure genuine user data remains 100% untouched
+  await runProductionCleanupMigration();
+
+  const postMigrateTasks = await getTasks();
+  const postMigrateNotes = await getNotes();
+  const postMigrateReminders = await getReminders();
+  const postMigrateSubjects = await getSubjects();
+
+  if (postMigrateTasks.length !== 1 || postMigrateTasks[0].id !== userTask.id) {
+    throw new Error('User task was deleted during migration');
   }
-  console.log('✓ Subject removed from store.');
-
-  // Verify that linked task survived and gracefully fell back to 'General'
-  const postDeleteTask = await getTask(linkedTask.id);
-  if (!postDeleteTask || postDeleteTask.subject !== 'General') {
-    throw new Error(`Linked task did not survive with 'General' fallback. Got: ${postDeleteTask?.subject}`);
+  if (postMigrateNotes.length !== 1 || postMigrateNotes[0].id !== userNote.id) {
+    throw new Error('User note was deleted during migration');
   }
-  console.log(`✓ Linked Task survived deletion: subject="${postDeleteTask.subject}" (ID: ${postDeleteTask.id})`);
-
-  // Verify that linked note survived and gracefully fell back to 'General'
-  const postDeleteNote = await getNote(linkedNote.id);
-  if (!postDeleteNote || postDeleteNote.subject !== 'General') {
-    throw new Error(`Linked note did not survive with 'General' fallback. Got: ${postDeleteNote?.subject}`);
+  if (postMigrateReminders.length !== 1 || postMigrateReminders[0].id !== userReminder.id) {
+    throw new Error('User reminder was deleted during migration');
   }
-  console.log(`✓ Linked Note survived deletion: subject="${postDeleteNote.subject}" (ID: ${postDeleteNote.id})`);
-
-  // Verify that linked reminder survived and gracefully fell back to 'General'
-  const postDeleteReminder = await getReminder(linkedReminder.id);
-  if (!postDeleteReminder || postDeleteReminder.subject !== 'General') {
-    throw new Error(`Linked reminder did not survive with 'General' fallback. Got: ${postDeleteReminder?.subject}`);
+  if (postMigrateSubjects.length !== 1 || postMigrateSubjects[0].id !== userSubject.id) {
+    throw new Error('User subject was deleted during migration');
   }
-  console.log(`✓ Linked Reminder survived deletion: subject="${postDeleteReminder.subject}" (ID: ${postDeleteReminder.id})`);
+  console.log('✓ Migration ran safely: all user records preserved perfectly.');
 
   // ──────────────────────────────────────────────────────────────────────────
-  // D. TASKS, NOTES & REMINDERS REGRESSION CRUD CHECKS
+  // 4. SAFE SUBJECT DELETION & NON-DESTRUCTIVE FALLBACK
   // ──────────────────────────────────────────────────────────────────────────
-  console.log('\n--- [4] TASKS, NOTES & REMINDERS REGRESSION CHECKS ---');
-  
-  // Task completion
-  await completeTask(postDeleteTask.id, true);
-  const completedTask = await getTask(postDeleteTask.id);
-  if (!completedTask?.completed) throw new Error('Task completion failed');
-  console.log('✓ Task completion toggling verified.');
+  console.log('\n--- [4] SAFE SUBJECT DELETION & DATA INTEGRITY ---');
+  await deleteSubject(userSubject.id);
 
-  // Note pin toggle
-  await toggleNotePinned(postDeleteNote.id, false);
-  const unpinnedNote = await getNote(postDeleteNote.id);
-  if (unpinnedNote?.pinned) throw new Error('Note unpin failed');
-  console.log('✓ Note pin toggling verified.');
+  const checkDeletedSub = await getSubject(userSubject.id);
+  if (checkDeletedSub) throw new Error('Deleted subject still present');
 
-  // Reminder snooze & dismiss
-  const newReminderTime = Date.now() + 7200000;
-  await snoozeReminder(postDeleteReminder.id, newReminderTime);
-  await dismissReminder(postDeleteReminder.id);
-  const snoozedDismissedReminder = await getReminder(postDeleteReminder.id);
-  if (!snoozedDismissedReminder?.dismissed || snoozedDismissedReminder.reminderAt !== newReminderTime) {
-    throw new Error('Reminder snooze & dismiss failed');
+  const survivedTask = await getTask(userTask.id);
+  const survivedNote = await getNote(userNote.id);
+  const survivedReminder = await getReminder(userReminder.id);
+
+  if (!survivedTask || survivedTask.subject !== 'General') {
+    throw new Error(`Task did not fallback to 'General'. Subject is: ${survivedTask?.subject}`);
   }
-  console.log('✓ Reminder snooze and dismissal verified.');
+  if (!survivedNote || survivedNote.subject !== 'General') {
+    throw new Error(`Note did not fallback to 'General'. Subject is: ${survivedNote?.subject}`);
+  }
+  if (!survivedReminder || survivedReminder.subject !== 'General') {
+    throw new Error(`Reminder did not fallback to 'General'. Subject is: ${survivedReminder?.subject}`);
+  }
+  console.log('✓ All linked user records survived subject deletion with "General" fallback.');
 
   // ──────────────────────────────────────────────────────────────────────────
-  // E. SIMULATED RELOAD PERSISTENCE ACROSS ALL STORES
+  // 5. INTERACTION & MUTATION TEST
   // ──────────────────────────────────────────────────────────────────────────
-  console.log('\n--- [5] SIMULATED RELOAD & COMPREHENSIVE INTEGRITY ---');
-  const reloadTasks = await getTasks();
-  const reloadNotes = await getNotes();
-  const reloadReminders = await getReminders();
-  const reloadSubjects = await getSubjects();
+  console.log('\n--- [5] USER INTERACTION & MUTATION VERIFICATION ---');
 
-  const session = await initializeAndTrackPersistence();
-  console.log(`✓ Subjects in store: ${reloadSubjects.length}`);
-  console.log(`✓ Tasks in store: ${reloadTasks.length}`);
-  console.log(`✓ Notes in store: ${reloadNotes.length}`);
-  console.log(`✓ Reminders in store: ${reloadReminders.length}`);
-  console.log(`✓ Session status: Ready (Reload count: ${session.reloadCount})`);
+  // Complete task
+  await completeTask(survivedTask.id, true);
+  const completedT = await getTask(survivedTask.id);
+  if (!completedT?.completed) throw new Error('Task completion failed');
+  console.log('✓ Task completion state toggle verified.');
+
+  // Unpin note
+  await toggleNotePinned(survivedNote.id, false);
+  const unpinnedN = await getNote(survivedNote.id);
+  if (unpinnedN?.pinned) throw new Error('Note unpin failed');
+  console.log('✓ Note pin state toggle verified.');
+
+  // Snooze reminder
+  const newTime = Date.now() + 1800000;
+  await snoozeReminder(survivedReminder.id, newTime);
+  const snoozedR = await getReminder(survivedReminder.id);
+  if (snoozedR?.reminderAt !== newTime) throw new Error('Reminder snooze failed');
+  console.log('✓ Reminder snooze verified.');
+
+  // Dismiss reminder
+  await dismissReminder(survivedReminder.id);
+  const dismissedR = await getReminder(survivedReminder.id);
+  if (!dismissedR?.dismissed) throw new Error('Reminder dismissal failed');
+  console.log('✓ Reminder dismiss verified.');
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 6. SIMULATED RELOAD
+  // ──────────────────────────────────────────────────────────────────────────
+  console.log('\n--- [6] SIMULATED RELOAD INTEGRITY ---');
+  const finalTasks = await getTasks();
+  const finalNotes = await getNotes();
+  const finalReminders = await getReminders();
+
+  console.log(`✓ Stored User Tasks: ${finalTasks.length}`);
+  console.log(`✓ Stored User Notes: ${finalNotes.length}`);
+  console.log(`✓ Stored User Reminders: ${finalReminders.length}`);
 
   console.log('\n================================================================');
-  console.log('✅ ALL INDEXEDDB SUBJECTS, TASKS, NOTES & REMINDERS TESTS PASSED!');
+  console.log('✅ ALL PRODUCTION HARDENING & CLEAN STATE TESTS PASSED!');
   console.log('================================================================\n');
 }
 
-runTest().catch((err) => {
-  console.error('\n❌ Persistence verification test failed:', err);
+runHardeningTest().catch((err) => {
+  console.error('\n❌ Production verification test failed:', err);
   process.exit(1);
 });

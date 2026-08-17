@@ -53,6 +53,16 @@ export const NoteModal: React.FC = () => {
     setErrorMessage('');
   }, [editingNote, isNoteModalOpen, subjects]);
 
+  useEffect(() => {
+    if (isNoteModalOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isNoteModalOpen]);
+
   if (!isNoteModalOpen) return null;
 
   const isEditingExisting = Boolean(editingNote && editingNote.id);

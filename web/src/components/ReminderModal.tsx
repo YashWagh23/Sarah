@@ -67,6 +67,16 @@ export const ReminderModal: React.FC = () => {
     setErrorMessage('');
   }, [editingReminder, isReminderModalOpen]);
 
+  useEffect(() => {
+    if (isReminderModalOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isReminderModalOpen]);
+
   if (!isReminderModalOpen) return null;
 
   const isEditingExisting = Boolean(editingReminder && editingReminder.id);

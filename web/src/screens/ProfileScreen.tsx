@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   Smartphone, 
   Share2, 
@@ -10,16 +10,10 @@ import {
   ShieldCheck, 
   Sparkles 
 } from 'lucide-react';
-import { initializeAndTrackPersistence, type PersistenceStatus } from '../lib/db';
 import { useReminders } from '../context/RemindersContext';
 
 export const ProfileScreen: React.FC = () => {
-  const [persistence, setPersistence] = useState<PersistenceStatus | null>(null);
   const { notificationPermission, requestNotificationPermission } = useReminders();
-
-  useEffect(() => {
-    initializeAndTrackPersistence().then(setPersistence);
-  }, []);
 
   return (
     <div 
@@ -104,11 +98,11 @@ export const ProfileScreen: React.FC = () => {
         </div>
 
         <p style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', lineHeight: 1.5, margin: 0 }}>
-          Your tasks, notes, reminders, and courses are stored safely on this device. No cloud sync or external tracking required.
+          Your Sarah data is stored on this device. No cloud sync or external tracking required.
         </p>
 
         <div style={{ fontSize: '11px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-low)', padding: '6px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-          <span>Device Sessions: {persistence?.reloadCount ?? 1}</span>
+          <span>Private Local Storage</span>
           <span>Offline Ready ✓</span>
         </div>
       </div>

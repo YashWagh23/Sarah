@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Plus, 
   CheckSquare, 
@@ -13,6 +13,16 @@ export const QuickAddMenu: React.FC = () => {
   const { isQuickAddOpen, openQuickAdd, closeQuickAdd, openCreateTaskModal } = useTasks();
   const { openCreateNoteModal } = useNotes();
   const { openCreateReminderModal } = useReminders();
+
+  useEffect(() => {
+    if (isQuickAddOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isQuickAddOpen]);
 
   const handleCreateTask = () => {
     closeQuickAdd();

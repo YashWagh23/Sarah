@@ -91,6 +91,16 @@ export const TaskModal: React.FC = () => {
     setErrorMessage('');
   }, [editingTask, isTaskModalOpen, subjects]);
 
+  useEffect(() => {
+    if (isTaskModalOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isTaskModalOpen]);
+
   if (!isTaskModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {

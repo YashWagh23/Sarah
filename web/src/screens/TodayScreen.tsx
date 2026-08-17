@@ -579,10 +579,10 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              No Pending Tasks for Today
+              {completedTasks.length > 0 ? "You're all caught up." : "You're all clear."}
             </div>
             <div style={{ fontSize: '12.5px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
-              Enjoy the breathing room, or tap below to plan ahead.
+              {completedTasks.length > 0 ? "All tasks are completed. Enjoy the breathing room." : "Start by adding your first task."}
             </div>
           </div>
           <button

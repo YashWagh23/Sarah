@@ -41,6 +41,16 @@ export const SubjectModal: React.FC = () => {
     setErrorMessage('');
   }, [editingSubject, isSubjectModalOpen]);
 
+  useEffect(() => {
+    if (isSubjectModalOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isSubjectModalOpen]);
+
   if (!isSubjectModalOpen) return null;
 
   const isEditingExisting = Boolean(editingSubject && editingSubject.id);
