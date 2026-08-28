@@ -19,16 +19,20 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
 
 class Phase1VerificationTest {
 
     private lateinit var feasibilityEngine: FeasibilityEngine
     private lateinit var agendaPlanner: AgendaPlanner
-    private val zone = ZoneId.of("UTC")
-    private val today = LocalDate.of(2026, 8, 15)
+    private val zone = TimeZone.UTC
+    private val today = LocalDate(2026, 8, 15)
 
     @Before
     fun setup() {
@@ -74,9 +78,9 @@ class Phase1VerificationTest {
             tasks = emptyList(),
             schedule = schedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(18, 30),
-            currentDate = today,
-            zoneId = zone
+            currentMinutesInput = 18 * 60 + 30,
+            currentDateInput = today,
+            timeZone = zone
         )
 
         assertEquals(300, report.minutesUntilSleep)
@@ -105,8 +109,8 @@ class Phase1VerificationTest {
     // 4. TASKS TRIAGE & FEASIBILITY REPORT VERIFICATION
     @Test
     fun verifyTaskTriageAndRiskAssessment() {
-        val tomorrowEpochMs = today.plusDays(1).atTime(10, 0).atZone(zone).toInstant().toEpochMilli()
-        val nextWeekEpochMs = today.plusDays(7).atTime(10, 0).atZone(zone).toInstant().toEpochMilli()
+        val tomorrowEpochMs = today.plus(1, DateTimeUnit.DAY).atTime(LocalTime(10, 0)).toInstant(zone).toEpochMilliseconds()
+        val nextWeekEpochMs = today.plus(7, DateTimeUnit.DAY).atTime(LocalTime(10, 0)).toInstant(zone).toEpochMilliseconds()
 
         val schedule = CollegeSchedule(sleepTimeMinutes = 23 * 60 + 30, dinnerBufferMinutes = 45)
 
@@ -119,9 +123,9 @@ class Phase1VerificationTest {
             tasks = listOf(task1, task2, task3, task4),
             schedule = schedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(18, 30),
-            currentDate = today,
-            zoneId = zone
+            currentMinutesInput = 18 * 60 + 30,
+            currentDateInput = today,
+            timeZone = zone
         )
 
         // Must Do = Java Practical + DBMS Assignment (due tomorrow, high urgency)
@@ -145,7 +149,7 @@ class Phase1VerificationTest {
     // 5. ENERGY LEVEL DYNAMIC ADAPTATION VERIFICATION
     @Test
     fun verifyEnergyLevelDynamicAdaptation() {
-        val tomorrowEpochMs = today.plusDays(1).atTime(10, 0).atZone(zone).toInstant().toEpochMilli()
+        val tomorrowEpochMs = today.plus(1, DateTimeUnit.DAY).atTime(LocalTime(10, 0)).toInstant(zone).toEpochMilliseconds()
         val schedule = CollegeSchedule(sleepTimeMinutes = 23 * 60 + 30, dinnerBufferMinutes = 45)
 
         val heavyTask = Task(id = 1, title = "Demanding Project", type = TaskType.ASSIGNMENT, deadlineEpochMs = tomorrowEpochMs, estimatedMinutes = 90, priority = TaskPriority.HIGH, energyRequirement = EnergyRequirement.HIGH)
@@ -154,9 +158,9 @@ class Phase1VerificationTest {
             tasks = listOf(heavyTask),
             schedule = schedule,
             energyLevel = EnergyLevel.HIGH,
-            currentTime = LocalTime.of(20, 0), // 8:00 PM (210 mins until sleep, 210 * 1.0 = 210 productive mins)
-            currentDate = today,
-            zoneId = zone
+            currentMinutesInput = 20 * 60, // 8:00 PM (210 mins until sleep, 210 * 1.0 = 210 productive mins)
+            currentDateInput = today,
+            timeZone = zone
         )
         assertEquals(FeasibilityStatus.OPTIMAL, highEnergyReport.status)
         assertEquals(210, highEnergyReport.realisticProductiveMinutes)
@@ -165,9 +169,9 @@ class Phase1VerificationTest {
             tasks = listOf(heavyTask),
             schedule = schedule,
             energyLevel = EnergyLevel.EXHAUSTED,
-            currentTime = LocalTime.of(20, 0), // 210 mins * 0.45 = 95 productive mins
-            currentDate = today,
-            zoneId = zone
+            currentMinutesInput = 20 * 60, // 210 mins * 0.45 = 95 productive mins
+            currentDateInput = today,
+            timeZone = zone
         )
         // With 90 min task and only 95 productive mins, workload becomes TIGHT or OVERLOADED
         assertEquals(95, exhaustedReport.realisticProductiveMinutes)
@@ -176,7 +180,7 @@ class Phase1VerificationTest {
     // 6. TASK COMPLETION TOGGLE RECALCULATION VERIFICATION
     @Test
     fun verifyTaskCompletionRecalculation() {
-        val tomorrowEpochMs = today.plusDays(1).atTime(10, 0).atZone(zone).toInstant().toEpochMilli()
+        val tomorrowEpochMs = today.plus(1, DateTimeUnit.DAY).atTime(LocalTime(10, 0)).toInstant(zone).toEpochMilliseconds()
         val schedule = CollegeSchedule(sleepTimeMinutes = 23 * 60 + 30, dinnerBufferMinutes = 45)
 
         val task1 = Task(id = 1, title = "Java Practical", type = TaskType.PRACTICAL, deadlineEpochMs = tomorrowEpochMs, estimatedMinutes = 50, priority = TaskPriority.CRITICAL, status = TaskStatus.PENDING)
@@ -186,9 +190,9 @@ class Phase1VerificationTest {
             tasks = listOf(task1, task2),
             schedule = schedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(18, 30),
-            currentDate = today,
-            zoneId = zone
+            currentMinutesInput = 18 * 60 + 30,
+            currentDateInput = today,
+            timeZone = zone
         )
         assertEquals(95, beforeReport.totalRequiredMinutes)
 
@@ -198,9 +202,9 @@ class Phase1VerificationTest {
             tasks = listOf(completedTask1, task2),
             schedule = schedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 30),
-            currentDate = today,
-            zoneId = zone
+            currentMinutesInput = 19 * 60 + 30,
+            currentDateInput = today,
+            timeZone = zone
         )
         assertEquals(45, afterReport.totalRequiredMinutes)
         assertEquals(1, afterReport.mustDoTasks.size)

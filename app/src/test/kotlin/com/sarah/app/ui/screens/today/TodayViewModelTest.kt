@@ -144,7 +144,7 @@ class TodayViewModelTest {
         preferencesManager = FakeSarahPreferences(energyFlow)
         fakeReminderRepository = FakeReminderRepository()
         fakeReminderScheduler = FakeReminderScheduler()
-        deadlineReminderEngine = DeadlineReminderEngine(ZoneId.of("UTC"))
+        deadlineReminderEngine = DeadlineReminderEngine(kotlinx.datetime.TimeZone.UTC)
     }
 
     @After

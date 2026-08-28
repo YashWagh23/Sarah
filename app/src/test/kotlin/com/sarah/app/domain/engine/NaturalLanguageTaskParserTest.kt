@@ -10,15 +10,15 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
-import java.time.ZoneId
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 
 class NaturalLanguageTaskParserTest {
 
     private lateinit var parser: NaturalLanguageTaskParser
     private lateinit var subjects: List<Subject>
-    private val zone = ZoneId.of("UTC")
-    private val fixedDate = LocalDate.of(2026, 8, 15) // Saturday
+    private val zone = TimeZone.UTC
+    private val fixedDate = LocalDate(2026, 8, 15) // Saturday
 
     @Before
     fun setup() {
@@ -38,7 +38,7 @@ class NaturalLanguageTaskParserTest {
             availableSubjects = subjects,
             sourceType = CaptureSourceType.NATURAL_LANGUAGE,
             currentDate = fixedDate,
-            zoneId = zone
+            timeZone = zone
         )
 
         assertEquals("Java & OOP", draft.subjectName)
@@ -58,7 +58,7 @@ class NaturalLanguageTaskParserTest {
             availableSubjects = subjects,
             sourceType = CaptureSourceType.NATURAL_LANGUAGE,
             currentDate = fixedDate,
-            zoneId = zone
+            timeZone = zone
         )
 
         assertEquals(TaskType.ASSIGNMENT, draft.type)
@@ -74,7 +74,7 @@ class NaturalLanguageTaskParserTest {
             availableSubjects = subjects,
             sourceType = CaptureSourceType.NATURAL_LANGUAGE,
             currentDate = fixedDate,
-            zoneId = zone
+            timeZone = zone
         )
 
         assertEquals(TaskType.EXAM_PREP, draft.type)
@@ -91,7 +91,7 @@ class NaturalLanguageTaskParserTest {
             availableSubjects = subjects,
             sourceType = CaptureSourceType.NATURAL_LANGUAGE,
             currentDate = fixedDate,
-            zoneId = zone
+            timeZone = zone
         )
 
         assertEquals(TaskType.PRACTICAL, draft.type)
@@ -106,7 +106,7 @@ class NaturalLanguageTaskParserTest {
             availableSubjects = subjects,
             sourceType = CaptureSourceType.NATURAL_LANGUAGE,
             currentDate = fixedDate,
-            zoneId = zone
+            timeZone = zone
         )
 
         assertEquals("Operating Systems", draft.subjectName)
@@ -122,7 +122,7 @@ class NaturalLanguageTaskParserTest {
             availableSubjects = subjects,
             sourceType = CaptureSourceType.NATURAL_LANGUAGE,
             currentDate = fixedDate,
-            zoneId = zone
+            timeZone = zone
         )
 
         val task = draft.toTask()

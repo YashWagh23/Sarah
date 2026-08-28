@@ -17,16 +17,20 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
 
 class AdaptiveDailyPlannerTest {
 
     private lateinit var scorer: TaskPriorityScorer
     private lateinit var planner: AdaptivePlanner
-    private val fixedDate = LocalDate.of(2026, 8, 15)
-    private val fixedZone = ZoneId.of("UTC")
+    private val fixedDate = LocalDate(2026, 8, 15)
+    private val fixedZone = TimeZone.UTC
     private val defaultSchedule = CollegeSchedule(
         wakeTimeMinutes = 7 * 60, // 7:00 AM
         sleepTimeMinutes = 23 * 60 + 30, // 11:30 PM (1410 mins)
@@ -43,7 +47,7 @@ class AdaptiveDailyPlannerTest {
     }
 
     private fun epochMsFor(dayOffset: Long, hour: Int, minute: Int): Long {
-        return fixedDate.plusDays(dayOffset).atTime(hour, minute).atZone(fixedZone).toInstant().toEpochMilli()
+        return fixedDate.plus(dayOffset, DateTimeUnit.DAY).atTime(LocalTime(hour, minute)).toInstant(fixedZone).toEpochMilliseconds()
     }
 
     @Test
@@ -71,9 +75,9 @@ class AdaptiveDailyPlannerTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 0), // 7:00 PM
-            currentDate = fixedDate,
-            zoneId = fixedZone
+            currentMinutesInput = 19 * 60, // 7:00 PM
+            currentDateInput = fixedDate,
+            timeZone = fixedZone
         )
 
         // Verify dinner buffer is scheduled first from 7:00 PM to 7:45 PM
@@ -136,9 +140,9 @@ class AdaptiveDailyPlannerTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(22, 0),
-            currentDate = fixedDate,
-            zoneId = fixedZone
+            currentMinutesInput = 22 * 60,
+            currentDateInput = fixedDate,
+            timeZone = fixedZone
         )
 
         assertEquals(FeasibilityStatus.OVERLOADED, plan.feasibilityStatus)
@@ -169,9 +173,9 @@ class AdaptiveDailyPlannerTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.EXHAUSTED,
-            currentTime = LocalTime.of(20, 0), // 8:00 PM
-            currentDate = fixedDate,
-            zoneId = fixedZone
+            currentMinutesInput = 20 * 60, // 8:00 PM
+            currentDateInput = fixedDate,
+            timeZone = fixedZone
         )
 
         val taskItems = plan.items.filter { it.type == PlanItemType.TASK }
@@ -205,8 +209,9 @@ class AdaptiveDailyPlannerTest {
             type = TaskType.SUBMISSION
         )
 
-        val scoredLow = scorer.scoreTask(lowPriorityTask, EnergyLevel.NORMAL, fixedDate, LocalTime.of(18, 0), fixedZone)
-        val scoredUrgent = scorer.scoreTask(urgentTask, EnergyLevel.NORMAL, fixedDate, LocalTime.of(18, 0), fixedZone)
+        val curEpochMs = fixedDate.atTime(LocalTime(18, 0)).toInstant(fixedZone).toEpochMilliseconds()
+        val scoredLow = scorer.scoreTask(lowPriorityTask, EnergyLevel.NORMAL, curEpochMs)
+        val scoredUrgent = scorer.scoreTask(urgentTask, EnergyLevel.NORMAL, curEpochMs)
 
         assertTrue("Urgent task score (${scoredUrgent.score}) must exceed low priority score (${scoredLow.score})", scoredUrgent.score > scoredLow.score)
         assertEquals(TaskBucket.MUST_DO, scoredUrgent.bucket)
@@ -216,9 +221,9 @@ class AdaptiveDailyPlannerTest {
             tasks = listOf(lowPriorityTask, urgentTask),
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(18, 0),
-            currentDate = fixedDate,
-            zoneId = fixedZone
+            currentMinutesInput = 18 * 60,
+            currentDateInput = fixedDate,
+            timeZone = fixedZone
         )
 
         val firstTaskItem = plan.items.first { it.type == PlanItemType.TASK }
@@ -244,7 +249,7 @@ class AdaptiveDailyPlannerTest {
             title = "Doctor Appointment",
             startMinutes = 20 * 60,
             endMinutes = 21 * 60 + 30,
-            dateEpochDay = fixedDate.toEpochDay()
+            dateEpochDay = fixedDate.toEpochDays().toLong()
         )
 
         val plan = planner.generatePlan(
@@ -252,9 +257,9 @@ class AdaptiveDailyPlannerTest {
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
             interruptions = listOf(interruption),
-            currentTime = LocalTime.of(20, 0), // 8:00 PM (1200 mins)
-            currentDate = fixedDate,
-            zoneId = fixedZone
+            currentMinutesInput = 20 * 60, // 8:00 PM (1200 mins)
+            currentDateInput = fixedDate,
+            timeZone = fixedZone
         )
 
         val unavailItem = plan.items.firstOrNull { it.type == PlanItemType.UNAVAILABLE }
@@ -283,9 +288,9 @@ class AdaptiveDailyPlannerTest {
             tasks = listOf(longTask),
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(21, 0), // 9:00 PM (1260 mins). Sleep is at 11:30 PM (1410 mins) -> exactly 150 mins
-            currentDate = fixedDate,
-            zoneId = fixedZone
+            currentMinutesInput = 21 * 60, // 9:00 PM (1260 mins). Sleep is at 11:30 PM (1410 mins) -> exactly 150 mins
+            currentDateInput = fixedDate,
+            timeZone = fixedZone
         )
 
         for (item in plan.items) {
@@ -312,9 +317,9 @@ class AdaptiveDailyPlannerTest {
             tasks = listOf(partiallyCompletedTask),
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(20, 0),
-            currentDate = fixedDate,
-            zoneId = fixedZone
+            currentMinutesInput = 20 * 60,
+            currentDateInput = fixedDate,
+            timeZone = fixedZone
         )
 
         val taskItems = plan.items.filter { it.type == PlanItemType.TASK }
@@ -329,8 +334,8 @@ class AdaptiveDailyPlannerTest {
             Task(id = 2, title = "Task B", deadlineEpochMs = epochMsFor(2, 12, 0), estimatedMinutes = 30, priority = TaskPriority.MEDIUM)
         )
 
-        val plan1 = planner.generatePlan(tasks, defaultSchedule, EnergyLevel.NORMAL, emptyList(), LocalTime.of(19, 0), fixedDate, fixedZone)
-        val plan2 = planner.generatePlan(tasks, defaultSchedule, EnergyLevel.NORMAL, emptyList(), LocalTime.of(19, 0), fixedDate, fixedZone)
+        val plan1 = planner.generatePlan(tasks, defaultSchedule, EnergyLevel.NORMAL, emptyList(), 19 * 60, fixedDate, fixedZone)
+        val plan2 = planner.generatePlan(tasks, defaultSchedule, EnergyLevel.NORMAL, emptyList(), 19 * 60, fixedDate, fixedZone)
 
         assertEquals(plan1.items.size, plan2.items.size)
         assertEquals(plan1.availableMinutes, plan2.availableMinutes)

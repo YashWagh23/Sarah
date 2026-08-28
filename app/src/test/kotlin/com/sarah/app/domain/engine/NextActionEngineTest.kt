@@ -63,18 +63,17 @@ class NextActionEngineTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 45), // 7:45 PM
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 19 * 60 + 45,
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         val nextAction = engine.computeNextAction(
             plan = plan,
             tasks = tasks,
             schedule = defaultSchedule,
-            currentTime = LocalTime.of(19, 45),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 19 * 60 + 45,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.START_TASK, nextAction.actionType)
@@ -101,18 +100,17 @@ class NextActionEngineTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 45),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 19 * 60 + 45,
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         val nextAction = engine.computeNextAction(
             plan = plan,
             tasks = tasks,
             schedule = defaultSchedule,
-            currentTime = LocalTime.of(19, 45),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 19 * 60 + 45,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.CONTINUE_TASK, nextAction.actionType)
@@ -132,22 +130,21 @@ class NextActionEngineTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(18, 0),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 18 * 60,
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         // Find break slot in plan (e.g. 6:45 PM - 7:00 PM)
         val breakItem = plan.items.first { it.type == PlanItemType.BREAK }
-        val breakTime = LocalTime.of(breakItem.startTimeMinutes / 60, breakItem.startTimeMinutes % 60)
+        val breakTimeMinutes = breakItem.startTimeMinutes
 
         val nextAction = engine.computeNextAction(
             plan = plan,
             tasks = tasks,
             schedule = defaultSchedule,
-            currentTime = breakTime,
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = breakTimeMinutes,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.TAKE_BREAK, nextAction.actionType)
@@ -164,18 +161,17 @@ class NextActionEngineTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 0), // 7:00 PM (Dinner start)
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 19 * 60, // 7:00 PM (Dinner start)
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         val nextAction = engine.computeNextAction(
             plan = plan,
             tasks = tasks,
             schedule = defaultSchedule,
-            currentTime = LocalTime.of(19, 15), // 7:15 PM inside dinner
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 19 * 60 + 15, // 7:15 PM inside dinner
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.MEAL, nextAction.actionType)
@@ -192,18 +188,17 @@ class NextActionEngineTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(23, 40), // 11:40 PM (Past 11:30 PM bedtime)
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 23 * 60 + 40, // 11:40 PM (Past 11:30 PM bedtime)
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         val nextAction = engine.computeNextAction(
             plan = plan,
             tasks = tasks,
             schedule = defaultSchedule,
-            currentTime = LocalTime.of(23, 40),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 23 * 60 + 40,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.STOP_FOR_TONIGHT, nextAction.actionType)
@@ -221,9 +216,9 @@ class NextActionEngineTest {
             tasks = tasks,
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(20, 0),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 20 * 60,
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         val delayedPlan = basePlan.copy(
@@ -237,9 +232,8 @@ class NextActionEngineTest {
             plan = delayedPlan,
             tasks = tasks,
             schedule = defaultSchedule,
-            currentTime = LocalTime.of(20, 40),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 20 * 60 + 40,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.RECOVER_FROM_DELAY, nextAction.actionType)
@@ -262,18 +256,17 @@ class NextActionEngineTest {
             tasks = listOf(nonCriticalTask),
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.EXHAUSTED,
-            currentTime = LocalTime.of(23, 10), // 11:10 PM (20m to 11:30 PM bedtime)
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 23 * 60 + 10, // 11:10 PM (20m to 11:30 PM bedtime)
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         val nextAction = engine.computeNextAction(
             plan = plan,
             tasks = listOf(nonCriticalTask),
             schedule = defaultSchedule,
-            currentTime = LocalTime.of(23, 10),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 23 * 60 + 10,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.STOP_FOR_TONIGHT, nextAction.actionType)
@@ -295,18 +288,17 @@ class NextActionEngineTest {
             tasks = listOf(completedTask),
             schedule = defaultSchedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(20, 0),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 20 * 60,
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         val nextAction = engine.computeNextAction(
             plan = plan,
             tasks = listOf(completedTask),
             schedule = defaultSchedule,
-            currentTime = LocalTime.of(20, 0),
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = 20 * 60,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         assertEquals(NextActionType.STOP_FOR_TONIGHT, nextAction.actionType)
@@ -320,10 +312,17 @@ class NextActionEngineTest {
             Task(id = 1, title = "Task A", deadlineEpochMs = epochMs(1, 9, 0), estimatedMinutes = 30)
         )
 
-        val plan = planner.generatePlan(tasks, defaultSchedule, EnergyLevel.NORMAL, emptyList(), LocalTime.of(19, 45), date, zone)
+        val plan = planner.generatePlan(
+            tasks = tasks,
+            schedule = defaultSchedule,
+            energyLevel = EnergyLevel.NORMAL,
+            currentMinutesInput = 19 * 60 + 45,
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
+        )
 
-        val action1 = engine.computeNextAction(plan, tasks, defaultSchedule, LocalTime.of(19, 45), date, zone)
-        val action2 = engine.computeNextAction(plan, tasks, defaultSchedule, LocalTime.of(19, 45), date, zone)
+        val action1 = engine.computeNextAction(plan, tasks, defaultSchedule, 19 * 60 + 45, kotlinx.datetime.TimeZone.UTC)
+        val action2 = engine.computeNextAction(plan, tasks, defaultSchedule, 19 * 60 + 45, kotlinx.datetime.TimeZone.UTC)
 
         assertEquals(action1.actionType, action2.actionType)
         assertEquals(action1.taskId, action2.taskId)

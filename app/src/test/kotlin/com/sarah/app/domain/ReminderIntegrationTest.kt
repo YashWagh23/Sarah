@@ -149,7 +149,7 @@ class ReminderIntegrationTest {
     fun setUp() {
         reminderRepository = FakeReminderRepository()
         reminderScheduler = FakeReminderScheduler()
-        deadlineReminderEngine = DeadlineReminderEngine(ZoneId.of("UTC"))
+        deadlineReminderEngine = DeadlineReminderEngine(kotlinx.datetime.TimeZone.UTC)
     }
 
     @Test

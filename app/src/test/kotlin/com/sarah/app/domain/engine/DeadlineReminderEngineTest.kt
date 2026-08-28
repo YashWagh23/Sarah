@@ -7,12 +7,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.ZoneId
+import kotlinx.datetime.TimeZone
 
 class DeadlineReminderEngineTest {
 
     private lateinit var engine: DeadlineReminderEngine
-    private val zoneId = ZoneId.of("UTC")
+    private val zoneId = TimeZone.UTC
 
     @Before
     fun setUp() {

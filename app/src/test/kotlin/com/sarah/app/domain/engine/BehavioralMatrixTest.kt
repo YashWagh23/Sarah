@@ -12,16 +12,20 @@ import com.sarah.app.domain.model.TaskType
 import com.sarah.app.domain.model.TemporaryInterruption
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
 
 class BehavioralMatrixTest {
 
     private lateinit var scorer: TaskPriorityScorer
     private lateinit var planner: AdaptivePlanner
-    private val date = LocalDate.of(2026, 8, 15)
-    private val zone = ZoneId.of("UTC")
+    private val date = LocalDate(2026, 8, 15)
+    private val zone = TimeZone.UTC
     private val schedule = CollegeSchedule(
         wakeTimeMinutes = 7 * 60,
         sleepTimeMinutes = 23 * 60 + 30, // 11:30 PM (1410 min)
@@ -38,7 +42,7 @@ class BehavioralMatrixTest {
     }
 
     private fun epochMs(dayOffset: Long, hour: Int, minute: Int): Long {
-        return date.plusDays(dayOffset).atTime(hour, minute).atZone(zone).toInstant().toEpochMilli()
+        return date.plus(dayOffset, DateTimeUnit.DAY).atTime(LocalTime(hour, minute)).toInstant(zone).toEpochMilliseconds()
     }
 
     private fun formatTime(minutes: Int): String {
@@ -65,8 +69,9 @@ class BehavioralMatrixTest {
         println("================================================================================")
         println("Energy: $energy | Current Time: ${currentTime} | Bedtime: ${formatTime(schedule.sleepTimeMinutes)}")
         println("\nINPUT TASKS:")
+        val curInstant = date.atTime(currentTime).toInstant(zone).toEpochMilliseconds()
         for (t in tasks) {
-            val dueHours = (t.deadlineEpochMs - date.atTime(currentTime).atZone(zone).toInstant().toEpochMilli()) / (1000.0 * 3600.0)
+            val dueHours = (t.deadlineEpochMs - curInstant) / (1000.0 * 3600.0)
             println("  - [ID ${t.id}] ${t.title} | Est: ${t.estimatedMinutes}m (Done: ${t.completedMinutes}m, Rem: ${t.remainingMinutes}m) | Priority: ${t.priority} | Type: ${t.type} | EnergyReq: ${t.energyRequirement} | Due in: ${String.format("%.1f", dueHours)}h")
         }
         if (interruptions.isNotEmpty()) {
@@ -81,9 +86,9 @@ class BehavioralMatrixTest {
             schedule = schedule,
             energyLevel = energy,
             interruptions = interruptions,
-            currentTime = currentTime,
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = currentTime.hour * 60 + currentTime.minute,
+            currentDateInput = date,
+            timeZone = zone
         )
 
         println("\nMETRICS:")
@@ -120,7 +125,7 @@ class BehavioralMatrixTest {
                 Task(id = 3, title = "Technical Communication Reading", deadlineEpochMs = epochMs(4, 18, 0), estimatedMinutes = 30, priority = TaskPriority.LOW, type = TaskType.READING, energyRequirement = EnergyRequirement.LOW)
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(18, 0)
+            currentTime = LocalTime(18, 0)
         )
 
         // Scenario 2: Exhausted student - urgent hard task + easy short task
@@ -131,7 +136,7 @@ class BehavioralMatrixTest {
                 Task(id = 2, title = "Software Eng Glossary Review", deadlineEpochMs = epochMs(1, 14, 0), estimatedMinutes = 25, priority = TaskPriority.MEDIUM, type = TaskType.REVISION, energyRequirement = EnergyRequirement.LOW)
             ),
             energy = EnergyLevel.EXHAUSTED,
-            currentTime = LocalTime.of(19, 45)
+            currentTime = LocalTime(19, 45)
         )
 
         // Scenario 3: Overloaded evening - 4-5 hours of work with ~2 hours available
@@ -144,7 +149,7 @@ class BehavioralMatrixTest {
                 Task(id = 4, title = "Web Dev Project Milestone", deadlineEpochMs = epochMs(3, 18, 0), estimatedMinutes = 60, priority = TaskPriority.LOW, type = TaskType.PROJECT, energyRequirement = EnergyRequirement.MEDIUM)
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(21, 0) // 9:00 PM to 11:30 PM = 2.5h (150 min raw)
+            currentTime = LocalTime(21, 0) // 9:00 PM to 11:30 PM = 2.5h (150 min raw)
         )
 
         // Scenario 4: New urgent assignment at 8 PM - verify reordering
@@ -155,7 +160,7 @@ class BehavioralMatrixTest {
                 Task(id = 2, title = "Surprise Quiz Revision: Discrete Math", deadlineEpochMs = epochMs(1, 8, 30), estimatedMinutes = 40, priority = TaskPriority.CRITICAL, type = TaskType.EXAM_PREP, energyRequirement = EnergyRequirement.HIGH)
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(20, 0)
+            currentTime = LocalTime(20, 0)
         )
 
         // Scenario 5: Partial completion - 90 min task, 35 min completed
@@ -166,7 +171,7 @@ class BehavioralMatrixTest {
                 Task(id = 2, title = "Physics Problem Sheet", deadlineEpochMs = epochMs(2, 12, 0), estimatedMinutes = 45, completedMinutes = 0, priority = TaskPriority.MEDIUM, type = TaskType.ASSIGNMENT, energyRequirement = EnergyRequirement.MEDIUM)
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 45)
+            currentTime = LocalTime(19, 45)
         )
 
         // Scenario 6: Temporary interruption - unavailable from 8:00 PM to 10:00 PM
@@ -177,10 +182,10 @@ class BehavioralMatrixTest {
                 Task(id = 2, title = "Linear Algebra Review", deadlineEpochMs = epochMs(2, 14, 0), estimatedMinutes = 30, priority = TaskPriority.MEDIUM, type = TaskType.REVISION, energyRequirement = EnergyRequirement.LOW)
             ),
             interruptions = listOf(
-                TemporaryInterruption(id = 10, title = "Family Dinner / Doctor", startMinutes = 20 * 60, endMinutes = 22 * 60, dateEpochDay = date.toEpochDay())
+                TemporaryInterruption(id = 10, title = "Family Dinner / Doctor", startMinutes = 20 * 60, endMinutes = 22 * 60, dateEpochDay = date.toEpochDays().toLong())
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 0)
+            currentTime = LocalTime(19, 0)
         )
 
         // Scenario 7: Tomorrow deadline vs next-week deadline
@@ -191,7 +196,7 @@ class BehavioralMatrixTest {
                 Task(id = 2, title = "Tomorrow Morning Stats Problem Set", deadlineEpochMs = epochMs(1, 9, 0), estimatedMinutes = 45, priority = TaskPriority.HIGH, type = TaskType.ASSIGNMENT, energyRequirement = EnergyRequirement.MEDIUM)
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 0)
+            currentTime = LocalTime(19, 0)
         )
 
         // Scenario 8: Sleep protection - verify nothing crosses bedtime
@@ -201,7 +206,7 @@ class BehavioralMatrixTest {
                 Task(id = 1, title = "Full Stack Capstone Coding", deadlineEpochMs = epochMs(1, 9, 0), estimatedMinutes = 180, priority = TaskPriority.CRITICAL, type = TaskType.PROJECT, energyRequirement = EnergyRequirement.HIGH)
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(22, 0) // Bedtime 11:30 PM (90 mins total window)
+            currentTime = LocalTime(22, 0) // Bedtime 11:30 PM (90 mins total window)
         )
 
         // Scenario 9: Quick task vs long task (quick-win boost)
@@ -212,7 +217,7 @@ class BehavioralMatrixTest {
                 Task(id = 2, title = "Deep Machine Learning Chapter", deadlineEpochMs = epochMs(2, 17, 0), estimatedMinutes = 90, priority = TaskPriority.MEDIUM, type = TaskType.READING, energyRequirement = EnergyRequirement.HIGH)
             ),
             energy = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(19, 45)
+            currentTime = LocalTime(19, 45)
         )
     }
 }

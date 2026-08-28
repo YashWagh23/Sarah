@@ -52,6 +52,15 @@ android {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
 
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/java", "src/main/kotlin")
+        }
+        getByName("test") {
+            java.srcDirs("src/test/java", "src/test/kotlin")
+        }
+    }
+
     testOptions {
         unitTests.isReturnDefaultValues = true
         unitTests.all {
@@ -60,7 +69,6 @@ android {
             it.jvmArgs("-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8")
         }
     }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -68,11 +76,23 @@ android {
     }
 }
 
-tasks.withType<Test> {
-    systemProperty("file.encoding", "UTF-8")
-    systemProperty("sun.jnu.encoding", "UTF-8")
-    jvmArgs("-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8")
+tasks.matching { it.name.startsWith("compile") && it.name.endsWith("UnitTestKotlin") }.configureEach {
+    doLast {
+        val variant = if (name.contains("Release", ignoreCase = true)) "releaseUnitTest" else "debugUnitTest"
+        val variantCap = if (name.contains("Release", ignoreCase = true)) "Release" else "Debug"
+        val kotlinSrc = layout.buildDirectory.dir("tmp/kotlin-classes/$variant").get().asFile
+        val javacDest = layout.buildDirectory.dir("intermediates/javac/$variant/compile${variantCap}UnitTestJavaWithJavac/classes").get().asFile
+        if (kotlinSrc.exists()) {
+            javacDest.mkdirs()
+            copy {
+                from(kotlinSrc)
+                into(javacDest)
+            }
+        }
+    }
 }
+
+
 
 
 
@@ -113,6 +133,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     // Testing
+    testImplementation(kotlin("test"))
+    testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

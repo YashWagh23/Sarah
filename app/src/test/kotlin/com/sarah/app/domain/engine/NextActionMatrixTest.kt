@@ -167,13 +167,14 @@ class NextActionMatrixTest {
         customMinutesBehind: Int? = null
     ) {
         val currentMinutes = currentTime.hour * 60 + currentTime.minute
+        val planGenMinutes = planGenerationTime.hour * 60 + planGenerationTime.minute
         var plan = planner.generatePlan(
             tasks = tasks,
             schedule = schedule,
             energyLevel = energy,
-            currentTime = planGenerationTime,
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = planGenMinutes,
+            currentDateInput = kotlinx.datetime.LocalDate(2026, 8, 15),
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         if (customPaceStatus != null || customMinutesBehind != null) {
@@ -190,9 +191,8 @@ class NextActionMatrixTest {
             plan = plan,
             tasks = tasks,
             schedule = schedule,
-            currentTime = currentTime,
-            currentDate = date,
-            zoneId = zone
+            currentMinutesInput = currentMinutes,
+            timeZone = kotlinx.datetime.TimeZone.UTC
         )
 
         println("================================================================================")

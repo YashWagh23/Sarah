@@ -10,16 +10,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
 
 class FeasibilityEngineTest {
 
     private lateinit var engine: FeasibilityEngine
     private lateinit var schedule: CollegeSchedule
-    private val fixedZone = ZoneId.of("UTC")
-    private val todayDate = LocalDate.of(2026, 8, 15)
+    private val fixedZone = TimeZone.UTC
+    private val todayDate = LocalDate(2026, 8, 15)
 
     @Before
     fun setup() {
@@ -38,8 +42,8 @@ class FeasibilityEngineTest {
 
     @Test
     fun testEvaluateTodayCorrectlyTriagesUrgentTasks() {
-        val deadlineTomorrow = todayDate.plusDays(1).atTime(10, 0).atZone(fixedZone).toInstant().toEpochMilli()
-        val deadlineNextWeek = todayDate.plusDays(7).atTime(10, 0).atZone(fixedZone).toInstant().toEpochMilli()
+        val deadlineTomorrow = todayDate.plus(1, DateTimeUnit.DAY).atTime(LocalTime(10, 0)).toInstant(fixedZone).toEpochMilliseconds()
+        val deadlineNextWeek = todayDate.plus(7, DateTimeUnit.DAY).atTime(LocalTime(10, 0)).toInstant(fixedZone).toEpochMilliseconds()
 
         val urgentPractical = Task(
             id = 1,
@@ -72,9 +76,9 @@ class FeasibilityEngineTest {
             tasks = listOf(urgentPractical, urgentAssignment, futureTask),
             schedule = schedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(18, 30),
-            currentDate = todayDate,
-            zoneId = fixedZone
+            currentMinutesInput = 18 * 60 + 30,
+            currentDateInput = todayDate,
+            timeZone = fixedZone
         )
 
         assertEquals(2, report.mustDoTasks.size)
@@ -86,7 +90,7 @@ class FeasibilityEngineTest {
 
     @Test
     fun testEvaluateTodayFlagsOverloadedWorkload() {
-        val deadlineTomorrow = todayDate.plusDays(1).atTime(10, 0).atZone(fixedZone).toInstant().toEpochMilli()
+        val deadlineTomorrow = todayDate.plus(1, DateTimeUnit.DAY).atTime(LocalTime(10, 0)).toInstant(fixedZone).toEpochMilliseconds()
 
         val heavyTask = Task(
             id = 1,
@@ -101,9 +105,9 @@ class FeasibilityEngineTest {
             tasks = listOf(heavyTask),
             schedule = schedule,
             energyLevel = EnergyLevel.NORMAL,
-            currentTime = LocalTime.of(22, 30),
-            currentDate = todayDate,
-            zoneId = fixedZone
+            currentMinutesInput = 22 * 60 + 30,
+            currentDateInput = todayDate,
+            timeZone = fixedZone
         )
 
         assertEquals(FeasibilityStatus.OVERLOADED, report.status)
@@ -116,18 +120,18 @@ class FeasibilityEngineTest {
             tasks = emptyList(),
             schedule = schedule,
             energyLevel = EnergyLevel.HIGH,
-            currentTime = LocalTime.of(18, 0),
-            currentDate = todayDate,
-            zoneId = fixedZone
+            currentMinutesInput = 18 * 60,
+            currentDateInput = todayDate,
+            timeZone = fixedZone
         )
 
         val exhaustedReport = engine.evaluateToday(
             tasks = emptyList(),
             schedule = schedule,
             energyLevel = EnergyLevel.EXHAUSTED,
-            currentTime = LocalTime.of(18, 0),
-            currentDate = todayDate,
-            zoneId = fixedZone
+            currentMinutesInput = 18 * 60,
+            currentDateInput = todayDate,
+            timeZone = fixedZone
         )
 
         assertTrue(exhaustedReport.realisticProductiveMinutes < normalReport.realisticProductiveMinutes)

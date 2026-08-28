@@ -56,7 +56,7 @@ class NotesViewModelTest {
         fakeTaskRepository = FakeTaskRepo()
         fakeReminderRepository = FakeReminderRepo()
         fakeReminderScheduler = FakeReminderSched()
-        deadlineReminderEngine = DeadlineReminderEngine(ZoneId.of("UTC"))
+        deadlineReminderEngine = DeadlineReminderEngine(kotlinx.datetime.TimeZone.UTC)
         preferencesManager = FakeSarahPreferences()
     }
 
