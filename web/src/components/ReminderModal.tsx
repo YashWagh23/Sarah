@@ -71,11 +71,18 @@ export const ReminderModal: React.FC = () => {
     if (isReminderModalOpen) {
       const original = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          closeReminderModal();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
       return () => {
         document.body.style.overflow = original;
+        window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isReminderModalOpen]);
+  }, [isReminderModalOpen, closeReminderModal]);
 
   if (!isReminderModalOpen) return null;
 
@@ -182,6 +189,9 @@ export const ReminderModal: React.FC = () => {
       onClick={closeReminderModal}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEditingExisting ? 'Edit Reminder' : 'Set Reminder'}
         onClick={(e) => e.stopPropagation()}
         className="glass-card"
         style={{

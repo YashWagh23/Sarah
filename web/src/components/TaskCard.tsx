@@ -8,7 +8,8 @@ import {
   Calendar,
   Trash2
 } from 'lucide-react';
-import { type Task, SUBJECT_COLORS } from '../lib/db';
+import { type Task } from '../lib/db';
+import { useSubjects } from '../context/SubjectsContext';
 
 interface TaskCardProps {
   task: Task;
@@ -25,7 +26,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onDelete,
   showDate = false
 }) => {
-  const subjectColor = SUBJECT_COLORS[task.subject] || '#6366F1';
+  const { getSubjectColor } = useSubjects();
+  const subjectColor = getSubjectColor(task.subject);
 
   const formatDeadline = (dateStr: string, timeStr?: string) => {
     const todayStr = new Date().toISOString().split('T')[0];

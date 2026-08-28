@@ -16,7 +16,6 @@ import { SubjectCard } from '../components/SubjectCard';
 import { TaskCard } from '../components/TaskCard';
 import { NoteCard } from '../components/NoteCard';
 import { ReminderCard } from '../components/ReminderCard';
-import { type Subject } from '../lib/db';
 
 export const SubjectsScreen: React.FC = () => {
   const { 
@@ -49,7 +48,8 @@ export const SubjectsScreen: React.FC = () => {
     removeReminder 
   } = useReminders();
 
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
+  const selectedSubject = subjects.find(s => s.id === selectedSubjectId) || null;
 
   // If a subject is selected for detail view
   if (selectedSubject) {
@@ -82,7 +82,7 @@ export const SubjectsScreen: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             type="button"
-            onClick={() => setSelectedSubject(null)}
+            onClick={() => setSelectedSubjectId(null)}
             className="btn-press"
             style={{
               display: 'flex',
@@ -386,7 +386,7 @@ export const SubjectsScreen: React.FC = () => {
           <SubjectCard
             key={subject.id}
             subject={subject}
-            onClick={() => setSelectedSubject(subject)}
+            onClick={() => setSelectedSubjectId(subject.id)}
             onEdit={() => openEditSubjectModal(subject)}
           />
         ))}

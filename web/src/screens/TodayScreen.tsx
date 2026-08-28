@@ -10,15 +10,21 @@ import {
   Check, 
   Pin, 
   ArrowRight,
-  Bell
+  Bell,
+  Zap,
+  Target,
+  BatteryCharging,
+  Moon
 } from 'lucide-react';
 import { useTasks } from '../context/TasksContext';
 import { useNotes } from '../context/NotesContext';
 import { useReminders } from '../context/RemindersContext';
+import { useSubjects } from '../context/SubjectsContext';
+import { useUserProfile } from '../context/UserProfileContext';
 import { TaskCard } from '../components/TaskCard';
 import { NoteCard } from '../components/NoteCard';
 import { ReminderCard } from '../components/ReminderCard';
-import { SUBJECT_COLORS } from '../lib/db';
+import { type EnergyLevel } from '../lib/db';
 
 interface TodayScreenProps {
   onNavigateToNotes?: () => void;
@@ -54,6 +60,9 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
     removeReminder
   } = useReminders();
 
+  const { getSubjectColor } = useSubjects();
+  const { profile, setEnergyLevel, feasibility } = useUserProfile();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -70,6 +79,15 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
   // Take top active reminders for Today
   const upcomingRemindersPreview = activeReminders.slice(0, 4);
 
+  const firstName = profile.name ? profile.name.trim().split(' ')[0] : 'Student';
+
+  const energyOptions: Array<{ id: EnergyLevel; label: string; icon: React.ComponentType<{ size?: number }> }> = [
+    { id: 'high', label: 'High', icon: Zap },
+    { id: 'normal', label: 'Steady', icon: Target },
+    { id: 'low', label: 'Low', icon: BatteryCharging },
+    { id: 'exhausted', label: 'Rest', icon: Moon }
+  ];
+
   return (
     <div 
       className="animate-fade-in"
@@ -77,31 +95,167 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         padding: '16px 18px 90px 18px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px'
+        gap: '18px'
       }}
     >
-      {/* 1. Sarah Header & Greeting */}
-      <section style={{ display: 'flex', flexDirection: 'column', gap: '3px', paddingTop: '4px' }}>
-        <h2
+      {/* 1. Sarah Header & Dynamic Greeting */}
+      <section style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h2
+              style={{
+                fontSize: '24px',
+                fontWeight: 800,
+                color: 'var(--sarah-on-background)',
+                letterSpacing: '-0.03em',
+                margin: 0
+              }}
+            >
+              {getGreeting()}, {firstName}
+            </h2>
+            <p
+              style={{
+                fontSize: '13px',
+                color: 'var(--sarah-on-surface-variant)',
+                margin: 0
+              }}
+            >
+              Bedtime target: {profile.targetBedtime || '23:30'} • Academic OS
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. 4-State Dynamic Energy Model Picker */}
+      <section
+        className="surface-card"
+        style={{
+          padding: '10px 12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          backgroundColor: '#FFFFFF'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sarah-secondary)' }}>
+            Current Energy Level
+          </span>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sarah-primary)' }}>
+            {profile.energyLevel === 'high' && '⚡ 1.25x Focus Multiplier'}
+            {profile.energyLevel === 'normal' && '🎯 1.0x Standard Pace'}
+            {profile.energyLevel === 'low' && '🔋 0.7x Reduced Capacity'}
+            {profile.energyLevel === 'exhausted' && '🛋️ 0.4x Rest Mode'}
+          </span>
+        </div>
+
+        <div
           style={{
-            fontSize: '25px',
-            fontWeight: 800,
-            color: 'var(--sarah-on-background)',
-            letterSpacing: '-0.03em',
-            margin: 0
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '6px',
+            backgroundColor: 'var(--sarah-surface-container-low)',
+            padding: '4px',
+            borderRadius: '14px'
           }}
         >
-          {getGreeting()}, Yash
-        </h2>
-        <p
-          style={{
-            fontSize: '13.5px',
-            color: 'var(--sarah-on-surface-variant)',
-            margin: 0
-          }}
-        >
-          Let's figure out tonight.
-        </p>
+          {energyOptions.map((opt) => {
+            const isSelected = profile.energyLevel === opt.id;
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setEnergyLevel(opt.id)}
+                className="btn-press"
+                style={{
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '7px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  backgroundColor: isSelected ? '#FFFFFF' : 'transparent',
+                  color: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-on-surface-variant)',
+                  boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  fontSize: '12px',
+                  fontWeight: isSelected ? 700 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Icon size={13} />
+                <span>{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 3. Deterministic Bedtime Feasibility Engine Card */}
+      <section
+        className="glass-card"
+        style={{
+          padding: '16px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          backgroundColor: feasibility.status === 'optimal' 
+            ? 'rgba(255, 255, 255, 0.92)' 
+            : feasibility.status === 'tight' 
+            ? 'rgba(255, 255, 255, 0.95)'
+            : 'rgba(255, 245, 245, 0.92)',
+          border: feasibility.status === 'overloaded' 
+            ? '1px solid rgba(186, 26, 26, 0.25)' 
+            : '1px solid var(--glass-border)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Sparkles size={15} color="var(--sarah-primary)" />
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--sarah-primary)' }}>
+              Feasibility Engine
+            </span>
+          </div>
+
+          <span
+            style={{
+              fontSize: '10.5px',
+              fontWeight: 700,
+              padding: '3px 8px',
+              borderRadius: '8px',
+              backgroundColor: feasibility.status === 'optimal'
+                ? 'rgba(16, 185, 129, 0.12)'
+                : feasibility.status === 'tight'
+                ? 'rgba(245, 158, 11, 0.12)'
+                : feasibility.status === 'rest_recommended'
+                ? 'rgba(139, 92, 246, 0.12)'
+                : 'rgba(186, 26, 26, 0.12)',
+              color: feasibility.status === 'optimal'
+                ? '#059669'
+                : feasibility.status === 'tight'
+                ? 'var(--sarah-tertiary)'
+                : feasibility.status === 'rest_recommended'
+                ? '#7C3AED'
+                : 'var(--sarah-error)'
+            }}
+          >
+            {feasibility.status === 'optimal' && 'CAPACITY OPTIMAL'}
+            {feasibility.status === 'tight' && 'TIGHT SCHEDULE'}
+            {feasibility.status === 'overloaded' && 'OVERLOADED'}
+            {feasibility.status === 'rest_recommended' && 'REST MODE'}
+          </span>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '14.5px', fontWeight: 700, color: 'var(--sarah-on-background)', margin: '0 0 2px 0' }}>
+            {feasibility.headline}
+          </h3>
+          <p style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', margin: 0, lineHeight: 1.45 }}>
+            {feasibility.subtext}
+          </p>
+        </div>
       </section>
 
       {/* 2. Sarah's Next Move — Liquid Glass Card */}
@@ -210,7 +364,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
                   width: '6px',
                   height: '6px',
                   borderRadius: '50%',
-                  backgroundColor: SUBJECT_COLORS[nextActionTask.subject] || '#6366F1'
+                  backgroundColor: getSubjectColor(nextActionTask.subject)
                 }}
               />
               <span style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)', fontWeight: 500 }}>

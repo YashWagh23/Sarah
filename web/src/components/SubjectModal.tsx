@@ -45,11 +45,18 @@ export const SubjectModal: React.FC = () => {
     if (isSubjectModalOpen) {
       const original = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          closeSubjectModal();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
       return () => {
         document.body.style.overflow = original;
+        window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isSubjectModalOpen]);
+  }, [isSubjectModalOpen, closeSubjectModal]);
 
   if (!isSubjectModalOpen) return null;
 
@@ -118,6 +125,9 @@ export const SubjectModal: React.FC = () => {
       onClick={closeSubjectModal}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEditingExisting ? 'Edit Subject' : 'Add New Subject'}
         onClick={(e) => e.stopPropagation()}
         className="glass-card"
         style={{

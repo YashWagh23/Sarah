@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BottomNav, type TabId } from './BottomNav';
 
 interface AppShellProps {
@@ -12,6 +12,23 @@ export const AppShell: React.FC<AppShellProps> = ({
   onTabSelect,
   children
 }) => {
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -119,10 +136,10 @@ export const AppShell: React.FC<AppShellProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              backgroundColor: 'rgba(68, 80, 183, 0.08)',
+              backgroundColor: isOnline ? 'rgba(68, 80, 183, 0.08)' : 'rgba(245, 158, 11, 0.1)',
               padding: '4px 10px',
               borderRadius: '20px',
-              border: '1px solid rgba(68, 80, 183, 0.15)'
+              border: isOnline ? '1px solid rgba(68, 80, 183, 0.15)' : '1px solid rgba(245, 158, 11, 0.25)'
             }}
           >
             <span
@@ -130,17 +147,17 @@ export const AppShell: React.FC<AppShellProps> = ({
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: '#10B981'
+                backgroundColor: isOnline ? '#10B981' : '#F59E0B'
               }}
             />
             <span
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                color: 'var(--sarah-primary)'
+                color: isOnline ? 'var(--sarah-primary)' : 'var(--sarah-tertiary)'
               }}
             >
-              PWA Online
+              {isOnline ? 'Online' : 'Offline Ready'}
             </span>
           </div>
         </div>

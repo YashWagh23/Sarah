@@ -1,6 +1,27 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 export type TaskPriority = 'must' | 'should' | 'later';
+export type EnergyLevel = 'high' | 'normal' | 'low' | 'exhausted';
+
+export interface UserProfile {
+  name: string;
+  branch: string;
+  semester: string;
+  targetBedtime: string; // 'HH:mm', e.g. '23:30'
+  collegeEndTime: string; // 'HH:mm', e.g. '17:00'
+  commuteMinutes: number; // e.g. 30
+  energyLevel: EnergyLevel;
+}
+
+export const DEFAULT_USER_PROFILE: UserProfile = {
+  name: 'Yash Wagh',
+  branch: 'Computer Science & Engineering',
+  semester: 'Semester 6',
+  targetBedtime: '23:30',
+  collegeEndTime: '17:00',
+  commuteMinutes: 30,
+  energyLevel: 'normal'
+};
 
 export interface Task {
   id: string;
@@ -501,6 +522,130 @@ export async function snoozeReminder(id: string, newTimeEpochMs: number): Promis
   return updated;
 }
 
+// ─── User Profile & Preferences Operations ───────────────────────────────────
+
+const USER_PROFILE_KEY = 'sarah_user_profile_v1';
+
+export async function getUserProfile(): Promise<UserProfile> {
+  await getDB();
+  const db = await getDB();
+  const stored = await db.get('key_val', USER_PROFILE_KEY);
+  if (stored && typeof stored === 'object') {
+    return {
+      ...DEFAULT_USER_PROFILE,
+      ...(stored as Partial<UserProfile>)
+    };
+  }
+  return DEFAULT_USER_PROFILE;
+}
+
+export async function saveUserProfile(profile: UserProfile): Promise<UserProfile> {
+  const db = await getDB();
+  await db.put('key_val', profile, USER_PROFILE_KEY);
+  return profile;
+}
+
+// ─── Full Data Backup & Restore Operations ───────────────────────────────────
+
+export interface SarahBackupData {
+  version: number;
+  exportedAt: number;
+  profile: UserProfile;
+  subjects: Subject[];
+  tasks: Task[];
+  notes: AcademicNote[];
+  reminders: Reminder[];
+}
+
+export async function exportAllDataJSON(): Promise<string> {
+  const db = await getDB();
+  const profile = await getUserProfile();
+  const subjects = await db.getAll('subjects');
+  const tasks = await db.getAll('tasks');
+  const notes = await db.getAll('notes');
+  const reminders = await db.getAll('reminders');
+
+  const backup: SarahBackupData = {
+    version: 1,
+    exportedAt: Date.now(),
+    profile,
+    subjects,
+    tasks,
+    notes,
+    reminders
+  };
+
+  return JSON.stringify(backup, null, 2);
+}
+
+export async function importAllDataJSON(jsonString: string): Promise<{ success: boolean; importedCounts: { tasks: number; notes: number; reminders: number; subjects: number } }> {
+  const db = await getDB();
+  const parsed = JSON.parse(jsonString) as Partial<SarahBackupData>;
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Invalid JSON format');
+  }
+
+  // Clear existing
+  const tx = db.transaction(['tasks', 'notes', 'reminders', 'subjects', 'key_val'], 'readwrite');
+  
+  if (parsed.profile) {
+    await tx.objectStore('key_val').put(parsed.profile, USER_PROFILE_KEY);
+  }
+
+  let taskCount = 0;
+  if (Array.isArray(parsed.tasks)) {
+    for (const t of parsed.tasks) {
+      if (t.id && t.title) {
+        await tx.objectStore('tasks').put(t);
+        taskCount++;
+      }
+    }
+  }
+
+  let noteCount = 0;
+  if (Array.isArray(parsed.notes)) {
+    for (const n of parsed.notes) {
+      if (n.id && n.title) {
+        await tx.objectStore('notes').put(n);
+        noteCount++;
+      }
+    }
+  }
+
+  let reminderCount = 0;
+  if (Array.isArray(parsed.reminders)) {
+    for (const r of parsed.reminders) {
+      if (r.id && r.title) {
+        await tx.objectStore('reminders').put(r);
+        reminderCount++;
+      }
+    }
+  }
+
+  let subjectCount = 0;
+  if (Array.isArray(parsed.subjects)) {
+    for (const s of parsed.subjects) {
+      if (s.id && s.name) {
+        await tx.objectStore('subjects').put(s);
+        subjectCount++;
+      }
+    }
+  }
+
+  await tx.done;
+
+  return {
+    success: true,
+    importedCounts: {
+      tasks: taskCount,
+      notes: noteCount,
+      reminders: reminderCount,
+      subjects: subjectCount
+    }
+  };
+}
+
 // ─── Local Data Initialization ──────────────────────────────────────────────
 
 export interface PersistenceStatus {
@@ -514,3 +659,4 @@ export async function initializeAndTrackPersistence(): Promise<PersistenceStatus
     isReady: true
   };
 }
+

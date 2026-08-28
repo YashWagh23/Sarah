@@ -4,7 +4,8 @@ import {
   Trash2, 
   Calendar 
 } from 'lucide-react';
-import { type AcademicNote, SUBJECT_COLORS } from '../lib/db';
+import { type AcademicNote } from '../lib/db';
+import { useSubjects } from '../context/SubjectsContext';
 
 interface NoteCardProps {
   note: AcademicNote;
@@ -21,7 +22,8 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   onDelete,
   compact = false
 }) => {
-  const subjectColor = SUBJECT_COLORS[note.subject] || '#6366F1';
+  const { getSubjectColor } = useSubjects();
+  const subjectColor = getSubjectColor(note.subject);
 
   const formatTimestamp = (timestamp: number) => {
     const d = new Date(timestamp);

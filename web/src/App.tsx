@@ -7,6 +7,7 @@ import { NotesScreen } from './screens/NotesScreen';
 import { SubjectsScreen } from './screens/SubjectsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { TasksProvider, useTasks } from './context/TasksContext';
+import { UserProfileProvider } from './context/UserProfileContext';
 import { NotesProvider } from './context/NotesContext';
 import { RemindersProvider } from './context/RemindersContext';
 import { SubjectsProvider } from './context/SubjectsContext';
@@ -89,13 +90,15 @@ const AppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <TasksProvider>
-      <NotesProvider>
-        <RemindersProvider>
-          <SubjectsProvider>
-            <AppContent />
-          </SubjectsProvider>
-        </RemindersProvider>
-      </NotesProvider>
+      <UserProfileProvider>
+        <NotesProvider>
+          <RemindersProvider>
+            <SubjectsProvider>
+              <AppContent />
+            </SubjectsProvider>
+          </RemindersProvider>
+        </NotesProvider>
+      </UserProfileProvider>
     </TasksProvider>
   );
 };

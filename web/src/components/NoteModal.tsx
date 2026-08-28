@@ -57,11 +57,18 @@ export const NoteModal: React.FC = () => {
     if (isNoteModalOpen) {
       const original = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          closeNoteModal();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
       return () => {
         document.body.style.overflow = original;
+        window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isNoteModalOpen]);
+  }, [isNoteModalOpen, closeNoteModal]);
 
   if (!isNoteModalOpen) return null;
 
@@ -137,6 +144,9 @@ export const NoteModal: React.FC = () => {
       onClick={closeNoteModal}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEditingExisting ? 'Edit Academic Note' : 'Capture Classroom Note'}
         onClick={(e) => e.stopPropagation()}
         className="glass-card"
         style={{
@@ -175,6 +185,7 @@ export const NoteModal: React.FC = () => {
           </h2>
           <button
             type="button"
+            aria-label="Close note modal"
             onClick={closeNoteModal}
             style={{
               background: 'var(--sarah-surface-container-low)',
@@ -255,6 +266,34 @@ export const NoteModal: React.FC = () => {
               Subject
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {/* If subjects is empty, render default General pill */}
+              {subjects.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubject('General');
+                    setIsCustomSubject(false);
+                  }}
+                  className="btn-press"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 12px',
+                    borderRadius: '16px',
+                    border: (!isCustomSubject && subject === 'General') ? `1.5px solid var(--sarah-primary)` : '1px solid var(--sarah-outline-variant)',
+                    backgroundColor: (!isCustomSubject && subject === 'General') ? 'rgba(68, 80, 183, 0.08)' : 'var(--sarah-surface-container-lowest)',
+                    color: (!isCustomSubject && subject === 'General') ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
+                    fontSize: '12px',
+                    fontWeight: (!isCustomSubject && subject === 'General') ? 600 : 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#6366F1' }} />
+                  General
+                </button>
+              )}
+
               {subjects.map((sub) => {
                 const isSelected = !isCustomSubject && subject.toLowerCase() === sub.name.toLowerCase();
                 const dotColor = sub.color || getSubjectColor(sub.name);
@@ -286,7 +325,53 @@ export const NoteModal: React.FC = () => {
                   </button>
                 );
               })}
+
+              {/* Custom Subject Toggle Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCustomSubject(true);
+                  setSubject('Custom');
+                }}
+                className="btn-press"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px 12px',
+                  borderRadius: '16px',
+                  border: isCustomSubject ? `1.5px solid var(--sarah-primary)` : '1px dashed var(--sarah-outline)',
+                  backgroundColor: isCustomSubject ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  color: isCustomSubject ? 'var(--sarah-primary)' : 'var(--sarah-secondary)',
+                  fontSize: '12px',
+                  fontWeight: isCustomSubject ? 600 : 500,
+                  cursor: 'pointer'
+                }}
+              >
+                <span>+ Custom Subject</span>
+              </button>
             </div>
+
+            {/* Custom Subject Input Field */}
+            {isCustomSubject && (
+              <input
+                type="text"
+                value={customSubject}
+                onChange={(e) => setCustomSubject(e.target.value)}
+                placeholder="Enter subject name (e.g. Operating Systems)"
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--sarah-primary)',
+                  fontSize: '13.5px',
+                  outline: 'none',
+                  backgroundColor: '#FFFFFF',
+                  color: 'var(--sarah-on-background)',
+                  marginTop: '4px'
+                }}
+              />
+            )}
           </div>
 
           {/* 3. Note Content */}

@@ -190,6 +190,38 @@ async function runHardeningTest() {
   console.log(`✓ Stored User Notes: ${finalNotes.length}`);
   console.log(`✓ Stored User Reminders: ${finalReminders.length}`);
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // 7. USER PROFILE & BACKUP EXPORT/IMPORT INTEGRITY
+  // ──────────────────────────────────────────────────────────────────────────
+  console.log('\n--- [7] PROFILE PERSISTENCE & DATA BACKUP VERIFICATION ---');
+  const { getUserProfile, saveUserProfile, exportAllDataJSON, importAllDataJSON } = await import('./src/lib/db');
+  
+  const initialProfile = await getUserProfile();
+  console.log(`✓ Initial Profile Loaded: "${initialProfile.name}" (Bedtime: ${initialProfile.targetBedtime})`);
+  
+  await saveUserProfile({
+    ...initialProfile,
+    name: 'Sarah Student',
+    energyLevel: 'high'
+  });
+  const updatedProfile = await getUserProfile();
+  if (updatedProfile.name !== 'Sarah Student' || updatedProfile.energyLevel !== 'high') {
+    throw new Error('User profile update failed');
+  }
+  console.log('✓ User profile mutation and persistence verified.');
+
+  const backupJson = await exportAllDataJSON();
+  if (!backupJson.includes('Sarah Student')) {
+    throw new Error('Export JSON backup missing user profile');
+  }
+  console.log('✓ Full JSON Data Export verified.');
+
+  const importResult = await importAllDataJSON(backupJson);
+  if (!importResult.success || importResult.importedCounts.tasks < 1) {
+    throw new Error('Full JSON Data Import failed');
+  }
+  console.log(`✓ Full JSON Data Restore verified (${importResult.importedCounts.tasks} tasks restored).`);
+
   console.log('\n================================================================');
   console.log('✅ ALL PRODUCTION HARDENING & CLEAN STATE TESTS PASSED!');
   console.log('================================================================\n');

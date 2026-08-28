@@ -9,6 +9,8 @@ import {
   SUBJECT_COLORS
 } from '../lib/db';
 import { useTasks } from './TasksContext';
+import { useNotes } from './NotesContext';
+import { useReminders } from './RemindersContext';
 
 interface SubjectsContextType {
   subjects: Subject[];
@@ -52,6 +54,8 @@ export const SubjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [viewingSubject, setViewingSubject] = useState<Subject | null>(null);
 
   const { showToast, refresh: refreshTasks } = useTasks();
+  const { refreshNotes } = useNotes();
+  const { refreshReminders } = useReminders();
 
   const refreshSubjects = useCallback(async () => {
     try {
@@ -118,11 +122,13 @@ export const SubjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     await dbDeleteSubject(id);
     await refreshSubjects();
     await refreshTasks(); // Refresh tasks as orphan records moved to 'General'
+    await refreshNotes(); // Refresh notes as orphan records moved to 'General'
+    await refreshReminders(); // Refresh reminders as orphan records moved to 'General'
     if (viewingSubject?.id === id) {
       setViewingSubject(null);
     }
     showToast(`Subject "${toDelete?.name || ''}" deleted (items moved to General)`);
-  }, [subjects, refreshSubjects, refreshTasks, viewingSubject, showToast]);
+  }, [subjects, refreshSubjects, refreshTasks, refreshNotes, refreshReminders, viewingSubject, showToast]);
 
   // Modal Controls
   const openCreateSubjectModal = useCallback(() => {
