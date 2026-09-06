@@ -12,8 +12,8 @@ import { useTasks } from '../context/TasksContext';
 import { useSubjects } from '../context/SubjectsContext';
 
 export const TaskModal: React.FC = () => {
-  const { isTaskModalOpen, editingTask, closeTaskModal, createTask, modifyTask, removeTask } = useTasks();
-  const { subjects, getSubjectColor } = useSubjects();
+  const { isTaskModalOpen, editingTask, initialTaskSubject, closeTaskModal, createTask, modifyTask, removeTask } = useTasks();
+  const { subjects, getSubjectColor, createSubject } = useSubjects();
 
   const getTodayStr = () => {
     const d = new Date();
@@ -57,7 +57,7 @@ export const TaskModal: React.FC = () => {
 
   useEffect(() => {
     const subjectNames = subjects.map(s => s.name);
-    const defaultSub = subjectNames.length > 0 ? subjectNames[0] : 'General';
+    const defaultSub = initialTaskSubject || (subjectNames.length > 0 ? subjectNames[0] : 'General');
 
     if (editingTask) {
       setTitle(editingTask.title);
@@ -71,7 +71,7 @@ export const TaskModal: React.FC = () => {
         setIsCustomSubject(true);
       }
       setDeadline(editingTask.deadline || getTodayStr());
-      setDeadlineTime(editingTask.deadlineTime || '');
+      setDeadlineTime(editingTask.deadlineTime || '23:59');
       setPriority(editingTask.priority);
       setEstimatedMinutes(editingTask.estimatedMinutes);
       setShowDeleteConfirm(false);
@@ -83,13 +83,13 @@ export const TaskModal: React.FC = () => {
       setIsCustomSubject(false);
       setCustomSubject('');
       setDeadline(getTodayStr());
-      setDeadlineTime('');
+      setDeadlineTime('23:59');
       setPriority('must');
       setEstimatedMinutes(45);
       setShowDeleteConfirm(false);
     }
     setErrorMessage('');
-  }, [editingTask, isTaskModalOpen, subjects]);
+  }, [editingTask, isTaskModalOpen, subjects, initialTaskSubject]);
 
   useEffect(() => {
     if (isTaskModalOpen) {
@@ -121,6 +121,19 @@ export const TaskModal: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Auto-register custom subject in subjects database if newly typed
+      const existingSub = subjects.find(s => s.name.toLowerCase() === finalSubject.toLowerCase());
+      if (!existingSub && finalSubject.toLowerCase() !== 'general') {
+        try {
+          await createSubject({
+            name: finalSubject,
+            color: getSubjectColor(finalSubject)
+          });
+        } catch (subErr) {
+          console.warn('Failed to auto-create subject:', subErr);
+        }
+      }
+
       if (editingTask) {
         await modifyTask({
           ...editingTask,
@@ -657,7 +670,7 @@ export const TaskModal: React.FC = () => {
           </div>
 
           {/* Actions Bar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px' }} className="safe-bottom">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px', paddingBottom: '20px' }} className="safe-bottom">
             <button
               type="submit"
               disabled={isSubmitting}

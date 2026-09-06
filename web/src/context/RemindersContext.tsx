@@ -28,7 +28,7 @@ interface RemindersContextType {
   // Modal Controls
   isReminderModalOpen: boolean;
   editingReminder: Reminder | null;
-  openCreateReminderModal: (linkedTaskId?: string, defaultTitle?: string) => void;
+  openCreateReminderModal: (linkedTaskId?: string, defaultTitle?: string, defaultSubject?: string) => void;
   openEditReminderModal: (reminder: Reminder) => void;
   closeReminderModal: () => void;
 }
@@ -155,23 +155,35 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [refreshReminders, showToast]);
 
   const removeReminder = useCallback(async (id: string) => {
-    await dbDeleteReminder(id);
+    // Optimistic UI update
+    setReminders(prev => prev.filter(r => r.id !== id));
     alertedIdsRef.current.delete(id);
-    await refreshReminders();
-    showToast('Reminder deleted');
+    try {
+      await dbDeleteReminder(id);
+      showToast('Reminder deleted');
+    } catch (err) {
+      console.error('Failed to delete reminder:', err);
+      await refreshReminders();
+    }
   }, [refreshReminders, showToast]);
 
   const dismiss = useCallback(async (id: string) => {
-    await dbDismissReminder(id);
+    // Instant zero-lag optimistic UI update
+    setReminders(prev => prev.map(r => r.id === id ? { ...r, dismissed: true, updatedAt: Date.now() } : r));
     alertedIdsRef.current.add(id);
-    await refreshReminders();
     showToast('Reminder dismissed');
+    try {
+      await dbDismissReminder(id);
+    } catch (err) {
+      console.error('Failed to dismiss reminder:', err);
+      await refreshReminders();
+    }
   }, [refreshReminders, showToast]);
 
   const snooze = useCallback(async (id: string, newTimeEpochMs: number) => {
-    await dbSnoozeReminder(id, newTimeEpochMs);
+    // Instant zero-lag optimistic UI update
+    setReminders(prev => prev.map(r => r.id === id ? { ...r, reminderAt: newTimeEpochMs, dismissed: false, updatedAt: Date.now() } : r));
     alertedIdsRef.current.delete(id);
-    await refreshReminders();
     
     const minutesFromNow = Math.round((newTimeEpochMs - Date.now()) / 60000);
     if (minutesFromNow < 60) {
@@ -179,10 +191,17 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } else {
       showToast('Reminder snoozed');
     }
+
+    try {
+      await dbSnoozeReminder(id, newTimeEpochMs);
+    } catch (err) {
+      console.error('Failed to snooze reminder:', err);
+      await refreshReminders();
+    }
   }, [refreshReminders, showToast]);
 
   // Modal Triggers
-  const openCreateReminderModal = useCallback((linkedTaskId?: string, defaultTitle?: string) => {
+  const openCreateReminderModal = useCallback((linkedTaskId?: string, defaultTitle?: string, defaultSubject?: string) => {
     const inOneHour = Date.now() + 3600000;
     setEditingReminder({
       id: '',
@@ -190,6 +209,7 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       message: '',
       reminderAt: inOneHour,
       taskId: linkedTaskId || undefined,
+      subject: defaultSubject || undefined,
       completed: false,
       dismissed: false,
       createdAt: 0,

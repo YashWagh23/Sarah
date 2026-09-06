@@ -11,7 +11,7 @@ import { useSubjects } from '../context/SubjectsContext';
 
 export const NoteModal: React.FC = () => {
   const { isNoteModalOpen, editingNote, closeNoteModal, createNote, modifyNote, removeNote } = useNotes();
-  const { subjects, getSubjectColor } = useSubjects();
+  const { subjects, getSubjectColor, createSubject } = useSubjects();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -89,6 +89,19 @@ export const NoteModal: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Auto-register custom subject in subjects database if newly typed
+      const existingSub = subjects.find(s => s.name.toLowerCase() === finalSubject.toLowerCase());
+      if (!existingSub && finalSubject.toLowerCase() !== 'general') {
+        try {
+          await createSubject({
+            name: finalSubject,
+            color: getSubjectColor(finalSubject)
+          });
+        } catch (subErr) {
+          console.warn('Failed to auto-create subject:', subErr);
+        }
+      }
+
       if (isEditingExisting && editingNote) {
         await modifyNote({
           ...editingNote,
@@ -386,6 +399,8 @@ export const NoteModal: React.FC = () => {
               placeholder="Jot down formulas, exam syllabus, professor hints, or important reminders..."
               style={{
                 width: '100%',
+                minHeight: '130px',
+                maxHeight: '280px',
                 padding: '12px 14px',
                 borderRadius: '14px',
                 border: '1px solid var(--sarah-outline-variant)',
@@ -393,7 +408,7 @@ export const NoteModal: React.FC = () => {
                 outline: 'none',
                 backgroundColor: 'var(--sarah-surface-container-low)',
                 color: 'var(--sarah-on-background)',
-                resize: 'none',
+                resize: 'vertical',
                 fontFamily: 'inherit',
                 lineHeight: 1.5
               }}
@@ -469,7 +484,7 @@ export const NoteModal: React.FC = () => {
           </div>
 
           {/* Actions Bar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px' }} className="safe-bottom">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px', paddingBottom: '20px' }} className="safe-bottom">
             <button
               type="submit"
               disabled={isSubmitting}

@@ -66,7 +66,7 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
       ...profile,
       energyLevel: energy
     };
-    await saveUserProfile(updated);
+    // Instant zero-lag optimistic UI update
     setProfile(updated);
     const labels: Record<EnergyLevel, string> = {
       high: '⚡ High Focus (Pace accelerated)',
@@ -75,6 +75,11 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
       exhausted: '🛋️ Exhausted (Prioritizing rest)'
     };
     showToast(labels[energy]);
+    try {
+      await saveUserProfile(updated);
+    } catch (err) {
+      console.error('Failed to save energy level:', err);
+    }
   }, [profile, showToast]);
 
   // Real-Time Feasibility Calculation Engine

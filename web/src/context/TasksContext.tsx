@@ -29,6 +29,7 @@ interface TasksContextType {
   // Modal / UI Controls
   isTaskModalOpen: boolean;
   editingTask: Task | null;
+  initialTaskSubject?: string;
   openCreateTaskModal: (defaultSubject?: string) => void;
   openEditTaskModal: (task: Task) => void;
   closeTaskModal: () => void;
@@ -50,6 +51,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Modal states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [initialTaskSubject, setInitialTaskSubject] = useState<string | undefined>(undefined);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -91,29 +93,43 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [refresh, showToast]);
 
   const removeTask = useCallback(async (id: string) => {
-    await dbDeleteTask(id);
-    await refresh();
-    showToast('Task deleted');
+    // Optimistic UI update
+    setTasks(prev => prev.filter(t => t.id !== id));
+    try {
+      await dbDeleteTask(id);
+      showToast('Task deleted');
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+      await refresh();
+    }
   }, [refresh, showToast]);
 
   const toggleTaskCompletion = useCallback(async (id: string) => {
     const target = tasks.find(t => t.id === id);
     if (!target) return;
     const newStatus = !target.completed;
-    await dbCompleteTask(id, newStatus);
-    await refresh();
-    showToast(newStatus ? 'Task completed! 🎉' : 'Task reopened');
+    // Instant zero-lag optimistic UI feedback
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: newStatus, updatedAt: Date.now() } : t));
+    try {
+      await dbCompleteTask(id, newStatus);
+      showToast(newStatus ? 'Task completed! 🎉' : 'Task reopened');
+    } catch (err) {
+      console.error('Failed to complete task:', err);
+      await refresh();
+    }
   }, [tasks, refresh, showToast]);
 
   // Modal triggers
-  const openCreateTaskModal = useCallback((_defaultSubject?: string) => {
+  const openCreateTaskModal = useCallback((defaultSubject?: string) => {
     setEditingTask(null);
+    setInitialTaskSubject(defaultSubject);
     setIsTaskModalOpen(true);
     setIsQuickAddOpen(false);
   }, []);
 
   const openEditTaskModal = useCallback((task: Task) => {
     setEditingTask(task);
+    setInitialTaskSubject(undefined);
     setIsTaskModalOpen(true);
     setIsQuickAddOpen(false);
   }, []);
@@ -121,6 +137,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const closeTaskModal = useCallback(() => {
     setIsTaskModalOpen(false);
     setEditingTask(null);
+    setInitialTaskSubject(undefined);
   }, []);
 
   const openQuickAdd = useCallback(() => {
@@ -215,6 +232,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     refresh,
     isTaskModalOpen,
     editingTask,
+    initialTaskSubject,
     openCreateTaskModal,
     openEditTaskModal,
     closeTaskModal,
@@ -240,6 +258,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     refresh,
     isTaskModalOpen,
     editingTask,
+    initialTaskSubject,
     openCreateTaskModal,
     openEditTaskModal,
     closeTaskModal,

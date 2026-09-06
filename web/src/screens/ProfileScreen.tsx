@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Smartphone, 
   Share2, 
@@ -43,6 +43,22 @@ export const ProfileScreen: React.FC = () => {
   const [commuteMinutes, setCommuteMinutes] = useState(profile.commuteMinutes || 30);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isEditingProfile) {
+      setName(profile.name);
+      setBranch(profile.branch);
+      setSemester(profile.semester);
+    }
+  }, [profile, isEditingProfile]);
+
+  useEffect(() => {
+    if (!isEditingSchedule) {
+      setTargetBedtime(profile.targetBedtime || '23:30');
+      setCollegeEndTime(profile.collegeEndTime || '17:00');
+      setCommuteMinutes(profile.commuteMinutes || 30);
+    }
+  }, [profile, isEditingSchedule]);
 
   const handleSaveProfile = async () => {
     if (!name.trim()) {
@@ -278,29 +294,52 @@ export const ProfileScreen: React.FC = () => {
               />
             </div>
 
-            <button
-              type="button"
-              onClick={handleSaveProfile}
-              className="btn-press"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                backgroundColor: 'var(--sarah-primary)',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '9px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                marginTop: '4px'
-              }}
-            >
-              <Check size={15} />
-              <span>Save Profile</span>
-            </button>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setIsEditingProfile(false)}
+                className="btn-press"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'var(--sarah-surface-container-low)',
+                  color: 'var(--sarah-secondary)',
+                  border: '1px solid var(--sarah-outline-variant)',
+                  borderRadius: '10px',
+                  padding: '9px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <span>Cancel</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                className="btn-press"
+                style={{
+                  flex: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  backgroundColor: 'var(--sarah-primary)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '9px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <Check size={15} />
+                <span>Save Profile</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -400,28 +439,52 @@ export const ProfileScreen: React.FC = () => {
               />
             </div>
 
-            <button
-              type="button"
-              onClick={handleSaveSchedule}
-              className="btn-press"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                backgroundColor: 'var(--sarah-primary)',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '9px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              <Check size={15} />
-              <span>Save Schedule</span>
-            </button>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setIsEditingSchedule(false)}
+                className="btn-press"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'var(--sarah-surface-container-low)',
+                  color: 'var(--sarah-secondary)',
+                  border: '1px solid var(--sarah-outline-variant)',
+                  borderRadius: '10px',
+                  padding: '9px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <span>Cancel</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSchedule}
+                className="btn-press"
+                style={{
+                  flex: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  backgroundColor: 'var(--sarah-primary)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '9px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <Check size={15} />
+                <span>Save Schedule</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

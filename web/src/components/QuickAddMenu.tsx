@@ -60,11 +60,8 @@ export const QuickAddMenu: React.FC = () => {
       {/* Floating Action Menu popup */}
       {isQuickAddOpen && (
         <div
-          className="glass-card"
+          className="glass-card quick-add-menu"
           style={{
-            position: 'fixed',
-            right: '20px',
-            bottom: '136px',
             width: '210px',
             padding: '8px',
             display: 'flex',
@@ -200,11 +197,8 @@ export const QuickAddMenu: React.FC = () => {
       <button
         aria-label={isQuickAddOpen ? 'Close Quick Add' : 'Open Quick Add'}
         onClick={isQuickAddOpen ? closeQuickAdd : openQuickAdd}
-        className="btn-press"
+        className="btn-press quick-add-fab"
         style={{
-          position: 'fixed',
-          right: '20px',
-          bottom: '76px',
           width: '50px',
           height: '50px',
           borderRadius: '18px',

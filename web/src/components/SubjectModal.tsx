@@ -303,7 +303,7 @@ export const SubjectModal: React.FC = () => {
           </div>
 
           {/* Actions Bar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px' }} className="safe-bottom">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px', paddingBottom: '20px' }} className="safe-bottom">
             <button
               type="submit"
               disabled={isSubmitting}

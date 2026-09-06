@@ -94,18 +94,30 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [refreshNotes, showToast]);
 
   const removeNote = useCallback(async (id: string) => {
-    await dbDeleteNote(id);
-    await refreshNotes();
-    showToast('Note deleted');
+    // Optimistic UI update
+    setNotes(prev => prev.filter(n => n.id !== id));
+    try {
+      await dbDeleteNote(id);
+      showToast('Note deleted');
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+      await refreshNotes();
+    }
   }, [refreshNotes, showToast]);
 
   const togglePin = useCallback(async (id: string) => {
     const target = notes.find(n => n.id === id);
     if (!target) return;
     const newPinned = !target.pinned;
-    await dbToggleNotePinned(id, newPinned);
-    await refreshNotes();
-    showToast(newPinned ? '📌 Note pinned to top' : 'Note unpinned');
+    // Instant zero-lag optimistic UI update
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, pinned: newPinned, updatedAt: Date.now() } : n));
+    try {
+      await dbToggleNotePinned(id, newPinned);
+      showToast(newPinned ? '📌 Note pinned to top' : 'Note unpinned');
+    } catch (err) {
+      console.error('Failed to toggle pin:', err);
+      await refreshNotes();
+    }
   }, [notes, refreshNotes, showToast]);
 
   // Modal Triggers

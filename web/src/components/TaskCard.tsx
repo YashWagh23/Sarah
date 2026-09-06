@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, 
   Circle, 
@@ -26,8 +26,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onDelete,
   showDate = false
 }) => {
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { getSubjectColor } = useSubjects();
   const subjectColor = getSubjectColor(task.subject);
+
+  useEffect(() => {
+    if (!isConfirmingDelete) return;
+    const timer = setTimeout(() => setIsConfirmingDelete(false), 3000);
+    return () => clearTimeout(timer);
+  }, [isConfirmingDelete]);
 
   const formatDeadline = (dateStr: string, timeStr?: string) => {
     const todayStr = new Date().toISOString().split('T')[0];
@@ -210,28 +217,56 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         )}
 
         {onDelete && (
-          <button
-            type="button"
-            aria-label="Delete task"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(task.id);
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '6px',
-              cursor: 'pointer',
-              color: 'var(--sarah-outline)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '8px',
-              outline: 'none'
-            }}
-          >
-            <Trash2 size={15} />
-          </button>
+          !isConfirmingDelete ? (
+            <button
+              type="button"
+              aria-label="Delete task"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsConfirmingDelete(true);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '6px',
+                cursor: 'pointer',
+                color: 'var(--sarah-outline)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                outline: 'none'
+              }}
+            >
+              <Trash2 size={15} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Confirm delete task"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(task.id);
+              }}
+              className="btn-press"
+              style={{
+                background: 'var(--sarah-error)',
+                border: 'none',
+                padding: '3px 8px',
+                cursor: 'pointer',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                outline: 'none'
+              }}
+            >
+              <span>Delete?</span>
+            </button>
+          )
         )}
       </div>
     </div>

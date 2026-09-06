@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Pin, 
   Trash2, 
@@ -22,8 +22,15 @@ export const NoteCard: React.FC<NoteCardProps> = ({
   onDelete,
   compact = false
 }) => {
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { getSubjectColor } = useSubjects();
   const subjectColor = getSubjectColor(note.subject);
+
+  useEffect(() => {
+    if (!isConfirmingDelete) return;
+    const timer = setTimeout(() => setIsConfirmingDelete(false), 3000);
+    return () => clearTimeout(timer);
+  }, [isConfirmingDelete]);
 
   const formatTimestamp = (timestamp: number) => {
     const d = new Date(timestamp);
@@ -114,28 +121,56 @@ export const NoteCard: React.FC<NoteCardProps> = ({
 
           {/* Delete Button */}
           {onDelete && (
-            <button
-              type="button"
-              aria-label="Delete note"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(note.id);
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '4px 6px',
-                cursor: 'pointer',
-                color: 'var(--sarah-outline)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                outline: 'none'
-              }}
-            >
-              <Trash2 size={14} />
-            </button>
+            !isConfirmingDelete ? (
+              <button
+                type="button"
+                aria-label="Delete note"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsConfirmingDelete(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px 6px',
+                  cursor: 'pointer',
+                  color: 'var(--sarah-outline)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  outline: 'none'
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label="Confirm delete note"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(note.id);
+                }}
+                className="btn-press"
+                style={{
+                  background: 'var(--sarah-error)',
+                  border: 'none',
+                  padding: '3px 8px',
+                  cursor: 'pointer',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  outline: 'none'
+                }}
+              >
+                <span>Delete?</span>
+              </button>
+            )
           )}
         </div>
       </div>
@@ -156,6 +191,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
 
       {/* Note Content Preview */}
       <p
+        className="selectable-text"
         style={{
           fontSize: '12.5px',
           color: 'var(--sarah-on-surface-variant)',

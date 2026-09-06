@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Bell, 
   Check, 
@@ -25,7 +25,14 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
   onDelete
 }) => {
   const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { tasks } = useTasks();
+
+  useEffect(() => {
+    if (!isConfirmingDelete) return;
+    const timer = setTimeout(() => setIsConfirmingDelete(false), 3000);
+    return () => clearTimeout(timer);
+  }, [isConfirmingDelete]);
 
   const linkedTask = reminder.taskId ? tasks.find(t => t.id === reminder.taskId) : null;
   const now = Date.now();
@@ -103,6 +110,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
         cursor: 'pointer',
         backgroundColor: '#FFFFFF',
         position: 'relative',
+        zIndex: showSnoozeMenu ? 75 : 1,
         transition: 'all 0.16s ease'
       }}
       onClick={() => onEdit(reminder)}
@@ -350,27 +358,55 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
 
         {/* Delete button if provided */}
         {onDelete && (
-          <button
-            type="button"
-            aria-label="Delete reminder"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(reminder.id);
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '4px',
-              cursor: 'pointer',
-              color: 'var(--sarah-outline)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '6px'
-            }}
-          >
-            <Trash2 size={14} />
-          </button>
+          !isConfirmingDelete ? (
+            <button
+              type="button"
+              aria-label="Delete reminder"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsConfirmingDelete(true);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '4px',
+                cursor: 'pointer',
+                color: 'var(--sarah-outline)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '6px'
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Confirm delete reminder"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(reminder.id);
+              }}
+              className="btn-press"
+              style={{
+                background: 'var(--sarah-error)',
+                border: 'none',
+                padding: '3px 8px',
+                cursor: 'pointer',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                outline: 'none'
+              }}
+            >
+              <span>Delete?</span>
+            </button>
+          )
         )}
       </div>
     </div>

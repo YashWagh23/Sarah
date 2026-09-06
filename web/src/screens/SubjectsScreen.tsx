@@ -182,7 +182,7 @@ export const SubjectsScreen: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => openCreateTaskModal()}
+              onClick={() => openCreateTaskModal(selectedSubject.name)}
               style={{
                 background: 'none',
                 border: 'none',
@@ -298,7 +298,7 @@ export const SubjectsScreen: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => openCreateReminderModal()}
+                onClick={() => openCreateReminderModal(undefined, undefined, selectedSubject.name)}
                 style={{
                   background: 'none',
                   border: 'none',
