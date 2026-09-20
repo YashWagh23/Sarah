@@ -4,9 +4,12 @@ import {
   saveUserProfile, 
   DEFAULT_USER_PROFILE, 
   type UserProfile, 
-  type EnergyLevel 
+  type EnergyLevel,
+  type ThemePreference
 } from '../lib/db';
 import { useTasks } from './TasksContext';
+import { formatMinutes, parseTimeToMinutes, startOfTodayMs, useNow } from '../lib/datetime';
+import { applyTheme, resolveTheme, watchSystemTheme, type ResolvedTheme } from '../lib/theme';
 
 export interface FeasibilityAssessment {
   rawMinutesAvailable: number;
@@ -19,12 +22,22 @@ export interface FeasibilityAssessment {
   subtext: string;
 }
 
+export interface StudyGoalProgress {
+  goalMinutes: number;
+  completedMinutes: number;
+  percent: number;
+  isMet: boolean;
+}
+
 interface UserProfileContextType {
   profile: UserProfile;
   isLoading: boolean;
   updateProfile: (updates: Partial<UserProfile>) => Promise<UserProfile>;
   setEnergyLevel: (energy: EnergyLevel) => Promise<void>;
+  setTheme: (theme: ThemePreference) => Promise<void>;
+  resolvedTheme: ResolvedTheme;
   feasibility: FeasibilityAssessment;
+  studyGoal: StudyGoalProgress;
   refreshProfile: () => Promise<void>;
 }
 
@@ -33,7 +46,9 @@ const UserProfileContext = createContext<UserProfileContextType | undefined>(und
 export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
   const [isLoading, setIsLoading] = useState(true);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => resolveTheme(DEFAULT_USER_PROFILE.theme));
   const { tasks, showToast } = useTasks();
+  const now = useNow(30000);
 
   const refreshProfile = useCallback(async () => {
     try {
@@ -82,25 +97,48 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [profile, showToast]);
 
+  const setTheme = useCallback(async (theme: ThemePreference) => {
+    const updated = { ...profile, theme };
+    // Paint first, persist after — the swap should feel instant.
+    setResolvedTheme(applyTheme(theme));
+    setProfile(updated);
+    try {
+      await saveUserProfile(updated);
+    } catch (err) {
+      console.error('Failed to save theme preference:', err);
+    }
+  }, [profile]);
+
+  // Apply the stored preference once the profile has loaded from IndexedDB.
+  useEffect(() => {
+    setResolvedTheme(applyTheme(profile.theme || 'system'));
+  }, [profile.theme]);
+
+  // Follow the OS while the preference is 'system'.
+  useEffect(() => {
+    if (profile.theme !== 'system') return;
+    return watchSystemTheme(() => setResolvedTheme(applyTheme('system')));
+  }, [profile.theme]);
+
   // Real-Time Feasibility Calculation Engine
   const feasibility = useMemo((): FeasibilityAssessment => {
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const currentDate = new Date(now);
+    const currentMinutes = currentDate.getHours() * 60 + currentDate.getMinutes();
 
-    // Parse target bedtime
-    const [bedHour, bedMin] = (profile.targetBedtime || '23:30').split(':').map(Number);
-    const bedtimeMinutes = (isNaN(bedHour) ? 23 : bedHour) * 60 + (isNaN(bedMin) ? 30 : bedMin);
+    const bedtimeMinutes = parseTimeToMinutes(profile.targetBedtime, 23 * 60 + 30);
 
-    // Compute raw available minutes before sleep
+    // Raw minutes left before sleep. A bedtime past midnight (e.g. 00:30) reads as
+    // a small number, so it is rolled into the next day instead of collapsing to 0.
     let minutesUntilSleep = bedtimeMinutes - currentMinutes;
+    if (bedtimeMinutes < 6 * 60 && currentMinutes > 12 * 60) {
+      minutesUntilSleep = bedtimeMinutes + 24 * 60 - currentMinutes;
+    }
     if (minutesUntilSleep < 0) {
-      // Past bedtime
       minutesUntilSleep = 0;
     }
 
     // Commute and college end buffer if student is still at college
-    const [colEndHour, colEndMin] = (profile.collegeEndTime || '17:00').split(':').map(Number);
-    const collegeEndTotal = (isNaN(colEndHour) ? 17 : colEndHour) * 60 + (isNaN(colEndMin) ? 0 : colEndMin) + (profile.commuteMinutes || 0);
+    const collegeEndTotal = parseTimeToMinutes(profile.collegeEndTime, 17 * 60) + (profile.commuteMinutes || 0);
 
     const remainingCollegeCommute = currentMinutes < collegeEndTotal ? Math.max(0, collegeEndTotal - currentMinutes) : 0;
     const dinnerBuffer = (currentMinutes < 20 * 60 && minutesUntilSleep > 120) ? 30 : 0;
@@ -128,13 +166,7 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
     let headline = '';
     let subtext = '';
 
-    const formatMins = (mins: number) => {
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
-      if (h > 0 && m > 0) return `${h}h ${m}m`;
-      if (h > 0) return `${h}h`;
-      return `${m}m`;
-    };
+    const formatMins = formatMinutes;
 
     if (profile.energyLevel === 'exhausted') {
       status = 'rest_recommended';
@@ -169,16 +201,37 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
       headline,
       subtext
     };
-  }, [profile, tasks]);
+  }, [profile, tasks, now]);
+
+  // Daily study goal — how much of today's target has actually been completed.
+  const studyGoal = useMemo((): StudyGoalProgress => {
+    const goalMinutes = Math.round((profile.dailyStudyGoalHours ?? 3) * 60);
+    const dayStart = startOfTodayMs();
+    const completedMinutes = tasks
+      .filter(t => t.completed && t.updatedAt >= dayStart)
+      .reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
+    const percent = goalMinutes > 0
+      ? Math.min(100, Math.round((completedMinutes / goalMinutes) * 100))
+      : 0;
+    return {
+      goalMinutes,
+      completedMinutes,
+      percent,
+      isMet: goalMinutes > 0 && completedMinutes >= goalMinutes
+    };
+  }, [profile.dailyStudyGoalHours, tasks, now]);
 
   const value = useMemo(() => ({
     profile,
     isLoading,
     updateProfile,
     setEnergyLevel,
+    setTheme,
+    resolvedTheme,
     feasibility,
+    studyGoal,
     refreshProfile
-  }), [profile, isLoading, updateProfile, setEnergyLevel, feasibility, refreshProfile]);
+  }), [profile, isLoading, updateProfile, setEnergyLevel, setTheme, resolvedTheme, feasibility, studyGoal, refreshProfile]);
 
   return (
     <UserProfileContext.Provider value={value}>

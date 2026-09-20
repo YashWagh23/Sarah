@@ -25,6 +25,7 @@ import { TaskCard } from '../components/TaskCard';
 import { NoteCard } from '../components/NoteCard';
 import { ReminderCard } from '../components/ReminderCard';
 import { type EnergyLevel } from '../lib/db';
+import { formatMinutes, useNow } from '../lib/datetime';
 
 interface TodayScreenProps {
   onNavigateToNotes?: () => void;
@@ -40,7 +41,8 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
     nextActionTask, 
     toggleTaskCompletion, 
     openEditTaskModal, 
-    openCreateTaskModal 
+    openCreateTaskModal,
+    todayStr
   } = useTasks();
 
   const {
@@ -61,16 +63,16 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
   } = useReminders();
 
   const { getSubjectColor } = useSubjects();
-  const { profile, setEnergyLevel, feasibility } = useUserProfile();
+  const { profile, setEnergyLevel, feasibility, studyGoal } = useUserProfile();
+  const now = useNow(60000);
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
+    const hour = new Date(now).getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
   const dueTodayCount = activeTasks.filter(t => t.deadline <= todayStr).length;
   const totalEstMinutes = activeTasks.reduce((acc, t) => acc + (t.estimatedMinutes || 0), 0);
 
@@ -134,7 +136,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          backgroundColor: '#FFFFFF'
+          backgroundColor: 'var(--sarah-surface-card)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
@@ -176,7 +178,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '4px',
-                  backgroundColor: isSelected ? '#FFFFFF' : 'transparent',
+                  backgroundColor: isSelected ? 'var(--sarah-segment-active)' : 'transparent',
                   color: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-on-surface-variant)',
                   boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   fontSize: '12px',
@@ -202,12 +204,12 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           flexDirection: 'column',
           gap: '10px',
           backgroundColor: feasibility.status === 'optimal' 
-            ? 'rgba(255, 255, 255, 0.92)' 
+            ? 'var(--glass-bg-strong)' 
             : feasibility.status === 'tight' 
-            ? 'rgba(255, 255, 255, 0.95)'
+            ? 'var(--glass-bg-strong)'
             : 'rgba(255, 245, 245, 0.92)',
           border: feasibility.status === 'overloaded' 
-            ? '1px solid rgba(186, 26, 26, 0.25)' 
+            ? '1px solid rgba(var(--sarah-error-rgb), 0.25)' 
             : '1px solid var(--glass-border)'
         }}
       >
@@ -226,18 +228,18 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               padding: '3px 8px',
               borderRadius: '8px',
               backgroundColor: feasibility.status === 'optimal'
-                ? 'rgba(16, 185, 129, 0.12)'
+                ? 'rgba(var(--sarah-success-rgb), 0.12)'
                 : feasibility.status === 'tight'
-                ? 'rgba(245, 158, 11, 0.12)'
+                ? 'rgba(var(--sarah-amber-rgb), 0.12)'
                 : feasibility.status === 'rest_recommended'
-                ? 'rgba(139, 92, 246, 0.12)'
-                : 'rgba(186, 26, 26, 0.12)',
+                ? 'rgba(var(--sarah-violet-rgb), 0.12)'
+                : 'rgba(var(--sarah-error-rgb), 0.12)',
               color: feasibility.status === 'optimal'
-                ? '#059669'
+                ? 'var(--sarah-success)'
                 : feasibility.status === 'tight'
                 ? 'var(--sarah-tertiary)'
                 : feasibility.status === 'rest_recommended'
-                ? '#7C3AED'
+                ? 'var(--sarah-violet)'
                 : 'var(--sarah-error)'
             }}
           >
@@ -282,7 +284,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               width: '130px',
               height: '130px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(94, 106, 210, 0.22) 0%, rgba(255,255,255,0) 70%)',
+              background: 'radial-gradient(circle, rgba(var(--sarah-primary-container-rgb), 0.22) 0%, transparent 70%)',
               pointerEvents: 'none'
             }}
           />
@@ -311,7 +313,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
                   fontWeight: 700,
                   padding: '3px 8px',
                   borderRadius: '10px',
-                  backgroundColor: 'rgba(186, 26, 26, 0.12)',
+                  backgroundColor: 'rgba(var(--sarah-error-rgb), 0.12)',
                   color: 'var(--sarah-error)'
                 }}
               >
@@ -324,7 +326,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
                   fontWeight: 700,
                   padding: '3px 8px',
                   borderRadius: '10px',
-                  backgroundColor: 'rgba(186, 26, 26, 0.1)',
+                  backgroundColor: 'rgba(var(--sarah-error-rgb), 0.1)',
                   color: 'var(--sarah-error)'
                 }}
               >
@@ -337,7 +339,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
                   fontWeight: 600,
                   padding: '3px 8px',
                   borderRadius: '10px',
-                  backgroundColor: 'rgba(68, 80, 183, 0.1)',
+                  backgroundColor: 'rgba(var(--sarah-primary-rgb), 0.1)',
                   color: 'var(--sarah-primary)'
                 }}
               >
@@ -400,14 +402,14 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
                   alignItems: 'center',
                   gap: '6px',
                   background: 'var(--sarah-primary)',
-                  color: '#FFFFFF',
+                  color: 'var(--sarah-on-primary)',
                   border: 'none',
                   borderRadius: '12px',
                   padding: '8px 16px',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(68, 80, 183, 0.3)'
+                  boxShadow: '0 4px 12px rgba(var(--sarah-primary-rgb), 0.3)'
                 }}
               >
                 <Check size={14} strokeWidth={2.5} />
@@ -417,7 +419,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           </div>
         </section>
       ) : (
-        /* All caught up card */
+        /* Single "nothing pending" state, with the next useful action inline */
         <section
           className="glass-card"
           style={{
@@ -425,7 +427,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
             display: 'flex',
             alignItems: 'center',
             gap: '16px',
-            backgroundColor: 'rgba(255, 255, 255, 0.88)'
+            backgroundColor: 'var(--glass-bg)'
           }}
         >
           <div
@@ -433,28 +435,104 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               width: '46px',
               height: '46px',
               borderRadius: '14px',
-              backgroundColor: 'rgba(16, 185, 129, 0.12)',
-              color: '#059669',
+              backgroundColor: completedTasks.length > 0
+                ? 'rgba(var(--sarah-success-rgb), 0.12)'
+                : 'rgba(var(--sarah-primary-rgb), 0.1)',
+              color: completedTasks.length > 0 ? 'var(--sarah-success)' : 'var(--sarah-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0
             }}
           >
-            <Coffee size={24} />
+            {completedTasks.length > 0 ? <Coffee size={24} /> : <CheckCircle2 size={24} />}
           </div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              All Caught Up! 🌟
+              {completedTasks.length > 0 ? 'All Caught Up! 🌟' : "You're all clear."}
             </div>
             <div style={{ fontSize: '12.5px', color: 'var(--sarah-on-surface-variant)', marginTop: '2px' }}>
-              No active tasks remaining tonight. Enjoy the breathing room.
+              {completedTasks.length > 0
+                ? 'No active tasks remaining tonight. Enjoy the breathing room.'
+                : 'Start by adding your first task or study session.'}
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => openCreateTaskModal()}
+            className="btn-press"
+            aria-label="Add a task"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              background: 'var(--sarah-primary)',
+              color: 'var(--sarah-on-primary)',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '8px 12px',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              flexShrink: 0
+            }}
+          >
+            <Plus size={14} />
+            <span>Add</span>
+          </button>
         </section>
       )}
 
-      {/* 3. Daily Summary Stats Bar */}
+      {/* 3. Daily Study Goal Progress */}
+      <section
+        className="surface-card"
+        style={{
+          padding: '12px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          backgroundColor: 'var(--sarah-surface-card)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Target size={13} color={studyGoal.isMet ? 'var(--sarah-success)' : 'var(--sarah-primary)'} />
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sarah-secondary)' }}>
+              Daily Study Goal
+            </span>
+          </div>
+          <span style={{ fontSize: '11.5px', fontWeight: 700, color: studyGoal.isMet ? 'var(--sarah-success)' : 'var(--sarah-on-background)' }}>
+            {formatMinutes(studyGoal.completedMinutes)} / {formatMinutes(studyGoal.goalMinutes)}
+            {studyGoal.isMet ? ' ✓' : ''}
+          </span>
+        </div>
+
+        <div
+          role="progressbar"
+          aria-valuenow={studyGoal.percent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Daily study goal progress"
+          style={{
+            height: '7px',
+            borderRadius: '99px',
+            backgroundColor: 'var(--sarah-surface-container-high)',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              width: `${studyGoal.percent}%`,
+              height: '100%',
+              borderRadius: '99px',
+              backgroundColor: studyGoal.isMet ? 'var(--sarah-success)' : 'var(--sarah-primary)',
+              transition: 'width 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+          />
+        </div>
+      </section>
+
+      {/* 4. Daily Summary Stats Bar */}
       <section
         className="surface-card"
         style={{
@@ -462,7 +540,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
-          backgroundColor: '#FFFFFF'
+          backgroundColor: 'var(--sarah-surface-card)'
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -477,7 +555,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         <div style={{ width: '1px', height: '26px', backgroundColor: 'var(--sarah-outline-variant)' }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <span style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>
+          <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--sarah-success)' }}>
             {completedTasks.length}
           </span>
           <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--sarah-secondary)', textTransform: 'uppercase' }}>
@@ -489,7 +567,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--sarah-on-background)' }}>
-            {totalEstMinutes > 0 ? `${totalEstMinutes}m` : '0m'}
+            {formatMinutes(totalEstMinutes)}
           </span>
           <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--sarah-secondary)', textTransform: 'uppercase' }}>
             Study Workload
@@ -705,64 +783,6 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
         </section>
       )}
 
-      {/* Empty State when zero total active tasks */}
-      {activeTasks.length === 0 && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '30px 10px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '12px'
-          }}
-        >
-          <div
-            style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '20px',
-              backgroundColor: 'var(--sarah-surface-container-low)',
-              color: 'var(--sarah-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <CheckCircle2 size={30} />
-          </div>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              {completedTasks.length > 0 ? "You're all caught up." : "You're all clear."}
-            </div>
-            <div style={{ fontSize: '12.5px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
-              {completedTasks.length > 0 ? "All tasks are completed. Enjoy the breathing room." : "Start by adding your first task."}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => openCreateTaskModal()}
-            className="btn-press"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'var(--sarah-primary)',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              marginTop: '4px'
-            }}
-          >
-            <Plus size={15} />
-            <span>Add Task</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 };

@@ -52,9 +52,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({
         flexDirection: 'column',
         gap: '9px',
         cursor: 'pointer',
-        backgroundColor: note.pinned ? 'rgba(255, 255, 255, 0.96)' : '#FFFFFF',
-        border: note.pinned ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid var(--sarah-outline-variant)',
-        boxShadow: note.pinned ? '0 4px 16px rgba(245, 158, 11, 0.08)' : 'var(--card-shadow)',
+        backgroundColor: 'var(--sarah-surface-card)',
+        border: note.pinned ? '1px solid rgba(var(--sarah-amber-rgb), 0.35)' : '1px solid var(--sarah-outline-variant)',
+        boxShadow: note.pinned ? '0 4px 16px rgba(var(--sarah-amber-rgb), 0.08)' : 'var(--card-shadow)',
         position: 'relative',
         transition: 'all 0.16s ease'
       }}
@@ -95,7 +95,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
               onTogglePin(note.id);
             }}
             style={{
-              background: note.pinned ? 'rgba(245, 158, 11, 0.12)' : 'transparent',
+              background: note.pinned ? 'rgba(var(--sarah-amber-rgb), 0.12)' : 'transparent',
               border: 'none',
               borderRadius: '8px',
               padding: '4px 7px',
@@ -158,7 +158,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({
                   border: 'none',
                   padding: '3px 8px',
                   cursor: 'pointer',
-                  color: '#FFFFFF',
+                  color: 'var(--sarah-on-error)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '3px',

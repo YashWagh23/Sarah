@@ -6,7 +6,8 @@ import {
   deleteSubject as dbDeleteSubject, 
   type Subject,
   SUBJECT_PALETTE,
-  SUBJECT_COLORS
+  SUBJECT_COLORS,
+  DuplicateSubjectError
 } from '../lib/db';
 import { useTasks } from './TasksContext';
 import { useNotes } from './NotesContext';
@@ -104,18 +105,36 @@ export const SubjectsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // CRUD Actions
   const createSubject = useCallback(async (subjectData: Omit<Subject, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const created = await dbAddSubject(subjectData);
-    await refreshSubjects();
-    showToast(`Subject "${created.name}" created`);
-    return created;
+    try {
+      const created = await dbAddSubject(subjectData);
+      await refreshSubjects();
+      showToast(`Subject "${created.name}" created`);
+      return created;
+    } catch (err) {
+      if (err instanceof DuplicateSubjectError) {
+        showToast(err.message);
+      }
+      throw err;
+    }
   }, [refreshSubjects, showToast]);
 
   const modifySubject = useCallback(async (subject: Subject) => {
-    const updated = await dbUpdateSubject(subject);
-    await refreshSubjects();
-    showToast(`Subject "${updated.name}" updated`);
-    return updated;
-  }, [refreshSubjects, showToast]);
+    try {
+      const updated = await dbUpdateSubject(subject);
+      await refreshSubjects();
+      // A rename carries tasks, notes and reminders over to the new name.
+      await refreshTasks();
+      await refreshNotes();
+      await refreshReminders();
+      showToast(`Subject "${updated.name}" updated`);
+      return updated;
+    } catch (err) {
+      if (err instanceof DuplicateSubjectError) {
+        showToast(err.message);
+      }
+      throw err;
+    }
+  }, [refreshSubjects, refreshTasks, refreshNotes, refreshReminders, showToast]);
 
   const removeSubject = useCallback(async (id: string) => {
     const toDelete = subjects.find(s => s.id === id);

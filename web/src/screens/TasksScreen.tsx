@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Plus, 
   Search, 
@@ -20,30 +20,25 @@ export const TasksScreen: React.FC = () => {
     toggleTaskCompletion, 
     openEditTaskModal, 
     openCreateTaskModal,
-    removeTask
+    removeTask,
+    todayStr
   } = useTasks();
 
-  const { subjects } = useSubjects();
+  const { subjects, getSubjectColor } = useSubjects();
 
   const [activeStatusFilter, setActiveStatusFilter] = useState<'all' | 'due_today' | 'in_progress' | 'completed'>('all');
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCompletedSectionOpen, setIsCompletedSectionOpen] = useState(true);
 
+  const dueTodayCount = activeTasks.filter(t => t.deadline <= todayStr).length;
+
   const statusFilters = [
     { id: 'all', label: `All (${tasks.length})` },
-    { id: 'due_today', label: 'Due Today' },
+    { id: 'due_today', label: `Due Today (${dueTodayCount})` },
     { id: 'in_progress', label: `In Progress (${activeTasks.length})` },
     { id: 'completed', label: `Completed (${completedTasks.length})` }
   ] as const;
-
-  const todayStr = useMemo(() => {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }, []);
 
   // Filter tasks based on status, subject, and search query
   const filteredTasks = useMemo(() => {
@@ -72,6 +67,39 @@ export const TasksScreen: React.FC = () => {
       return true;
     });
   }, [tasks, activeStatusFilter, selectedSubjectFilter, searchQuery, todayStr]);
+
+  // Chips cover every subject a task is actually filed under — including free-typed
+  // ones and the "General" fallback, which have no Subject record to iterate.
+  const subjectFilters = useMemo(() => {
+    const byKey = new Map<string, { key: string; name: string; label: string; color: string; count: number }>();
+
+    for (const sub of subjects) {
+      const key = sub.name.toLowerCase();
+      byKey.set(key, {
+        key,
+        name: sub.name,
+        label: sub.code || sub.name,
+        color: sub.color || getSubjectColor(sub.name),
+        count: 0
+      });
+    }
+
+    for (const task of tasks) {
+      const name = task.subject?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        byKey.set(key, { key, name, label: name, color: getSubjectColor(name), count: 1 });
+      }
+    }
+
+    return Array.from(byKey.values())
+      .filter(entry => entry.count > 0 || selectedSubjectFilter.toLowerCase() === entry.key)
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }, [subjects, tasks, getSubjectColor, selectedSubjectFilter]);
 
   const activeFiltered = filteredTasks.filter(t => !t.completed);
   const completedFiltered = filteredTasks.filter(t => t.completed);
@@ -105,14 +133,16 @@ export const TasksScreen: React.FC = () => {
             alignItems: 'center',
             gap: '5px',
             background: 'var(--sarah-primary)',
-            color: '#FFFFFF',
+            color: 'var(--sarah-on-primary)',
             border: 'none',
             borderRadius: '12px',
             padding: '8px 14px',
             fontSize: '13px',
             fontWeight: 600,
             cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(68, 80, 183, 0.28)'
+            boxShadow: '0 3px 10px rgba(var(--sarah-primary-rgb), 0.28)',
+            whiteSpace: 'nowrap',
+            flexShrink: 0
           }}
         >
           <Plus size={15} strokeWidth={2.5} />
@@ -126,7 +156,7 @@ export const TasksScreen: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: '#FFFFFF',
+          background: 'var(--sarah-surface-card)',
           border: '1px solid var(--sarah-outline-variant)',
           borderRadius: '14px',
           padding: '9px 12px',
@@ -196,9 +226,9 @@ export const TasksScreen: React.FC = () => {
                 fontWeight: isSelected ? 700 : 500,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                backgroundColor: isSelected ? 'var(--sarah-primary)' : '#FFFFFF',
-                color: isSelected ? '#FFFFFF' : 'var(--sarah-on-surface-variant)',
-                boxShadow: isSelected ? '0 2px 8px rgba(68, 80, 183, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
+                backgroundColor: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-surface-card)',
+                color: isSelected ? 'var(--sarah-on-primary)' : 'var(--sarah-on-surface-variant)',
+                boxShadow: isSelected ? '0 2px 8px rgba(var(--sarah-primary-rgb), 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -209,7 +239,7 @@ export const TasksScreen: React.FC = () => {
       </div>
 
       {/* 2. Subject Filter Chips */}
-      {subjects.length > 0 && (
+      {subjectFilters.length > 0 && (
         <div 
           style={{ 
             display: 'flex', 
@@ -222,6 +252,7 @@ export const TasksScreen: React.FC = () => {
           <button
             type="button"
             onClick={() => setSelectedSubjectFilter('all')}
+            aria-pressed={selectedSubjectFilter === 'all'}
             className="btn-press"
             style={{
               border: selectedSubjectFilter === 'all' ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
@@ -231,40 +262,39 @@ export const TasksScreen: React.FC = () => {
               fontWeight: selectedSubjectFilter === 'all' ? 700 : 500,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              backgroundColor: selectedSubjectFilter === 'all' ? 'rgba(68, 80, 183, 0.1)' : 'transparent',
+              backgroundColor: selectedSubjectFilter === 'all' ? 'rgba(var(--sarah-primary-rgb), 0.1)' : 'transparent',
               color: selectedSubjectFilter === 'all' ? 'var(--sarah-primary)' : 'var(--sarah-secondary)'
             }}
           >
             All Courses
           </button>
 
-          {subjects.map((sub) => {
-            const isSelected = selectedSubjectFilter.toLowerCase() === sub.name.toLowerCase();
-            const count = tasks.filter(t => t.subject.toLowerCase() === sub.name.toLowerCase()).length;
-            if (count === 0 && !isSelected) return null;
+          {subjectFilters.map((entry) => {
+            const isSelected = selectedSubjectFilter.toLowerCase() === entry.key;
             return (
               <button
-                key={sub.id}
+                key={entry.key}
                 type="button"
-                onClick={() => setSelectedSubjectFilter(sub.name)}
+                aria-pressed={isSelected}
+                onClick={() => setSelectedSubjectFilter(isSelected ? 'all' : entry.name)}
                 className="btn-press"
                 style={{
-                  border: isSelected ? `1.5px solid ${sub.color}` : '1px solid var(--sarah-outline-variant)',
+                  border: isSelected ? `1.5px solid ${entry.color}` : '1px solid var(--sarah-outline-variant)',
                   borderRadius: '14px',
                   padding: '4px 10px',
                   fontSize: '11.5px',
                   fontWeight: isSelected ? 700 : 500,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
-                  backgroundColor: isSelected ? `${sub.color}15` : 'transparent',
-                  color: isSelected ? sub.color : 'var(--sarah-secondary)',
+                  backgroundColor: isSelected ? `${entry.color}22` : 'transparent',
+                  color: isSelected ? entry.color : 'var(--sarah-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px'
                 }}
               >
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: sub.color }} />
-                <span>{sub.code || sub.name} ({count})</span>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: entry.color }} />
+                <span>{entry.label} ({entry.count})</span>
               </button>
             );
           })}
@@ -286,7 +316,9 @@ export const TasksScreen: React.FC = () => {
               />
             ))
           ) : (
-            activeStatusFilter !== 'all' && (
+            // Only shown when completed results exist below; otherwise the single
+            // full empty state at the bottom of the screen covers it.
+            completedFiltered.length > 0 && (
               <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--sarah-secondary)', fontSize: '13px' }}>
                 No active tasks matching this filter.
               </div>
@@ -313,7 +345,7 @@ export const TasksScreen: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <CheckCircle2 size={15} color="#059669" />
+              <CheckCircle2 size={15} color="var(--sarah-success)" />
               <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                 Completed ({completedFiltered.length})
               </span>
@@ -406,7 +438,7 @@ export const TasksScreen: React.FC = () => {
                 alignItems: 'center',
                 gap: '6px',
                 background: 'var(--sarah-primary)',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-primary)',
                 border: 'none',
                 borderRadius: '12px',
                 padding: '8px 16px',

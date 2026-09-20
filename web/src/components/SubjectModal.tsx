@@ -6,7 +6,7 @@ import {
   Check, 
   AlertCircle 
 } from 'lucide-react';
-import { SUBJECT_PALETTE } from '../lib/db';
+import { DuplicateSubjectError, SUBJECT_PALETTE } from '../lib/db';
 import { useSubjects } from '../context/SubjectsContext';
 
 export const SubjectModal: React.FC = () => {
@@ -21,6 +21,9 @@ export const SubjectModal: React.FC = () => {
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [faculty, setFaculty] = useState('');
+  const [credits, setCredits] = useState('');
+  const [weeklyHours, setWeeklyHours] = useState('');
   const [color, setColor] = useState(SUBJECT_PALETTE[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -30,11 +33,17 @@ export const SubjectModal: React.FC = () => {
     if (editingSubject && editingSubject.id) {
       setName(editingSubject.name);
       setCode(editingSubject.code || '');
+      setFaculty(editingSubject.faculty || '');
+      setCredits(editingSubject.credits != null ? String(editingSubject.credits) : '');
+      setWeeklyHours(editingSubject.weeklyHours != null ? String(editingSubject.weeklyHours) : '');
       setColor(editingSubject.color || SUBJECT_PALETTE[0]);
       setShowDeleteConfirm(false);
     } else {
       setName('');
       setCode('');
+      setFaculty('');
+      setCredits('');
+      setWeeklyHours('');
       setColor(SUBJECT_PALETTE[0]);
       setShowDeleteConfirm(false);
     }
@@ -71,25 +80,36 @@ export const SubjectModal: React.FC = () => {
 
     setIsSubmitting(true);
 
+    const toOptionalNumber = (value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed) return undefined;
+      const parsed = Number(trimmed);
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+    };
+
+    const details = {
+      name: name.trim(),
+      code: code.trim() || undefined,
+      faculty: faculty.trim() || undefined,
+      credits: toOptionalNumber(credits),
+      weeklyHours: toOptionalNumber(weeklyHours),
+      color
+    };
+
     try {
       if (isEditingExisting && editingSubject) {
-        await modifySubject({
-          ...editingSubject,
-          name: name.trim(),
-          code: code.trim() || undefined,
-          color
-        });
+        await modifySubject({ ...editingSubject, ...details });
       } else {
-        await createSubject({
-          name: name.trim(),
-          code: code.trim() || undefined,
-          color
-        });
+        await createSubject(details);
       }
       closeSubjectModal();
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to save subject. Please try again.');
+      setErrorMessage(
+        err instanceof DuplicateSubjectError
+          ? err.message
+          : 'Failed to save subject. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -134,7 +154,7 @@ export const SubjectModal: React.FC = () => {
           width: '100%',
           maxWidth: '540px',
           maxHeight: '90dvh',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--sarah-elevated)',
           borderTopLeftRadius: '28px',
           borderTopRightRadius: '28px',
           borderBottomLeftRadius: 0,
@@ -266,7 +286,84 @@ export const SubjectModal: React.FC = () => {
             />
           </div>
 
-          {/* 3. Color Selection Swatches */}
+          {/* 3. Faculty */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
+              Faculty (Optional)
+            </label>
+            <input
+              type="text"
+              value={faculty}
+              onChange={(e) => setFaculty(e.target.value)}
+              placeholder="e.g. Prof. R. Deshmukh"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '12px',
+                border: '1px solid var(--sarah-outline-variant)',
+                fontSize: '13.5px',
+                outline: 'none',
+                backgroundColor: 'var(--sarah-surface-container-low)',
+                color: 'var(--sarah-on-background)'
+              }}
+            />
+          </div>
+
+          {/* 4. Credits & Weekly Hours */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
+                Credits
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={20}
+                step={0.5}
+                value={credits}
+                onChange={(e) => setCredits(e.target.value)}
+                placeholder="4"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--sarah-outline-variant)',
+                  fontSize: '13.5px',
+                  outline: 'none',
+                  backgroundColor: 'var(--sarah-surface-container-low)',
+                  color: 'var(--sarah-on-background)'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
+                Hours / Week
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={40}
+                step={0.5}
+                value={weeklyHours}
+                onChange={(e) => setWeeklyHours(e.target.value)}
+                placeholder="5"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--sarah-outline-variant)',
+                  fontSize: '13.5px',
+                  outline: 'none',
+                  backgroundColor: 'var(--sarah-surface-container-low)',
+                  color: 'var(--sarah-on-background)'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 5. Color Selection Swatches */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
               Color Accent
@@ -284,7 +381,7 @@ export const SubjectModal: React.FC = () => {
                       height: '36px',
                       borderRadius: '50%',
                       backgroundColor: c,
-                      border: isSelected ? '3px solid #FFFFFF' : 'none',
+                      border: isSelected ? '3px solid var(--sarah-elevated)' : 'none',
                       outline: isSelected ? `2px solid ${c}` : 'none',
                       cursor: 'pointer',
                       display: 'flex',
@@ -313,12 +410,12 @@ export const SubjectModal: React.FC = () => {
                 padding: '14px',
                 borderRadius: '14px',
                 backgroundColor: 'var(--sarah-primary)',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-primary)',
                 border: 'none',
                 fontSize: '15px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(68, 80, 183, 0.35)',
+                boxShadow: '0 4px 14px rgba(var(--sarah-primary-rgb), 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -375,7 +472,7 @@ export const SubjectModal: React.FC = () => {
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
                         style={{
-                          background: '#FFFFFF',
+                          background: 'var(--sarah-surface-container-high)',
                           border: 'none',
                           padding: '6px 12px',
                           borderRadius: '8px',
@@ -391,7 +488,7 @@ export const SubjectModal: React.FC = () => {
                         onClick={handleDelete}
                         style={{
                           background: 'var(--sarah-error)',
-                          color: '#FFFFFF',
+                          color: 'var(--sarah-on-error)',
                           border: 'none',
                           padding: '6px 14px',
                           borderRadius: '8px',

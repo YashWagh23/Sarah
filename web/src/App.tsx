@@ -43,7 +43,7 @@ const AppContent: React.FC = () => {
       {renderActiveScreen()}
 
       {/* Global Quick Add Floating Action Menu */}
-      <QuickAddMenu />
+      <QuickAddMenu hidden={activeTab === 'profile'} />
 
       {/* Global Task Modal (Add & Edit Bottom Sheet) */}
       <TaskModal />
@@ -60,13 +60,15 @@ const AppContent: React.FC = () => {
       {/* Global Toast Notification */}
       {toastMessage && (
         <div
+          role="status"
+          aria-live="polite"
           style={{
             position: 'fixed',
             top: '64px',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(26, 28, 29, 0.92)',
-            color: '#FFFFFF',
+            backgroundColor: 'var(--sarah-toast-bg)',
+            color: 'var(--sarah-toast-fg)',
             padding: '8px 18px',
             borderRadius: '20px',
             fontSize: '12.5px',

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { type Task } from '../lib/db';
 import { useSubjects } from '../context/SubjectsContext';
+import { todayStr as getTodayStr, tomorrowStr as getTomorrowStr } from '../lib/datetime';
 
 interface TaskCardProps {
   task: Task;
@@ -37,10 +38,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   }, [isConfirmingDelete]);
 
   const formatDeadline = (dateStr: string, timeStr?: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const todayStr = getTodayStr();
+    const tomorrowStr = getTomorrowStr();
 
     let dateLabel = dateStr;
     if (dateStr === todayStr) {
@@ -72,7 +71,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         cursor: 'pointer',
         transition: 'all 0.18s ease',
         opacity: task.completed ? 0.6 : 1,
-        backgroundColor: task.completed ? 'rgba(255, 255, 255, 0.65)' : '#FFFFFF',
+        backgroundColor: task.completed ? 'var(--sarah-surface-card-muted)' : 'var(--sarah-surface-card)',
         position: 'relative'
       }}
       onClick={() => onEdit(task)}
@@ -172,7 +171,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   fontWeight: 700,
                   padding: '3px 8px',
                   borderRadius: '8px',
-                  backgroundColor: 'rgba(186, 26, 26, 0.1)',
+                  backgroundColor: 'rgba(var(--sarah-error-rgb), 0.1)',
                   color: 'var(--sarah-error)',
                   display: 'flex',
                   alignItems: 'center',
@@ -189,7 +188,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   fontWeight: 600,
                   padding: '3px 8px',
                   borderRadius: '8px',
-                  backgroundColor: 'rgba(131, 79, 0, 0.1)',
+                  backgroundColor: 'rgba(var(--sarah-tertiary-rgb), 0.1)',
                   color: 'var(--sarah-tertiary)',
                   display: 'flex',
                   alignItems: 'center',
@@ -254,7 +253,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 border: 'none',
                 padding: '3px 8px',
                 cursor: 'pointer',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-error)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '3px',

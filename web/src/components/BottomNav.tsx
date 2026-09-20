@@ -35,10 +35,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabSelect }) 
       style={{
         position: 'relative',
         width: '100%',
-        background: 'rgba(255, 255, 255, 0.88)',
+        background: 'var(--sarah-nav-bg)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        borderTop: '1px solid rgba(226, 226, 232, 0.8)',
+        borderTop: '1px solid var(--sarah-nav-border)',
         zIndex: 50,
       }}
       className="safe-bottom"
@@ -61,6 +61,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabSelect }) 
             <button
               key={item.id}
               onClick={() => onTabSelect(item.id)}
+              aria-current={isSelected ? 'page' : undefined}
+              aria-label={item.label}
               className="btn-press"
               style={{
                 background: 'none',
@@ -86,7 +88,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabSelect }) 
                   justifyContent: 'center',
                   padding: '2px 14px',
                   borderRadius: '14px',
-                  backgroundColor: isSelected ? 'rgba(68, 80, 183, 0.1)' : 'transparent',
+                  backgroundColor: isSelected ? 'rgba(var(--sarah-primary-rgb), 0.1)' : 'transparent',
                   transition: 'background-color 0.2s ease'
                 }}
               >

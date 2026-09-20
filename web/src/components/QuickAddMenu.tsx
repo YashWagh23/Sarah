@@ -9,7 +9,12 @@ import { useTasks } from '../context/TasksContext';
 import { useNotes } from '../context/NotesContext';
 import { useReminders } from '../context/RemindersContext';
 
-export const QuickAddMenu: React.FC = () => {
+interface QuickAddMenuProps {
+  /** Hidden on settings-style screens where it would sit on top of controls. */
+  hidden?: boolean;
+}
+
+export const QuickAddMenu: React.FC<QuickAddMenuProps> = ({ hidden = false }) => {
   const { isQuickAddOpen, openQuickAdd, closeQuickAdd, openCreateTaskModal } = useTasks();
   const { openCreateNoteModal } = useNotes();
   const { openCreateReminderModal } = useReminders();
@@ -39,6 +44,13 @@ export const QuickAddMenu: React.FC = () => {
     openCreateReminderModal();
   };
 
+  // Close a menu left open when navigating to a screen that hides the button.
+  useEffect(() => {
+    if (hidden && isQuickAddOpen) closeQuickAdd();
+  }, [hidden, isQuickAddOpen, closeQuickAdd]);
+
+  if (hidden) return null;
+
   return (
     <>
       {/* Backdrop overlay when open */}
@@ -67,7 +79,7 @@ export const QuickAddMenu: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: '4px',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'var(--glass-bg-strong)',
             zIndex: 90,
             boxShadow: '0 12px 36px rgba(0, 0, 0, 0.15)',
             borderRadius: '20px',
@@ -86,7 +98,7 @@ export const QuickAddMenu: React.FC = () => {
               padding: '10px 12px',
               borderRadius: '12px',
               border: 'none',
-              background: 'rgba(68, 80, 183, 0.08)',
+              background: 'rgba(var(--sarah-primary-rgb), 0.08)',
               color: 'var(--sarah-primary)',
               fontSize: '13.5px',
               fontWeight: 700,
@@ -100,7 +112,7 @@ export const QuickAddMenu: React.FC = () => {
                 height: '28px',
                 borderRadius: '8px',
                 backgroundColor: 'var(--sarah-primary)',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -136,7 +148,7 @@ export const QuickAddMenu: React.FC = () => {
                 width: '28px',
                 height: '28px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                backgroundColor: 'rgba(var(--sarah-amber-rgb), 0.12)',
                 color: 'var(--sarah-tertiary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -176,7 +188,7 @@ export const QuickAddMenu: React.FC = () => {
                 width: '28px',
                 height: '28px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(68, 80, 183, 0.12)',
+                backgroundColor: 'rgba(var(--sarah-primary-rgb), 0.12)',
                 color: 'var(--sarah-primary)',
                 display: 'flex',
                 alignItems: 'center',
@@ -203,9 +215,9 @@ export const QuickAddMenu: React.FC = () => {
           height: '50px',
           borderRadius: '18px',
           backgroundColor: isQuickAddOpen ? 'var(--sarah-secondary)' : 'var(--sarah-primary-container)',
-          color: '#FFFFFF',
+          color: 'var(--sarah-on-primary)',
           border: 'none',
-          boxShadow: '0 6px 20px rgba(94, 106, 210, 0.45)',
+          boxShadow: '0 6px 20px rgba(var(--sarah-primary-container-rgb), 0.45)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

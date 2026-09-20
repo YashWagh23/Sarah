@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { type Reminder } from '../lib/db';
 import { useTasks } from '../context/TasksContext';
+import { useNow } from '../lib/datetime';
 
 interface ReminderCardProps {
   reminder: Reminder;
@@ -35,7 +36,8 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
   }, [isConfirmingDelete]);
 
   const linkedTask = reminder.taskId ? tasks.find(t => t.id === reminder.taskId) : null;
-  const now = Date.now();
+  // Ticks so "Overdue by 3m" and the due-soon tint stay accurate without a reload.
+  const now = useNow(30000);
   const isOverdue = reminder.reminderAt < now;
   const isDueSoon = !isOverdue && (reminder.reminderAt - now < 3600000 * 2); // within 2h
 
@@ -82,20 +84,20 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
   };
 
   // Status colors
-  let iconBg = 'rgba(68, 80, 183, 0.08)';
+  let iconBg = 'rgba(var(--sarah-primary-rgb), 0.08)';
   let iconColor = 'var(--sarah-primary)';
   let statusBadgeBg = 'var(--sarah-surface-container-low)';
   let statusBadgeColor = 'var(--sarah-secondary)';
 
   if (isOverdue) {
-    iconBg = 'rgba(186, 26, 26, 0.12)';
+    iconBg = 'rgba(var(--sarah-error-rgb), 0.12)';
     iconColor = 'var(--sarah-error)';
-    statusBadgeBg = 'rgba(186, 26, 26, 0.1)';
+    statusBadgeBg = 'rgba(var(--sarah-error-rgb), 0.1)';
     statusBadgeColor = 'var(--sarah-error)';
   } else if (isDueSoon) {
-    iconBg = 'rgba(245, 158, 11, 0.12)';
+    iconBg = 'rgba(var(--sarah-amber-rgb), 0.12)';
     iconColor = 'var(--sarah-tertiary)';
-    statusBadgeBg = 'rgba(245, 158, 11, 0.1)';
+    statusBadgeBg = 'rgba(var(--sarah-amber-rgb), 0.1)';
     statusBadgeColor = 'var(--sarah-tertiary)';
   }
 
@@ -108,7 +110,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
         alignItems: 'center',
         gap: '12px',
         cursor: 'pointer',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--sarah-surface-card)',
         position: 'relative',
         zIndex: showSnoozeMenu ? 75 : 1,
         transition: 'all 0.16s ease'
@@ -256,7 +258,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '2px',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--sarah-elevated)',
                   zIndex: 75,
                   boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
                   borderRadius: '12px'
@@ -340,7 +342,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
             onDismiss(reminder.id);
           }}
           style={{
-            background: 'rgba(16, 185, 129, 0.1)',
+            background: 'rgba(var(--sarah-success-rgb), 0.1)',
             border: 'none',
             borderRadius: '8px',
             width: '30px',
@@ -349,7 +351,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            color: '#059669',
+            color: 'var(--sarah-success)',
             outline: 'none'
           }}
         >
@@ -394,7 +396,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
                 border: 'none',
                 padding: '3px 8px',
                 cursor: 'pointer',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-error)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '3px',

@@ -35,6 +35,9 @@ interface RemindersContextType {
 
 const RemindersContext = createContext<RemindersContextType | undefined>(undefined);
 
+/** How long after its due time a reminder may still raise an alert. */
+const ALERT_WINDOW_MS = 15 * 60 * 1000;
+
 export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,11 +106,16 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Client-side In-App Reminder Watcher
   useEffect(() => {
-    const checkInterval = setInterval(() => {
+    const fire = () => {
       const now = Date.now();
       activeReminders.forEach(reminder => {
-        // If within alert window and not yet alerted this session
-        if (reminder.reminderAt <= now && !alertedIdsRef.current.has(reminder.id)) {
+        // Only reminders that came due recently are announced. Without this window
+        // every reload re-alerts every stale reminder, because the "already alerted"
+        // set lives in memory and starts empty each session.
+        const dueAgo = now - reminder.reminderAt;
+        const isFreshlyDue = dueAgo >= 0 && dueAgo <= ALERT_WINDOW_MS;
+
+        if (isFreshlyDue && !alertedIdsRef.current.has(reminder.id)) {
           alertedIdsRef.current.add(reminder.id);
 
           // 1. In-app toast alert
@@ -130,7 +138,10 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           }
         }
       });
-    }, 20000); // check every 20s
+    };
+
+    fire(); // catch anything that came due while this effect was re-created
+    const checkInterval = setInterval(fire, 20000);
 
     return () => clearInterval(checkInterval);
   }, [activeReminders, showToast]);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   X, 
   Trash2, 
@@ -22,8 +22,17 @@ export const NoteModal: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const wasOpenRef = useRef(false);
 
+  // Seeded once per opening — see TaskModal for why `subjects` must not re-seed.
   useEffect(() => {
+    if (!isNoteModalOpen) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
+
     const subjectNames = subjects.map(s => s.name);
     const defaultSub = subjectNames.length > 0 ? subjectNames[0] : 'General';
 
@@ -166,7 +175,7 @@ export const NoteModal: React.FC = () => {
           width: '100%',
           maxWidth: '540px',
           maxHeight: '90dvh',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--sarah-elevated)',
           borderTopLeftRadius: '28px',
           borderTopRightRadius: '28px',
           borderBottomLeftRadius: 0,
@@ -295,7 +304,7 @@ export const NoteModal: React.FC = () => {
                     padding: '6px 12px',
                     borderRadius: '16px',
                     border: (!isCustomSubject && subject === 'General') ? `1.5px solid var(--sarah-primary)` : '1px solid var(--sarah-outline-variant)',
-                    backgroundColor: (!isCustomSubject && subject === 'General') ? 'rgba(68, 80, 183, 0.08)' : 'var(--sarah-surface-container-lowest)',
+                    backgroundColor: (!isCustomSubject && subject === 'General') ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'var(--sarah-surface-container-lowest)',
                     color: (!isCustomSubject && subject === 'General') ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                     fontSize: '12px',
                     fontWeight: (!isCustomSubject && subject === 'General') ? 600 : 500,
@@ -326,7 +335,7 @@ export const NoteModal: React.FC = () => {
                       padding: '6px 12px',
                       borderRadius: '16px',
                       border: isSelected ? `1.5px solid var(--sarah-primary)` : '1px solid var(--sarah-outline-variant)',
-                      backgroundColor: isSelected ? 'rgba(68, 80, 183, 0.08)' : 'var(--sarah-surface-container-lowest)',
+                      backgroundColor: isSelected ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'var(--sarah-surface-container-lowest)',
                       color: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                       fontSize: '12px',
                       fontWeight: isSelected ? 600 : 500,
@@ -354,7 +363,7 @@ export const NoteModal: React.FC = () => {
                   padding: '6px 12px',
                   borderRadius: '16px',
                   border: isCustomSubject ? `1.5px solid var(--sarah-primary)` : '1px dashed var(--sarah-outline)',
-                  backgroundColor: isCustomSubject ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  backgroundColor: isCustomSubject ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'transparent',
                   color: isCustomSubject ? 'var(--sarah-primary)' : 'var(--sarah-secondary)',
                   fontSize: '12px',
                   fontWeight: isCustomSubject ? 600 : 500,
@@ -379,7 +388,7 @@ export const NoteModal: React.FC = () => {
                   border: '1px solid var(--sarah-primary)',
                   fontSize: '13.5px',
                   outline: 'none',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--sarah-surface-card)',
                   color: 'var(--sarah-on-background)',
                   marginTop: '4px'
                 }}
@@ -432,7 +441,7 @@ export const NoteModal: React.FC = () => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '10px',
-                  backgroundColor: pinned ? 'rgba(245, 158, 11, 0.15)' : 'var(--sarah-surface-container-high)',
+                  backgroundColor: pinned ? 'rgba(var(--sarah-amber-rgb), 0.15)' : 'var(--sarah-surface-container-high)',
                   color: pinned ? 'var(--sarah-tertiary)' : 'var(--sarah-secondary)',
                   display: 'flex',
                   alignItems: 'center',
@@ -475,7 +484,7 @@ export const NoteModal: React.FC = () => {
                   width: '22px',
                   height: '22px',
                   borderRadius: '50%',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--sarah-surface-card)',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
                   transition: 'left 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                 }}
@@ -494,12 +503,12 @@ export const NoteModal: React.FC = () => {
                 padding: '14px',
                 borderRadius: '14px',
                 backgroundColor: 'var(--sarah-primary)',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-primary)',
                 border: 'none',
                 fontSize: '15px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(68, 80, 183, 0.35)',
+                boxShadow: '0 4px 14px rgba(var(--sarah-primary-rgb), 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -557,7 +566,7 @@ export const NoteModal: React.FC = () => {
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
                         style={{
-                          background: '#FFFFFF',
+                          background: 'var(--sarah-surface-container-high)',
                           border: 'none',
                           padding: '5px 10px',
                           borderRadius: '8px',
@@ -573,7 +582,7 @@ export const NoteModal: React.FC = () => {
                         onClick={handleDelete}
                         style={{
                           background: 'var(--sarah-error)',
-                          color: '#FFFFFF',
+                          color: 'var(--sarah-on-error)',
                           border: 'none',
                           padding: '5px 12px',
                           borderRadius: '8px',

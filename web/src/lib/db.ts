@@ -2,15 +2,19 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 export type TaskPriority = 'must' | 'should' | 'later';
 export type EnergyLevel = 'high' | 'normal' | 'low' | 'exhausted';
+export type ThemePreference = 'system' | 'light' | 'dark';
 
 export interface UserProfile {
   name: string;
   branch: string;
   semester: string;
   targetBedtime: string; // 'HH:mm', e.g. '23:30'
+  wakeUpTime: string; // 'HH:mm', e.g. '07:00'
   collegeEndTime: string; // 'HH:mm', e.g. '17:00'
   commuteMinutes: number; // e.g. 30
+  dailyStudyGoalHours: number; // Target focused study hours per day
   energyLevel: EnergyLevel;
+  theme: ThemePreference;
 }
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
@@ -18,9 +22,12 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   branch: 'Computer Science & Engineering',
   semester: 'Semester 6',
   targetBedtime: '23:30',
+  wakeUpTime: '07:00',
   collegeEndTime: '17:00',
   commuteMinutes: 30,
-  energyLevel: 'normal'
+  dailyStudyGoalHours: 3,
+  energyLevel: 'normal',
+  theme: 'system'
 };
 
 export interface Task {
@@ -65,6 +72,9 @@ export interface Subject {
   name: string;
   code?: string;
   color: string;
+  faculty?: string; // Course instructor / professor
+  credits?: number; // Credit weight of the course
+  weeklyHours?: number; // Scheduled contact hours per week
   createdAt: number;
   updatedAt: number;
 }
@@ -91,8 +101,17 @@ export const SUBJECT_COLORS: Record<string, string> = {
   'General': '#6366F1'
 };
 
+export const FALLBACK_SUBJECT = 'General';
+
+export class DuplicateSubjectError extends Error {
+  constructor(name: string) {
+    super(`A subject named "${name}" already exists.`);
+    this.name = 'DuplicateSubjectError';
+  }
+}
+
 export const DEFAULT_SUBJECTS = [
-  'General'
+  FALLBACK_SUBJECT
 ];
 
 interface SarahPwaDB extends DBSchema {
@@ -215,17 +234,19 @@ let migrationRan = false;
 
 export async function runProductionCleanupMigration(): Promise<void> {
   if (migrationRan) return;
-  migrationRan = true;
 
   try {
     const db = await getDB();
     const isCleaned = await db.get('key_val', 'sarah_production_cleaned_v1');
-    if (isCleaned) return;
+    if (isCleaned) {
+      migrationRan = true;
+      return;
+    }
 
     // 1. Remove only demo tasks
     const allTasks = await db.getAll('tasks');
     for (const task of allTasks) {
-      if (DEMO_TASK_TITITIES_MATCH(task)) {
+      if (isDemoTask(task)) {
         await db.delete('tasks', task.id);
       }
     }
@@ -255,15 +276,15 @@ export async function runProductionCleanupMigration(): Promise<void> {
     }
 
     await db.put('key_val', true, 'sarah_production_cleaned_v1');
+    migrationRan = true;
   } catch (err) {
+    // Left unflagged so a transient IndexedDB failure is retried next time.
     console.warn('Production cleanup migration note:', err);
   }
 }
 
-function DEMO_TASK_TITITIES_MATCH(task: Task): boolean {
-  if (DEMO_TASK_TITLES.has(task.title)) return true;
-  if (task.id.startsWith('task_1786978') && DEMO_TASK_TITLES.has(task.title)) return true;
-  return false;
+function isDemoTask(task: Task): boolean {
+  return DEMO_TASK_TITLES.has(task.title);
 }
 
 // ─── Subjects CRUD Operations ───────────────────────────────────────────────
@@ -280,8 +301,22 @@ export async function getSubject(id: string): Promise<Subject | undefined> {
   return db.get('subjects', id);
 }
 
+export async function findSubjectByName(name: string): Promise<Subject | undefined> {
+  const db = await getDB();
+  const all = await db.getAll('subjects');
+  return all.find(s => s.name.trim().toLowerCase() === name.trim().toLowerCase());
+}
+
 export async function addSubject(subjectData: Omit<Subject, 'id' | 'createdAt' | 'updatedAt'>): Promise<Subject> {
   const db = await getDB();
+
+  // Subjects are matched by name across tasks, notes and reminders, so two
+  // subjects sharing a name would split every count and filter in the UI.
+  const duplicate = await findSubjectByName(subjectData.name);
+  if (duplicate) {
+    throw new DuplicateSubjectError(duplicate.name);
+  }
+
   const now = Date.now();
   const newSubject: Subject = {
     ...subjectData,
@@ -295,12 +330,54 @@ export async function addSubject(subjectData: Omit<Subject, 'id' | 'createdAt' |
 
 export async function updateSubject(subject: Subject): Promise<Subject> {
   const db = await getDB();
+  const previous = await db.get('subjects', subject.id);
+
+  const duplicate = await findSubjectByName(subject.name);
+  if (duplicate && duplicate.id !== subject.id) {
+    throw new DuplicateSubjectError(duplicate.name);
+  }
+
   const updated: Subject = {
     ...subject,
     updatedAt: Date.now()
   };
   await db.put('subjects', updated);
+
+  // Tasks, notes and reminders reference a subject by name, so a rename has to
+  // carry those records over or they would be orphaned under the old label.
+  if (previous && previous.name !== updated.name) {
+    await renameSubjectReferences(previous.name, updated.name);
+  }
+
   return updated;
+}
+
+async function renameSubjectReferences(fromName: string, toName: string): Promise<void> {
+  const db = await getDB();
+  const now = Date.now();
+  const matches = (value: string | undefined) =>
+    Boolean(value) && value!.toLowerCase() === fromName.toLowerCase();
+
+  const allTasks = await db.getAll('tasks');
+  for (const task of allTasks) {
+    if (matches(task.subject)) {
+      await db.put('tasks', { ...task, subject: toName, updatedAt: now });
+    }
+  }
+
+  const allNotes = await db.getAll('notes');
+  for (const note of allNotes) {
+    if (matches(note.subject)) {
+      await db.put('notes', { ...note, subject: toName, updatedAt: now });
+    }
+  }
+
+  const allReminders = await db.getAll('reminders');
+  for (const reminder of allReminders) {
+    if (matches(reminder.subject)) {
+      await db.put('reminders', { ...reminder, subject: toName, updatedAt: now });
+    }
+  }
 }
 
 export async function deleteSubject(id: string): Promise<void> {
@@ -309,28 +386,7 @@ export async function deleteSubject(id: string): Promise<void> {
   if (!subjectToDelete) return;
 
   // Gracefully fallback all tasks, notes, and reminders from deleted subject to 'General'
-  const subjectName = subjectToDelete.name;
-  
-  const allTasks = await db.getAll('tasks');
-  for (const task of allTasks) {
-    if (task.subject === subjectName) {
-      await db.put('tasks', { ...task, subject: 'General', updatedAt: Date.now() });
-    }
-  }
-
-  const allNotes = await db.getAll('notes');
-  for (const note of allNotes) {
-    if (note.subject === subjectName) {
-      await db.put('notes', { ...note, subject: 'General', updatedAt: Date.now() });
-    }
-  }
-
-  const allReminders = await db.getAll('reminders');
-  for (const reminder of allReminders) {
-    if (reminder.subject === subjectName) {
-      await db.put('reminders', { ...reminder, subject: 'General', updatedAt: Date.now() });
-    }
-  }
+  await renameSubjectReferences(subjectToDelete.name, FALLBACK_SUBJECT);
 
   await db.delete('subjects', id);
 }
@@ -527,7 +583,6 @@ export async function snoozeReminder(id: string, newTimeEpochMs: number): Promis
 const USER_PROFILE_KEY = 'sarah_user_profile_v1';
 
 export async function getUserProfile(): Promise<UserProfile> {
-  await getDB();
   const db = await getDB();
   const stored = await db.get('key_val', USER_PROFILE_KEY);
   if (stored && typeof stored === 'object') {
@@ -578,25 +633,61 @@ export async function exportAllDataJSON(): Promise<string> {
   return JSON.stringify(backup, null, 2);
 }
 
-export async function importAllDataJSON(jsonString: string): Promise<{ success: boolean; importedCounts: { tasks: number; notes: number; reminders: number; subjects: number } }> {
-  const db = await getDB();
-  const parsed = JSON.parse(jsonString) as Partial<SarahBackupData>;
+export type ImportMode = 'merge' | 'replace';
 
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Invalid JSON format');
+export interface ImportResult {
+  success: boolean;
+  mode: ImportMode;
+  importedCounts: { tasks: number; notes: number; reminders: number; subjects: number };
+}
+
+function isSarahBackup(parsed: unknown): parsed is Partial<SarahBackupData> {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+  const candidate = parsed as Record<string, unknown>;
+  // A genuine Sarah export always carries at least one of the record collections.
+  return ['tasks', 'notes', 'reminders', 'subjects'].some(key => Array.isArray(candidate[key]))
+    || typeof candidate.profile === 'object';
+}
+
+export async function importAllDataJSON(
+  jsonString: string,
+  mode: ImportMode = 'merge'
+): Promise<ImportResult> {
+  const db = await getDB();
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch {
+    throw new Error('That file is not valid JSON.');
   }
 
-  // Clear existing
+  if (!isSarahBackup(parsed)) {
+    throw new Error('That file is not a Sarah backup.');
+  }
+
+  const backup = parsed as Partial<SarahBackupData>;
+
   const tx = db.transaction(['tasks', 'notes', 'reminders', 'subjects', 'key_val'], 'readwrite');
-  
-  if (parsed.profile) {
-    await tx.objectStore('key_val').put(parsed.profile, USER_PROFILE_KEY);
+
+  if (mode === 'replace') {
+    await tx.objectStore('tasks').clear();
+    await tx.objectStore('notes').clear();
+    await tx.objectStore('reminders').clear();
+    await tx.objectStore('subjects').clear();
+  }
+
+  if (backup.profile) {
+    await tx.objectStore('key_val').put(
+      { ...DEFAULT_USER_PROFILE, ...backup.profile },
+      USER_PROFILE_KEY
+    );
   }
 
   let taskCount = 0;
-  if (Array.isArray(parsed.tasks)) {
-    for (const t of parsed.tasks) {
-      if (t.id && t.title) {
+  if (Array.isArray(backup.tasks)) {
+    for (const t of backup.tasks) {
+      if (t && t.id && t.title) {
         await tx.objectStore('tasks').put(t);
         taskCount++;
       }
@@ -604,9 +695,9 @@ export async function importAllDataJSON(jsonString: string): Promise<{ success: 
   }
 
   let noteCount = 0;
-  if (Array.isArray(parsed.notes)) {
-    for (const n of parsed.notes) {
-      if (n.id && n.title) {
+  if (Array.isArray(backup.notes)) {
+    for (const n of backup.notes) {
+      if (n && n.id && n.title) {
         await tx.objectStore('notes').put(n);
         noteCount++;
       }
@@ -614,22 +705,30 @@ export async function importAllDataJSON(jsonString: string): Promise<{ success: 
   }
 
   let reminderCount = 0;
-  if (Array.isArray(parsed.reminders)) {
-    for (const r of parsed.reminders) {
-      if (r.id && r.title) {
+  if (Array.isArray(backup.reminders)) {
+    for (const r of backup.reminders) {
+      if (r && r.id && r.title) {
         await tx.objectStore('reminders').put(r);
         reminderCount++;
       }
     }
   }
 
+  // Subjects are keyed by id but matched by name everywhere else, so a merge
+  // skips any incoming subject whose name is already taken by another record.
   let subjectCount = 0;
-  if (Array.isArray(parsed.subjects)) {
-    for (const s of parsed.subjects) {
-      if (s.id && s.name) {
-        await tx.objectStore('subjects').put(s);
-        subjectCount++;
-      }
+  if (Array.isArray(backup.subjects)) {
+    const store = tx.objectStore('subjects');
+    const existing = await store.getAll();
+    const takenNames = new Map(existing.map(sub => [sub.name.trim().toLowerCase(), sub.id]));
+    for (const sub of backup.subjects) {
+      if (!sub || !sub.id || !sub.name) continue;
+      const key = sub.name.trim().toLowerCase();
+      const owner = takenNames.get(key);
+      if (owner && owner !== sub.id) continue;
+      await store.put(sub);
+      takenNames.set(key, sub.id);
+      subjectCount++;
     }
   }
 
@@ -637,6 +736,7 @@ export async function importAllDataJSON(jsonString: string): Promise<{ success: 
 
   return {
     success: true,
+    mode,
     importedCounts: {
       tasks: taskCount,
       notes: noteCount,

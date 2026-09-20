@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Plus, 
   Search, 
@@ -29,6 +29,37 @@ export const NotesScreen: React.FC = () => {
 
   const totalFilteredCount = pinnedNotes.length + unpinnedNotes.length;
 
+  // Every subject notes are actually filed under, not just the ones with a
+  // Subject record — free-typed subjects and "General" get a chip too.
+  const subjectFilters = useMemo(() => {
+    const byKey = new Map<string, { key: string; name: string; color: string; count: number }>();
+
+    for (const sub of subjects) {
+      byKey.set(sub.name.toLowerCase(), {
+        key: sub.name.toLowerCase(),
+        name: sub.name,
+        color: sub.color || getSubjectColor(sub.name),
+        count: 0
+      });
+    }
+
+    for (const note of notes) {
+      const name = note.subject?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      const existing = byKey.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        byKey.set(key, { key, name, color: getSubjectColor(name), count: 1 });
+      }
+    }
+
+    return Array.from(byKey.values())
+      .filter(entry => entry.count > 0 || selectedSubject.toLowerCase() === entry.key)
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }, [subjects, notes, getSubjectColor, selectedSubject]);
+
   return (
     <div 
       className="animate-fade-in"
@@ -58,14 +89,16 @@ export const NotesScreen: React.FC = () => {
             alignItems: 'center',
             gap: '5px',
             background: 'var(--sarah-primary)',
-            color: '#FFFFFF',
+            color: 'var(--sarah-on-primary)',
             border: 'none',
             borderRadius: '12px',
             padding: '8px 14px',
             fontSize: '13px',
             fontWeight: 600,
             cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(68, 80, 183, 0.28)'
+            boxShadow: '0 3px 10px rgba(var(--sarah-primary-rgb), 0.28)',
+            whiteSpace: 'nowrap',
+            flexShrink: 0
           }}
         >
           <Plus size={15} strokeWidth={2.5} />
@@ -79,7 +112,7 @@ export const NotesScreen: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: '#FFFFFF',
+          background: 'var(--sarah-surface-card)',
           border: '1px solid var(--sarah-outline-variant)',
           borderRadius: '14px',
           padding: '9px 12px',
@@ -136,6 +169,7 @@ export const NotesScreen: React.FC = () => {
         <button
           type="button"
           onClick={() => setSelectedSubject('all')}
+          aria-pressed={selectedSubject === 'all'}
           className="btn-press"
           style={{
             border: 'none',
@@ -145,24 +179,25 @@ export const NotesScreen: React.FC = () => {
             fontWeight: selectedSubject === 'all' ? 700 : 500,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
-            backgroundColor: selectedSubject === 'all' ? 'var(--sarah-primary)' : '#FFFFFF',
-            color: selectedSubject === 'all' ? '#FFFFFF' : 'var(--sarah-on-surface-variant)',
-            boxShadow: selectedSubject === 'all' ? '0 2px 8px rgba(68, 80, 183, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
+            backgroundColor: selectedSubject === 'all' ? 'var(--sarah-primary)' : 'var(--sarah-surface-card)',
+            color: selectedSubject === 'all' ? 'var(--sarah-on-primary)' : 'var(--sarah-on-surface-variant)',
+            boxShadow: selectedSubject === 'all' ? '0 2px 8px rgba(var(--sarah-primary-rgb), 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
             transition: 'all 0.15s ease'
           }}
         >
           All ({notes.length})
         </button>
 
-        {subjects.map((sub) => {
-          const isSelected = selectedSubject.toLowerCase() === sub.name.toLowerCase();
-          const count = notes.filter(n => n.subject.toLowerCase() === sub.name.toLowerCase()).length;
-          const dotColor = sub.color || getSubjectColor(sub.name);
+        {subjectFilters.map((entry) => {
+          const isSelected = selectedSubject.toLowerCase() === entry.key;
+          const count = entry.count;
+          const dotColor = entry.color;
           return (
             <button
-              key={sub.id}
+              key={entry.key}
               type="button"
-              onClick={() => setSelectedSubject(sub.name)}
+              aria-pressed={isSelected}
+              onClick={() => setSelectedSubject(isSelected ? 'all' : entry.name)}
               className="btn-press"
               style={{
                 border: 'none',
@@ -172,17 +207,17 @@ export const NotesScreen: React.FC = () => {
                 fontWeight: isSelected ? 700 : 500,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                backgroundColor: isSelected ? 'var(--sarah-primary)' : '#FFFFFF',
-                color: isSelected ? '#FFFFFF' : 'var(--sarah-on-surface-variant)',
-                boxShadow: isSelected ? '0 2px 8px rgba(68, 80, 183, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
+                backgroundColor: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-surface-card)',
+                color: isSelected ? 'var(--sarah-on-primary)' : 'var(--sarah-on-surface-variant)',
+                boxShadow: isSelected ? '0 2px 8px rgba(var(--sarah-primary-rgb), 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
                 transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: isSelected ? '#FFFFFF' : dotColor }} />
-              <span>{sub.name} {count > 0 ? `(${count})` : ''}</span>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: isSelected ? 'var(--sarah-on-primary)' : dotColor }} />
+              <span>{entry.name} {count > 0 ? `(${count})` : ''}</span>
             </button>
           );
         })}
@@ -320,7 +355,7 @@ export const NotesScreen: React.FC = () => {
                 alignItems: 'center',
                 gap: '6px',
                 background: 'var(--sarah-primary)',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-primary)',
                 border: 'none',
                 borderRadius: '12px',
                 padding: '8px 16px',

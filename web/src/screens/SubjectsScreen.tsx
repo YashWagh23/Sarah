@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Plus, 
   BookOpen, 
@@ -21,7 +21,10 @@ export const SubjectsScreen: React.FC = () => {
   const { 
     subjects, 
     openCreateSubjectModal, 
-    openEditSubjectModal 
+    openEditSubjectModal,
+    viewingSubject,
+    openSubjectDetail,
+    closeSubjectDetail
   } = useSubjects();
 
   const { 
@@ -48,8 +51,9 @@ export const SubjectsScreen: React.FC = () => {
     removeReminder 
   } = useReminders();
 
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
-  const selectedSubject = subjects.find(s => s.id === selectedSubjectId) || null;
+  // Detail selection lives in the subjects context so a rename or delete keeps
+  // this view in sync instead of stranding it on a stale copy of the record.
+  const selectedSubject = viewingSubject;
 
   // If a subject is selected for detail view
   if (selectedSubject) {
@@ -82,7 +86,7 @@ export const SubjectsScreen: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             type="button"
-            onClick={() => setSelectedSubjectId(null)}
+            onClick={closeSubjectDetail}
             className="btn-press"
             style={{
               display: 'flex',
@@ -134,7 +138,7 @@ export const SubjectsScreen: React.FC = () => {
             alignItems: 'center',
             gap: '14px',
             borderLeft: `5px solid ${selectedSubject.color}`,
-            backgroundColor: '#FFFFFF'
+            backgroundColor: 'var(--sarah-surface-card)'
           }}
         >
           <div
@@ -156,17 +160,25 @@ export const SubjectsScreen: React.FC = () => {
             <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--sarah-on-background)', margin: 0, letterSpacing: '-0.02em' }}>
               {selectedSubject.name}
             </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
               {selectedSubject.code && (
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--sarah-secondary)', letterSpacing: '0.04em' }}>
                   {selectedSubject.code}
                 </span>
               )}
-              <span style={{ fontSize: '11px', color: 'var(--sarah-outline)' }}>•</span>
               <span style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)' }}>
                 {subjectActiveTasks.length} pending tasks • {subjectNotes.length} notes
               </span>
             </div>
+            {(selectedSubject.faculty || selectedSubject.credits != null || selectedSubject.weeklyHours != null) && (
+              <div style={{ fontSize: '11.5px', color: 'var(--sarah-secondary)', marginTop: '3px' }}>
+                {[
+                  selectedSubject.faculty,
+                  selectedSubject.credits != null ? `${selectedSubject.credits} credits` : null,
+                  selectedSubject.weeklyHours != null ? `${selectedSubject.weeklyHours}h/week` : null
+                ].filter(Boolean).join(' • ')}
+              </div>
+            )}
           </div>
         </div>
 
@@ -365,14 +377,16 @@ export const SubjectsScreen: React.FC = () => {
             alignItems: 'center',
             gap: '5px',
             background: 'var(--sarah-primary)',
-            color: '#FFFFFF',
+            color: 'var(--sarah-on-primary)',
             border: 'none',
             borderRadius: '12px',
             padding: '8px 14px',
             fontSize: '13px',
             fontWeight: 600,
             cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(68, 80, 183, 0.28)'
+            boxShadow: '0 3px 10px rgba(var(--sarah-primary-rgb), 0.28)',
+            whiteSpace: 'nowrap',
+            flexShrink: 0
           }}
         >
           <Plus size={15} strokeWidth={2.5} />
@@ -386,7 +400,7 @@ export const SubjectsScreen: React.FC = () => {
           <SubjectCard
             key={subject.id}
             subject={subject}
-            onClick={() => setSelectedSubjectId(subject.id)}
+            onClick={() => openSubjectDetail(subject)}
             onEdit={() => openEditSubjectModal(subject)}
           />
         ))}
@@ -434,7 +448,7 @@ export const SubjectsScreen: React.FC = () => {
               alignItems: 'center',
               gap: '6px',
               background: 'var(--sarah-primary)',
-              color: '#FFFFFF',
+              color: 'var(--sarah-on-primary)',
               border: 'none',
               borderRadius: '12px',
               padding: '8px 16px',

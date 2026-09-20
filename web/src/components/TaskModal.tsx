@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   X, 
   Trash2, 
@@ -8,6 +8,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { type TaskPriority } from '../lib/db';
+import { addDaysStr, todayStr, tomorrowStr } from '../lib/datetime';
 import { useTasks } from '../context/TasksContext';
 import { useSubjects } from '../context/SubjectsContext';
 
@@ -15,31 +16,9 @@ export const TaskModal: React.FC = () => {
   const { isTaskModalOpen, editingTask, initialTaskSubject, closeTaskModal, createTask, modifyTask, removeTask } = useTasks();
   const { subjects, getSubjectColor, createSubject } = useSubjects();
 
-  const getTodayStr = () => {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  const getTomorrowStr = () => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  const getNextWeekStr = () => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
+  const getTodayStr = todayStr;
+  const getTomorrowStr = tomorrowStr;
+  const getNextWeekStr = () => addDaysStr(7);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -54,8 +33,19 @@ export const TaskModal: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const wasOpenRef = useRef(false);
 
+  // The form is seeded only as the sheet opens. Keying this on `subjects` as well
+  // would wipe whatever the user has typed the moment a subject is auto-created
+  // during save, or whenever the subject list refreshes underneath the sheet.
   useEffect(() => {
+    if (!isTaskModalOpen) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
+
     const subjectNames = subjects.map(s => s.name);
     const defaultSub = initialTaskSubject || (subjectNames.length > 0 ? subjectNames[0] : 'General');
 
@@ -205,7 +195,7 @@ export const TaskModal: React.FC = () => {
           width: '100%',
           maxWidth: '540px',
           maxHeight: '90dvh',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--sarah-elevated)',
           borderTopLeftRadius: '28px',
           borderTopRightRadius: '28px',
           borderBottomLeftRadius: 0,
@@ -334,7 +324,7 @@ export const TaskModal: React.FC = () => {
                     padding: '6px 12px',
                     borderRadius: '16px',
                     border: (!isCustomSubject && subject === 'General') ? `1.5px solid var(--sarah-primary)` : '1px solid var(--sarah-outline-variant)',
-                    backgroundColor: (!isCustomSubject && subject === 'General') ? 'rgba(68, 80, 183, 0.08)' : 'var(--sarah-surface-container-lowest)',
+                    backgroundColor: (!isCustomSubject && subject === 'General') ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'var(--sarah-surface-container-lowest)',
                     color: (!isCustomSubject && subject === 'General') ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                     fontSize: '12px',
                     fontWeight: (!isCustomSubject && subject === 'General') ? 600 : 500,
@@ -365,7 +355,7 @@ export const TaskModal: React.FC = () => {
                       padding: '6px 12px',
                       borderRadius: '16px',
                       border: isSelected ? `1.5px solid var(--sarah-primary)` : '1px solid var(--sarah-outline-variant)',
-                      backgroundColor: isSelected ? 'rgba(68, 80, 183, 0.08)' : 'var(--sarah-surface-container-lowest)',
+                      backgroundColor: isSelected ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'var(--sarah-surface-container-lowest)',
                       color: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                       fontSize: '12px',
                       fontWeight: isSelected ? 600 : 500,
@@ -393,7 +383,7 @@ export const TaskModal: React.FC = () => {
                   padding: '6px 12px',
                   borderRadius: '16px',
                   border: isCustomSubject ? `1.5px solid var(--sarah-primary)` : '1px dashed var(--sarah-outline)',
-                  backgroundColor: isCustomSubject ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  backgroundColor: isCustomSubject ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'transparent',
                   color: isCustomSubject ? 'var(--sarah-primary)' : 'var(--sarah-secondary)',
                   fontSize: '12px',
                   fontWeight: isCustomSubject ? 600 : 500,
@@ -418,7 +408,7 @@ export const TaskModal: React.FC = () => {
                   border: '1px solid var(--sarah-primary)',
                   fontSize: '13.5px',
                   outline: 'none',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--sarah-surface-card)',
                   color: 'var(--sarah-on-background)',
                   marginTop: '4px'
                 }}
@@ -453,7 +443,7 @@ export const TaskModal: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '4px',
-                  backgroundColor: priority === 'must' ? '#FFFFFF' : 'transparent',
+                  backgroundColor: priority === 'must' ? 'var(--sarah-segment-active)' : 'transparent',
                   color: priority === 'must' ? 'var(--sarah-error)' : 'var(--sarah-on-surface-variant)',
                   boxShadow: priority === 'must' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   fontSize: '12.5px',
@@ -477,7 +467,7 @@ export const TaskModal: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '4px',
-                  backgroundColor: priority === 'should' ? '#FFFFFF' : 'transparent',
+                  backgroundColor: priority === 'should' ? 'var(--sarah-segment-active)' : 'transparent',
                   color: priority === 'should' ? 'var(--sarah-tertiary)' : 'var(--sarah-on-surface-variant)',
                   boxShadow: priority === 'should' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   fontSize: '12.5px',
@@ -500,7 +490,7 @@ export const TaskModal: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: priority === 'later' ? '#FFFFFF' : 'transparent',
+                  backgroundColor: priority === 'later' ? 'var(--sarah-segment-active)' : 'transparent',
                   color: priority === 'later' ? 'var(--sarah-on-background)' : 'var(--sarah-on-surface-variant)',
                   boxShadow: priority === 'later' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   fontSize: '12.5px',
@@ -528,7 +518,7 @@ export const TaskModal: React.FC = () => {
                   padding: '7px 4px',
                   borderRadius: '10px',
                   border: deadline === getTodayStr() ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
-                  backgroundColor: deadline === getTodayStr() ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  backgroundColor: deadline === getTodayStr() ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'transparent',
                   color: deadline === getTodayStr() ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -546,7 +536,7 @@ export const TaskModal: React.FC = () => {
                   padding: '7px 4px',
                   borderRadius: '10px',
                   border: deadline === getTomorrowStr() ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
-                  backgroundColor: deadline === getTomorrowStr() ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  backgroundColor: deadline === getTomorrowStr() ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'transparent',
                   color: deadline === getTomorrowStr() ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -564,7 +554,7 @@ export const TaskModal: React.FC = () => {
                   padding: '7px 4px',
                   borderRadius: '10px',
                   border: deadline === getNextWeekStr() ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
-                  backgroundColor: deadline === getNextWeekStr() ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                  backgroundColor: deadline === getNextWeekStr() ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'transparent',
                   color: deadline === getNextWeekStr() ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -631,7 +621,7 @@ export const TaskModal: React.FC = () => {
                     padding: '6px 2px',
                     borderRadius: '10px',
                     border: estimatedMinutes === mins ? '1.5px solid var(--sarah-primary)' : '1px solid var(--sarah-outline-variant)',
-                    backgroundColor: estimatedMinutes === mins ? 'rgba(68, 80, 183, 0.08)' : 'transparent',
+                    backgroundColor: estimatedMinutes === mins ? 'rgba(var(--sarah-primary-rgb), 0.08)' : 'transparent',
                     color: estimatedMinutes === mins ? 'var(--sarah-primary)' : 'var(--sarah-on-surface)',
                     fontSize: '12px',
                     fontWeight: 600,
@@ -680,12 +670,12 @@ export const TaskModal: React.FC = () => {
                 padding: '14px',
                 borderRadius: '14px',
                 backgroundColor: 'var(--sarah-primary)',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-primary)',
                 border: 'none',
                 fontSize: '15px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(68, 80, 183, 0.35)',
+                boxShadow: '0 4px 14px rgba(var(--sarah-primary-rgb), 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -743,7 +733,7 @@ export const TaskModal: React.FC = () => {
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
                         style={{
-                          background: '#FFFFFF',
+                          background: 'var(--sarah-surface-container-high)',
                           border: 'none',
                           padding: '5px 10px',
                           borderRadius: '8px',
@@ -759,7 +749,7 @@ export const TaskModal: React.FC = () => {
                         onClick={handleDelete}
                         style={{
                           background: 'var(--sarah-error)',
-                          color: '#FFFFFF',
+                          color: 'var(--sarah-on-error)',
                           border: 'none',
                           padding: '5px 12px',
                           borderRadius: '8px',

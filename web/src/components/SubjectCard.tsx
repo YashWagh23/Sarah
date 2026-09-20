@@ -34,6 +34,12 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
     n => n.subject.toLowerCase() === subject.name.toLowerCase()
   ).length;
 
+  const metaLine = [
+    subject.code,
+    subject.credits != null ? `${subject.credits} credits` : null,
+    subject.weeklyHours != null ? `${subject.weeklyHours}h/week` : null
+  ].filter(Boolean).join(' • ');
+
   const reminderCount = activeReminders.filter(
     r => (r.subject && r.subject.toLowerCase() === subject.name.toLowerCase()) ||
          (r.taskId && tasks.find(t => t.id === r.taskId)?.subject.toLowerCase() === subject.name.toLowerCase())
@@ -48,7 +54,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--sarah-surface-card)',
         position: 'relative',
         cursor: 'pointer',
         borderLeft: `4px solid ${subject.color}`,
@@ -81,7 +87,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
             </h3>
           </div>
 
-          {subject.code && (
+          {metaLine && (
             <span
               style={{
                 fontSize: '11.5px',
@@ -91,7 +97,19 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
                 paddingLeft: '18px'
               }}
             >
-              {subject.code}
+              {metaLine}
+            </span>
+          )}
+
+          {subject.faculty && (
+            <span
+              style={{
+                fontSize: '11px',
+                color: 'var(--sarah-on-surface-variant)',
+                paddingLeft: '18px'
+              }}
+            >
+              {subject.faculty}
             </span>
           )}
         </div>
@@ -155,7 +173,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
 
         {reminderCount > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Bell size={13} color="#BA1A1A" />
+            <Bell size={13} color="var(--sarah-error)" />
             <span style={{ fontWeight: 600, color: 'var(--sarah-on-background)' }}>
               {reminderCount}
             </span>

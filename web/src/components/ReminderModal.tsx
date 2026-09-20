@@ -11,24 +11,15 @@ import {
 import { useReminders } from '../context/RemindersContext';
 import { useTasks } from '../context/TasksContext';
 import { useSubjects } from '../context/SubjectsContext';
+import { toLocalDateStr, toLocalTimeStr } from '../lib/datetime';
 
 export const ReminderModal: React.FC = () => {
   const { isReminderModalOpen, editingReminder, closeReminderModal, createReminder, modifyReminder, removeReminder } = useReminders();
   const { activeTasks } = useTasks();
   const { subjects } = useSubjects();
 
-  const getLocalDateStr = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  const getLocalTimeStr = (d: Date) => {
-    const hours = String(d.getHours()).padStart(2, '0');
-    const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${hours}:${mins}`;
-  };
+  const getLocalDateStr = toLocalDateStr;
+  const getLocalTimeStr = toLocalTimeStr;
 
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -198,7 +189,7 @@ export const ReminderModal: React.FC = () => {
           width: '100%',
           maxWidth: '540px',
           maxHeight: '90dvh',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--sarah-elevated)',
           borderTopLeftRadius: '28px',
           borderTopRightRadius: '28px',
           borderBottomLeftRadius: 0,
@@ -521,12 +512,12 @@ export const ReminderModal: React.FC = () => {
                 padding: '14px',
                 borderRadius: '14px',
                 backgroundColor: 'var(--sarah-primary)',
-                color: '#FFFFFF',
+                color: 'var(--sarah-on-primary)',
                 border: 'none',
                 fontSize: '15px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(68, 80, 183, 0.35)',
+                boxShadow: '0 4px 14px rgba(var(--sarah-primary-rgb), 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -584,7 +575,7 @@ export const ReminderModal: React.FC = () => {
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
                         style={{
-                          background: '#FFFFFF',
+                          background: 'var(--sarah-surface-container-high)',
                           border: 'none',
                           padding: '5px 10px',
                           borderRadius: '8px',
@@ -600,7 +591,7 @@ export const ReminderModal: React.FC = () => {
                         onClick={handleDelete}
                         style={{
                           background: 'var(--sarah-error)',
-                          color: '#FFFFFF',
+                          color: 'var(--sarah-on-error)',
                           border: 'none',
                           padding: '5px 12px',
                           borderRadius: '8px',

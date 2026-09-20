@@ -1,9 +1,18 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   Sarah Design Tokens
+   Light is the default palette. The dark ("obsidian") palette applies when the
+   user explicitly picks dark (`data-theme="dark"`) or when they follow the
+   system and the system is dark. Every colour used in the app resolves through
+   these tokens so both themes stay in sync.
+   ─────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  /* Sarah Apple-Inspired Color Palette */
+  /* Brand */
   --sarah-primary: #4450B7;
   --sarah-primary-rgb: 68, 80, 183;
   --sarah-on-primary: #FFFFFF;
   --sarah-primary-container: #5E6AD2;
+  --sarah-primary-container-rgb: 94, 106, 210;
   --sarah-primary-fixed: #DFE0FF;
   --sarah-primary-fixed-dim: #BDC2FF;
   --sarah-on-primary-fixed: #000965;
@@ -14,15 +23,28 @@
   --sarah-secondary-fixed: #E3E2E7;
 
   --sarah-tertiary: #834F00;
+  --sarah-tertiary-rgb: 131, 79, 0;
   --sarah-on-tertiary: #FFFFFF;
   --sarah-tertiary-container: #A56500;
   --sarah-tertiary-fixed: #FFDDBB;
   --sarah-tertiary-fixed-dim: #FFB867;
 
+  /* Status accents */
   --sarah-error: #BA1A1A;
+  --sarah-error-rgb: 186, 26, 26;
+  --sarah-on-error: #FFFFFF;
   --sarah-error-container: #FFDAD6;
   --sarah-on-error-container: #93000A;
+  --sarah-error-surface: rgba(255, 245, 245, 0.92);
 
+  --sarah-success: #059669;
+  --sarah-success-rgb: 16, 185, 129;
+  --sarah-amber: #F59E0B;
+  --sarah-amber-rgb: 245, 158, 11;
+  --sarah-violet: #7C3AED;
+  --sarah-violet-rgb: 139, 92, 246;
+
+  /* Surfaces */
   --sarah-background: #F9F9FB;
   --sarah-on-background: #1A1C1D;
   --sarah-surface: #F9F9FB;
@@ -34,17 +56,109 @@
   --sarah-surface-container: #EEEEF0;
   --sarah-surface-container-high: #E8E8EA;
 
+  /* Card / chrome surfaces */
+  --sarah-surface-card: #FFFFFF;
+  --sarah-surface-card-muted: rgba(255, 255, 255, 0.65);
+  --sarah-elevated: #FFFFFF;
+  --sarah-segment-active: #FFFFFF;
+  --sarah-header-bg: rgba(249, 249, 251, 0.88);
+  --sarah-header-border: rgba(226, 226, 232, 0.6);
+  --sarah-nav-bg: rgba(255, 255, 255, 0.88);
+  --sarah-nav-border: rgba(226, 226, 232, 0.8);
+  --sarah-scrim: rgba(0, 0, 0, 0.45);
+  --sarah-toast-bg: rgba(26, 28, 29, 0.92);
+  --sarah-toast-fg: #FFFFFF;
+
   --sarah-outline: #767684;
   --sarah-outline-variant: #E2E2E8;
 
   /* Glassmorphic values */
   --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg-strong: rgba(255, 255, 255, 0.95);
   --glass-border: rgba(255, 255, 255, 0.8);
   --glass-shadow: 0 10px 36px -4px rgba(68, 80, 183, 0.08), 0 2px 10px -2px rgba(0, 0, 0, 0.03);
   --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  --sheet-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+  --menu-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
 
   /* Typography */
   --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Plus Jakarta Sans", "Inter", sans-serif;
+
+  color-scheme: light;
+}
+
+/* Obsidian dark palette — shared by explicit dark and system-dark */
+:root[data-theme="dark"] {
+  --sarah-primary: #AFB6FF;
+  --sarah-primary-rgb: 175, 182, 255;
+  --sarah-on-primary: #111535;
+  --sarah-primary-container: #7C87E8;
+  --sarah-primary-container-rgb: 124, 135, 232;
+  --sarah-primary-fixed: #2A2F5C;
+  --sarah-primary-fixed-dim: #3A4079;
+  --sarah-on-primary-fixed: #DFE0FF;
+
+  --sarah-secondary: #A5A7AF;
+  --sarah-on-secondary: #16181C;
+  --sarah-secondary-container: #2A2D33;
+  --sarah-secondary-fixed: #2A2D33;
+
+  --sarah-tertiary: #FFB867;
+  --sarah-tertiary-rgb: 255, 184, 103;
+  --sarah-on-tertiary: #2B1700;
+  --sarah-tertiary-container: #4A2C00;
+  --sarah-tertiary-fixed: #4A2C00;
+  --sarah-tertiary-fixed-dim: #FFB867;
+
+  --sarah-error: #FFB4AB;
+  --sarah-error-rgb: 255, 180, 171;
+  --sarah-on-error: #4B0006;
+  --sarah-error-container: #4E1417;
+  --sarah-on-error-container: #FFDAD6;
+  --sarah-error-surface: rgba(78, 20, 23, 0.55);
+
+  --sarah-success: #34D399;
+  --sarah-success-rgb: 52, 211, 153;
+  --sarah-amber: #FBBF24;
+  --sarah-amber-rgb: 251, 191, 36;
+  --sarah-violet: #C4B5FD;
+  --sarah-violet-rgb: 167, 139, 250;
+
+  --sarah-background: #0B0C0E;
+  --sarah-on-background: #ECEDF0;
+  --sarah-surface: #0B0C0E;
+  --sarah-on-surface: #ECEDF0;
+  --sarah-on-surface-variant: #B7B9C1;
+
+  --sarah-surface-container-lowest: #131418;
+  --sarah-surface-container-low: #1A1C21;
+  --sarah-surface-container: #212429;
+  --sarah-surface-container-high: #2A2E35;
+
+  --sarah-surface-card: #141519;
+  --sarah-surface-card-muted: rgba(20, 21, 25, 0.6);
+  --sarah-elevated: #1C1E24;
+  --sarah-segment-active: #2E323A;
+  --sarah-header-bg: rgba(11, 12, 14, 0.86);
+  --sarah-header-border: rgba(255, 255, 255, 0.07);
+  --sarah-nav-bg: rgba(14, 15, 18, 0.9);
+  --sarah-nav-border: rgba(255, 255, 255, 0.07);
+  --sarah-scrim: rgba(0, 0, 0, 0.62);
+  --sarah-toast-bg: rgba(42, 46, 53, 0.95);
+  --sarah-toast-fg: #F4F5F7;
+
+  --sarah-outline: #7E8189;
+  --sarah-outline-variant: #2E3138;
+
+  --glass-bg: rgba(24, 26, 31, 0.8);
+  --glass-bg-strong: rgba(28, 30, 36, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 10px 36px -4px rgba(0, 0, 0, 0.55), 0 2px 10px -2px rgba(0, 0, 0, 0.4);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+  --sheet-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+  --menu-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
 }
 
 * {
@@ -73,6 +187,20 @@ html, body {
 input, textarea, select, [contenteditable="true"] {
   user-select: text;
   -webkit-user-select: text;
+  color: var(--sarah-on-background);
+}
+
+/* iOS Safari zooms the viewport when a focused field is below 16px. Keeping
+   form controls at 16px on phones removes that jump without disabling pinch. */
+@media (max-width: 767px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Native controls (date/time pickers, calendar glyphs) follow the theme */
+input[type="date"], input[type="time"], input[type="number"] {
+  color-scheme: inherit;
 }
 
 .selectable-text {
@@ -120,7 +248,7 @@ button, input, textarea, select, .btn-press, a {
 }
 
 .surface-card {
-  background: var(--sarah-surface-container-lowest);
+  background: var(--sarah-surface-card);
   border: 1px solid var(--sarah-outline-variant);
   box-shadow: var(--card-shadow);
   border-radius: 18px;
@@ -182,10 +310,27 @@ button, input, textarea, select, .btn-press, a {
   opacity: 0.88;
 }
 
+/* Visible keyboard focus for every interactive control */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--sarah-primary);
+  outline-offset: 2px;
+}
+
 /* Input Focus Rings */
 input:focus, textarea:focus, select:focus {
   border-color: var(--sarah-primary) !important;
-  box-shadow: 0 0 0 3px rgba(68, 80, 183, 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(var(--sarah-primary-rgb), 0.18) !important;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* Responsive Floating Action Button & Menu Positioning */

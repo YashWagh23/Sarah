@@ -7,6 +7,7 @@ import {
   completeTask as dbCompleteTask,
   type Task
 } from '../lib/db';
+import { toLocalDateStr, useNow } from '../lib/datetime';
 
 interface TasksContextType {
   tasks: Task[];
@@ -18,6 +19,7 @@ interface TasksContextType {
   shouldDoTasks: Task[];
   laterTasks: Task[];
   nextActionTask: Task | null;
+  todayStr: string;
   
   // CRUD Actions
   createTask: (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Task>;
@@ -47,6 +49,7 @@ const TasksContext = createContext<TasksContextType | undefined>(undefined);
 export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const now = useNow(30000);
 
   // Modal states
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -152,13 +155,9 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const activeTasks = useMemo(() => tasks.filter(t => !t.completed), [tasks]);
   const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
 
-  const todayStr = useMemo(() => {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }, []);
+  // Recomputed from the ticking clock so an app left open overnight rolls over
+  // to the new day instead of staying on the day it was launched.
+  const todayStr = useMemo(() => toLocalDateStr(new Date(now)), [now]);
 
   const todayTasks = useMemo(() => {
     return tasks.filter(t => t.deadline <= todayStr && !t.completed);
@@ -225,6 +224,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     shouldDoTasks,
     laterTasks,
     nextActionTask,
+    todayStr,
     createTask,
     modifyTask,
     removeTask,
@@ -251,6 +251,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     shouldDoTasks,
     laterTasks,
     nextActionTask,
+    todayStr,
     createTask,
     modifyTask,
     removeTask,
