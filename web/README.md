@@ -11,7 +11,8 @@ Built with **React 19**, **TypeScript**, **Vite**, and **IndexedDB**. Designed t
 - **Tonight Planner** (`src/lib/planner.ts`): a pure function of *(tasks, profile, now)* that ranks open work and schedules focus sessions, breaks, classes, commute and dinner before bedtime. The Today screen renders its verdict, next move, timeline and "won't fit" list.
 - **Instant Optimistic UI**: Checkbox toggles, note pins, energy switches, and snooze actions update instantaneously with async background persistence.
 - **Offline-First PWA**: Workbox service worker precaches application assets for offline access; data persists in browser IndexedDB via `idb`.
-- **Responsive Obsidian Aesthetics**: Tailored dark-mode theme, glassmorphic navigation, mobile safe-area insets, and iOS touch-delay elimination.
+- **Design system**: tokens and primitives live in `src/index.css`; shared components in `src/components/ui.tsx`. Every editor is a `Sheet`; lists are grouped `.list` surfaces with `.list-row` rows. One accent (`--accent`), status colours only for meaning (`--danger`, `--warn`, `--ok`), and a fixed radius scale (`--r-surface` 16px, `--r-control` 12px, `--r-pill`, `--r-sheet` 24px). Light and dark are defined side by side, so new UI should use tokens, never raw colours.
+- **Typography**: Geist Variable, self-hosted and precached; times and durations use tabular figures (`.tnum`).
 - **Data Portability**: Full JSON export and restore built into the Profile screen.
 
 ---

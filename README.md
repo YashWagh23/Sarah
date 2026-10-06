@@ -14,7 +14,7 @@ Sarah is an intelligent, offline-first personal academic operating system design
 - ⚡ **Zero-Lag Optimistic UI**: Checkbox completions, note pins, energy level switches, and reminder actions update instantly on touch with asynchronous background persistence.
 - 🧠 **Tonight Planner**: Scores every open task by deadline urgency, priority and size, then lays real focus sessions and breaks on the clock between now and bedtime — around classes, commute and dinner — and flags deadlines that won't fit.
 - 🔋 **4-State Dynamic Energy Model**: `High`, `Steady`, `Low` and `Rest` change focus-block length, break length and how much of your free time is realistically plannable; `Rest` keeps only work that can't wait.
-- 🎨 **Apple-Inspired Dark Aesthetic**: Premium obsidian-style UI with fluid spring transitions, ambient cards, and high-contrast status chips.
+- 🎨 **Calm, Consistent Design System**: Navy-tinted neutrals with one periwinkle accent from the logo, Geist type, grouped lists instead of card clutter, and full light/dark parity.
 - 💾 **Universal Data Backup & Portability**: One-click JSON backup export and restore across devices without cloud vendor lock-in.
 
 ---
@@ -58,7 +58,9 @@ Sarah is an intelligent, offline-first personal academic operating system design
 ### Web Progressive Web App (`web/`)
 - **Framework**: React 19 + TypeScript
 - **Bundler & Tooling**: Vite + Vite PWA Plugin (Workbox Service Worker)
-- **Styling**: Vanilla CSS with modern CSS custom properties, glassmorphism, responsive safe-area insets, and touch latency elimination (`touch-action: manipulation`)
+- **Styling**: Vanilla CSS design tokens and primitives in `src/index.css` (card, list, button, chip, segmented, field, sheet, tag, meter); one radius scale (16px surfaces, 12px controls, pill chips, 24px sheets); light and dark themes; safe-area insets
+- **Type**: Geist Variable, self-hosted via `@fontsource-variable/geist` (precached, works offline)
+- **Shared UI**: `src/components/ui.tsx` (`Sheet`, `Field`, `Segmented`, `SectionHead`, `EmptyState`, `DeleteConfirm`) used by every screen and editor
 - **Local Storage**: IndexedDB via `idb`
 - **Icons**: Lucide React
 - **Testing**: Automated persistence and clean-state verification test suite with `tsx` & `fake-indexeddb`
