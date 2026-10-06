@@ -12,8 +12,8 @@ Sarah is an intelligent, offline-first personal academic operating system design
 
 - 🔒 **100% Offline-First & Private**: No mandatory cloud accounts or external tracking. Your tasks, notes, courses, and schedules are stored locally (IndexedDB on Web, Room SQLite on Android) and never leave your device.
 - ⚡ **Zero-Lag Optimistic UI**: Checkbox completions, note pins, energy level switches, and reminder actions update instantly on touch with asynchronous background persistence.
-- 🧠 **Deterministic Feasibility Engine**: Real-time evaluation of study capacity against pending deadlines, scheduled classes, and planned bedtime.
-- 🔋 **4-State Dynamic Energy Model**: Instant recalibration of study pace (`High`, `Steady`, `Low`, `Rest`) to adapt to real student fatigue levels.
+- 🧠 **Tonight Planner**: Scores every open task by deadline urgency, priority and size, then lays real focus sessions and breaks on the clock between now and bedtime — around classes, commute and dinner — and flags deadlines that won't fit.
+- 🔋 **4-State Dynamic Energy Model**: `High`, `Steady`, `Low` and `Rest` change focus-block length, break length and how much of your free time is realistically plannable; `Rest` keeps only work that can't wait.
 - 🎨 **Apple-Inspired Dark Aesthetic**: Premium obsidian-style UI with fluid spring transitions, ambient cards, and high-contrast status chips.
 - 💾 **Universal Data Backup & Portability**: One-click JSON backup export and restore across devices without cloud vendor lock-in.
 
@@ -21,9 +21,13 @@ Sarah is an intelligent, offline-first personal academic operating system design
 
 ## ✨ Features
 
-### 🎯 Smart Task Triage
-- Categorizes tasks automatically into **Must Do Tonight**, **Should Do**, and **Can Defer** based on real deadlines and remaining study capacity before bedtime.
-- Quick inline 2-step deletion with auto-reset timers to prevent accidental taps on mobile devices.
+### 🎯 Today: Your Evening, Planned
+- **Tonight verdict** — *On track*, *Tight*, *Overloaded*, *Rest mode* or *Past bedtime*, with planned focus vs. realistic capacity and free time before bed.
+- **Do this next** — the single highest-value task, with why (e.g. "Overdue by 2 days", "Due tomorrow at 9:00 AM") and when it's scheduled.
+- **Tonight's plan** — a timeline of sessions, breaks, classes, commute, dinner and bedtime. Long tasks split into energy-sized focus blocks ("part 1/3").
+- **Won't fit before bedtime** — deadlines that can't be finished tonight, including partial fits ("only 45m of 1h fits"), so you can trim scope or ask for an extension early.
+- **Can wait** — everything else, ordered by urgency. The plan recomputes instantly as you finish tasks, change energy, or as time passes.
+- Overdue tasks are flagged everywhere; the Tasks list is ordered by deadline.
 - Link tasks directly to enrolled courses or custom-typed subjects.
 
 ### 📚 Course & Curriculum Management
@@ -42,7 +46,8 @@ Sarah is an intelligent, offline-first personal academic operating system design
 - Dropdown menus with elevated stacking contexts for seamless mobile interaction without layout clipping.
 
 ### 👤 Profile & Schedule Customization
-- Configure your target bedtime, wake-up time, and daily study hours.
+- A first-run welcome sheet asks for your name, when classes end, commute, bedtime and which days you have classes (weekends are free by default).
+- Configure your target bedtime (after-midnight bedtimes supported), wake-up time, class days, and daily study goal.
 - Toggle energy states anytime from the navigation header or profile screen.
 - Manage browser push notification permissions directly from the app.
 
@@ -85,7 +90,7 @@ Sarah is an intelligent, offline-first personal academic operating system design
    ```
    Open `http://localhost:5173` in your browser.
 
-4. Run the automated persistence test suite:
+4. Run the automated test suites (persistence + Tonight Planner):
    ```bash
    npm run test
    ```
@@ -109,11 +114,12 @@ Sarah is an intelligent, offline-first personal academic operating system design
 
 ## 🧪 Testing & Data Integrity
 
-Sarah is built with strict zero-loss data persistence principles. The test suite guarantees:
+Sarah is built with strict zero-loss data persistence principles. The web test suites guarantee:
 - **Clean State**: Fresh installations start with 0 demo data records.
 - **Relational Integrity**: Deleting a subject safely migrates tasks and notes without dropping records.
 - **Optimistic State Consistency**: React state transitions match local database states identically.
 - **Backup & Restore**: Full JSON roundtrip export and import without field degradation.
+- **Planner correctness**: deadline ranking, college vs. weekend days, dinner and commute blocks, past-midnight bedtimes, overloaded nights, rest mode, and session splitting (`web/test-planner.ts`).
 
 Run tests anytime with:
 ```bash
