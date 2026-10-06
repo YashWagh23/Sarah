@@ -11,6 +11,7 @@ import {
 import { type Task } from '../lib/db';
 import { useSubjects } from '../context/SubjectsContext';
 import { todayStr as getTodayStr, tomorrowStr as getTomorrowStr } from '../lib/datetime';
+import { taskDueMs } from '../lib/planner';
 
 interface TaskCardProps {
   task: Task;
@@ -30,6 +31,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { getSubjectColor } = useSubjects();
   const subjectColor = getSubjectColor(task.subject);
+  const isOverdue = !task.completed && Boolean(task.deadline) && taskDueMs(task) < Date.now();
 
   useEffect(() => {
     if (!isConfirmingDelete) return;
@@ -147,13 +149,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             <span>{task.estimatedMinutes}m</span>
           </div>
 
-          {/* Optional Date */}
-          {showDate && task.deadline && (
+          {/* Date — always shown once a task is overdue, so it never hides in a list */}
+          {(showDate || isOverdue) && task.deadline && (
             <>
               <span style={{ fontSize: '10px', color: 'var(--sarah-outline)' }}>•</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--sarah-secondary)' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  fontSize: '11px',
+                  color: isOverdue ? 'var(--sarah-error)' : 'var(--sarah-secondary)',
+                  fontWeight: isOverdue ? 600 : 400
+                }}
+              >
                 <Calendar size={11} />
-                <span>{formatDeadline(task.deadline, task.deadlineTime)}</span>
+                <span>{isOverdue ? 'Overdue · ' : ''}{formatDeadline(task.deadline, task.deadlineTime)}</span>
               </div>
             </>
           )}

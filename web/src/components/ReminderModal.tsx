@@ -117,6 +117,14 @@ export const ReminderModal: React.FC = () => {
     const reminderDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
     const reminderAt = reminderDate.getTime();
 
+    // Alerts only fire for reminders that come due while the app is open, so a
+    // time already in the past would be saved and then silently never ring.
+    const isUnchangedExistingTime = isEditingExisting && editingReminder?.reminderAt === reminderAt;
+    if (reminderAt < Date.now() - 60000 && !isUnchangedExistingTime) {
+      setErrorMessage('That time has already passed — pick a time in the future.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

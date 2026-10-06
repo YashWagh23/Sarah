@@ -3,11 +3,12 @@ import { BatteryCharging, Moon, Target, Zap } from 'lucide-react';
 import { BottomNav, type TabId } from './BottomNav';
 import { useUserProfile } from '../context/UserProfileContext';
 import { type EnergyLevel } from '../lib/db';
+import { useNow } from '../lib/datetime';
 
 const ENERGY_OPTIONS: Array<{ id: EnergyLevel; label: string; icon: React.ComponentType<{ size?: number }> }> = [
-  { id: 'high', label: 'High Focus', icon: Zap },
-  { id: 'normal', label: 'Steady Pace', icon: Target },
-  { id: 'low', label: 'Low Battery', icon: BatteryCharging },
+  { id: 'high', label: 'High energy', icon: Zap },
+  { id: 'normal', label: 'Steady', icon: Target },
+  { id: 'low', label: 'Low energy', icon: BatteryCharging },
   { id: 'exhausted', label: 'Resting', icon: Moon }
 ];
 
@@ -65,7 +66,9 @@ export const AppShell: React.FC<AppShellProps> = ({
     };
   }, []);
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
+  // Ticks so a PWA left open overnight shows the new day, not the launch day.
+  const now = useNow(60000);
+  const currentDate = new Date(now).toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric'

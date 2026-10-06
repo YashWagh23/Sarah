@@ -11,6 +11,7 @@ import {
 import { useTasks } from '../context/TasksContext';
 import { useSubjects } from '../context/SubjectsContext';
 import { TaskCard } from '../components/TaskCard';
+import { taskDueMs } from '../lib/planner';
 
 export const TasksScreen: React.FC = () => {
   const { 
@@ -101,8 +102,13 @@ export const TasksScreen: React.FC = () => {
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   }, [subjects, tasks, getSubjectColor, selectedSubjectFilter]);
 
-  const activeFiltered = filteredTasks.filter(t => !t.completed);
-  const completedFiltered = filteredTasks.filter(t => t.completed);
+  // Open work reads soonest-deadline first; finished work most-recent first.
+  const activeFiltered = filteredTasks
+    .filter(t => !t.completed)
+    .sort((a, b) => taskDueMs(a) - taskDueMs(b));
+  const completedFiltered = filteredTasks
+    .filter(t => t.completed)
+    .sort((a, b) => (b.completedAt ?? b.updatedAt) - (a.completedAt ?? a.updatedAt));
 
   return (
     <div 

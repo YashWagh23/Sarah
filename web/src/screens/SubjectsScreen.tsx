@@ -297,52 +297,55 @@ export const SubjectsScreen: React.FC = () => {
           )}
         </section>
 
-        {/* Section 3: Active Reminders for Subject */}
-        {subjectReminders.length > 0 && (
-          <section style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Bell size={14} color="var(--sarah-primary)" />
-                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--sarah-primary)' }}>
-                  Active Reminders ({subjectReminders.length})
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => openCreateReminderModal(undefined, undefined, selectedSubject.name)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  fontSize: '11.5px',
-                  fontWeight: 600,
-                  color: 'var(--sarah-primary)',
-                  cursor: 'pointer',
-                  padding: '2px 4px'
-                }}
-              >
-                <Plus size={13} />
-                <span>Add Reminder</span>
-              </button>
+        {/* Section 3: Active Reminders for Subject — always shown so one can be added */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Bell size={14} color="var(--sarah-primary)" />
+              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--sarah-primary)' }}>
+                Active Reminders ({subjectReminders.length})
+              </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {subjectReminders.map((reminder) => (
-                <ReminderCard
-                  key={reminder.id}
-                  reminder={reminder}
-                  onDismiss={dismiss}
-                  onSnooze={snooze}
-                  onEdit={openEditReminderModal}
-                  onDelete={removeReminder}
-                />
-              ))}
+            <button
+              type="button"
+              onClick={() => openCreateReminderModal(undefined, undefined, selectedSubject.name)}
+              style={{
+                background: 'none',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: 'var(--sarah-primary)',
+                cursor: 'pointer',
+                padding: '2px 4px'
+              }}
+            >
+              <Plus size={13} />
+              <span>Add Reminder</span>
+            </button>
+          </div>
+
+          {subjectReminders.length === 0 && (
+            <div style={{ fontSize: '12.5px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-lowest)', padding: '12px 14px', borderRadius: '12px', textAlign: 'center' }}>
+              No reminders for this course.
             </div>
-          </section>
-        )}
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {subjectReminders.map((reminder) => (
+              <ReminderCard
+                key={reminder.id}
+                reminder={reminder}
+                onDismiss={dismiss}
+                onSnooze={snooze}
+                onEdit={openEditReminderModal}
+                onDelete={removeReminder}
+              />
+            ))}
+          </div>
+        </section>
       </div>
     );
   }
