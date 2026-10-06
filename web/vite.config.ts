@@ -20,8 +20,8 @@ export default defineConfig({
         name: 'Sarah',
         short_name: 'Sarah',
         description: 'Personal Academic & Schedule Assistant',
-        theme_color: '#F9F9FB',
-        background_color: '#F9F9FB',
+        theme_color: '#F5F6FA',
+        background_color: '#F5F6FA',
         display: 'standalone',
         orientation: 'portrait',
         start_url: './',
@@ -46,25 +46,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
-        // Fonts come from Google's CDN, which precaching cannot see — cache them on
-        // first use so an offline launch keeps its typography.
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'google-fonts-stylesheets' }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-webfonts',
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 }
-            }
-          }
-        ]
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}']
       }
     })
   ],

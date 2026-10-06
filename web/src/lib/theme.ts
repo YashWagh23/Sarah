@@ -10,8 +10,8 @@ export type ResolvedTheme = 'light' | 'dark';
 export const THEME_STORAGE_KEY = 'sarah_theme_preference';
 
 const THEME_COLORS: Record<ResolvedTheme, string> = {
-  light: '#F9F9FB',
-  dark: '#0B0C0E'
+  light: '#F5F6FA',
+  dark: '#0B0C18'
 };
 
 export function prefersDark(): boolean {

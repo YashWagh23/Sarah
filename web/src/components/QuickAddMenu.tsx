@@ -1,10 +1,5 @@
 import React, { useEffect } from 'react';
-import { 
-  Plus, 
-  CheckSquare, 
-  FileText, 
-  Bell 
-} from 'lucide-react';
+import { Bell, ListPlus, NotebookPen, Plus } from 'lucide-react';
 import { useTasks } from '../context/TasksContext';
 import { useNotes } from '../context/NotesContext';
 import { useReminders } from '../context/RemindersContext';
@@ -20,214 +15,109 @@ export const QuickAddMenu: React.FC<QuickAddMenuProps> = ({ hidden = false }) =>
   const { openCreateReminderModal } = useReminders();
 
   useEffect(() => {
-    if (isQuickAddOpen) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = original;
-      };
-    }
-  }, [isQuickAddOpen]);
-
-  const handleCreateTask = () => {
-    closeQuickAdd();
-    openCreateTaskModal();
-  };
-
-  const handleCaptureNote = () => {
-    closeQuickAdd();
-    openCreateNoteModal();
-  };
-
-  const handleSetReminder = () => {
-    closeQuickAdd();
-    openCreateReminderModal();
-  };
-
-  // Close a menu left open when navigating to a screen that hides the button.
-  useEffect(() => {
     if (hidden && isQuickAddOpen) closeQuickAdd();
   }, [hidden, isQuickAddOpen, closeQuickAdd]);
 
+  useEffect(() => {
+    if (!isQuickAddOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeQuickAdd();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isQuickAddOpen, closeQuickAdd]);
+
   if (hidden) return null;
+
+  const actions = [
+    { label: 'Task', hint: 'Something with a deadline', icon: ListPlus, run: () => openCreateTaskModal() },
+    { label: 'Note', hint: 'Lecture notes, formulas', icon: NotebookPen, run: () => openCreateNoteModal() },
+    { label: 'Reminder', hint: 'A nudge at a set time', icon: Bell, run: () => openCreateReminderModal() }
+  ];
 
   return (
     <>
-      {/* Backdrop overlay when open */}
       {isQuickAddOpen && (
         <div
           onClick={closeQuickAdd}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.35)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-            zIndex: 80,
-            animation: 'fadeIn 0.15s ease'
-          }}
+          style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--scrim)', animation: 'fade 0.18s ease both' }}
         />
       )}
 
-      {/* Floating Action Menu popup */}
       {isQuickAddOpen && (
         <div
-          className="glass-card quick-add-menu"
+          role="menu"
+          aria-label="Add"
+          className="list fab"
           style={{
-            width: '210px',
-            padding: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            backgroundColor: 'var(--glass-bg-strong)',
+            bottom: 'calc(140px + env(safe-area-inset-bottom, 0px))',
+            width: 248,
             zIndex: 90,
-            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.15)',
-            borderRadius: '20px',
-            animation: 'slideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            boxShadow: 'var(--shadow-2)',
+            transformOrigin: 'bottom right',
+            animation: 'pop 0.2s var(--ease-out) both'
           }}
         >
-          {/* Action 1: Task */}
-          <button
-            type="button"
-            onClick={handleCreateTask}
-            className="btn-press"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '12px',
-              border: 'none',
-              background: 'rgba(var(--sarah-primary-rgb), 0.08)',
-              color: 'var(--sarah-primary)',
-              fontSize: '13.5px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            <div
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--sarah-primary)',
-                color: 'var(--sarah-on-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <CheckSquare size={16} />
-            </div>
-            <span>New Task</span>
-          </button>
-
-          {/* Action 2: Note */}
-          <button
-            type="button"
-            onClick={handleCaptureNote}
-            className="btn-press"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '12px',
-              border: 'none',
-              background: 'transparent',
-              color: 'var(--sarah-on-background)',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            <div
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(var(--sarah-amber-rgb), 0.12)',
-                color: 'var(--sarah-tertiary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <FileText size={16} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>Capture Note</span>
-              <span style={{ fontSize: '9.5px', color: 'var(--sarah-secondary)', fontWeight: 400 }}>Classroom Notes</span>
-            </div>
-          </button>
-
-          {/* Action 3: Reminder */}
-          <button
-            type="button"
-            onClick={handleSetReminder}
-            className="btn-press"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '12px',
-              border: 'none',
-              background: 'transparent',
-              color: 'var(--sarah-on-background)',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            <div
-              style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(var(--sarah-primary-rgb), 0.12)',
-                color: 'var(--sarah-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Bell size={16} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>Set Reminder</span>
-              <span style={{ fontSize: '9.5px', color: 'var(--sarah-secondary)', fontWeight: 400 }}>Time Alert</span>
-            </div>
-          </button>
+          {actions.map(action => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.label}
+                type="button"
+                role="menuitem"
+                className="list-row"
+                onClick={() => {
+                  closeQuickAdd();
+                  action.run();
+                }}
+              >
+                <span
+                  className="row"
+                  style={{
+                    justifyContent: 'center',
+                    width: 34,
+                    height: 34,
+                    borderRadius: 'var(--r-control)',
+                    background: 'var(--accent-soft)',
+                    color: 'var(--accent-text)',
+                    flexShrink: 0
+                  }}
+                >
+                  <Icon size={17} />
+                </span>
+                <span className="grow">
+                  <span className="row-title" style={{ display: 'block' }}>{action.label}</span>
+                  <span className="meta">{action.hint}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {/* Main Floating Button */}
       <button
-        aria-label={isQuickAddOpen ? 'Close Quick Add' : 'Open Quick Add'}
+        type="button"
+        aria-label={isQuickAddOpen ? 'Close add menu' : 'Add task, note or reminder'}
+        aria-expanded={isQuickAddOpen}
         onClick={isQuickAddOpen ? closeQuickAdd : openQuickAdd}
-        className="btn-press quick-add-fab"
+        className="fab press"
         style={{
-          width: '50px',
-          height: '50px',
-          borderRadius: '18px',
-          backgroundColor: isQuickAddOpen ? 'var(--sarah-secondary)' : 'var(--sarah-primary-container)',
-          color: 'var(--sarah-on-primary)',
-          border: 'none',
-          boxShadow: '0 6px 20px rgba(var(--sarah-primary-container-rgb), 0.45)',
+          width: 52,
+          height: 52,
+          borderRadius: 'var(--r-surface)',
+          background: 'var(--accent)',
+          color: 'var(--accent-ink)',
+          boxShadow: 'var(--shadow-2)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 85,
-          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-          transform: isQuickAddOpen ? 'rotate(45deg)' : 'none'
+          zIndex: 91
         }}
       >
-        <Plus size={26} strokeWidth={2.4} />
+        <Plus
+          size={24}
+          style={{ transition: 'transform 0.22s var(--ease-out)', transform: isQuickAddOpen ? 'rotate(45deg)' : 'none' }}
+        />
       </button>
     </>
   );

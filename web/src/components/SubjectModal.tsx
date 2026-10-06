@@ -1,23 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Trash2, 
-  BookOpen, 
-  Check, 
-  AlertCircle 
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Check } from 'lucide-react';
 import { DuplicateSubjectError, SUBJECT_PALETTE } from '../lib/db';
 import { useSubjects } from '../context/SubjectsContext';
+import { DeleteConfirm, Field, FieldGroup, FormError, Sheet } from './ui';
 
 export const SubjectModal: React.FC = () => {
-  const { 
-    isSubjectModalOpen, 
-    editingSubject, 
-    closeSubjectModal, 
-    createSubject, 
-    modifySubject, 
-    removeSubject 
-  } = useSubjects();
+  const { isSubjectModalOpen, editingSubject, closeSubjectModal, createSubject, modifySubject, removeSubject } = useSubjects();
 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -26,67 +14,35 @@ export const SubjectModal: React.FC = () => {
   const [weeklyHours, setWeeklyHours] = useState('');
   const [color, setColor] = useState(SUBJECT_PALETTE[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    if (editingSubject && editingSubject.id) {
-      setName(editingSubject.name);
-      setCode(editingSubject.code || '');
-      setFaculty(editingSubject.faculty || '');
-      setCredits(editingSubject.credits != null ? String(editingSubject.credits) : '');
-      setWeeklyHours(editingSubject.weeklyHours != null ? String(editingSubject.weeklyHours) : '');
-      setColor(editingSubject.color || SUBJECT_PALETTE[0]);
-      setShowDeleteConfirm(false);
-    } else {
-      setName('');
-      setCode('');
-      setFaculty('');
-      setCredits('');
-      setWeeklyHours('');
-      setColor(SUBJECT_PALETTE[0]);
-      setShowDeleteConfirm(false);
-    }
+    const s = editingSubject;
+    setName(s?.name ?? '');
+    setCode(s?.code ?? '');
+    setFaculty(s?.faculty ?? '');
+    setCredits(s?.credits != null ? String(s.credits) : '');
+    setWeeklyHours(s?.weeklyHours != null ? String(s.weeklyHours) : '');
+    setColor(s?.color || SUBJECT_PALETTE[0]);
     setErrorMessage('');
   }, [editingSubject, isSubjectModalOpen]);
 
-  useEffect(() => {
-    if (isSubjectModalOpen) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          closeSubjectModal();
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        document.body.style.overflow = original;
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
-  }, [isSubjectModalOpen, closeSubjectModal]);
-
-  if (!isSubjectModalOpen) return null;
-
   const isEditingExisting = Boolean(editingSubject && editingSubject.id);
+
+  const toOptionalNumber = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setErrorMessage('Please enter a subject name.');
+      setErrorMessage('Give the subject a name.');
       return;
     }
-
     setIsSubmitting(true);
-
-    const toOptionalNumber = (value: string) => {
-      const trimmed = value.trim();
-      if (!trimmed) return undefined;
-      const parsed = Number(trimmed);
-      return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
-    };
-
     const details = {
       name: name.trim(),
       code: code.trim() || undefined,
@@ -95,418 +51,103 @@ export const SubjectModal: React.FC = () => {
       weeklyHours: toOptionalNumber(weeklyHours),
       color
     };
-
     try {
-      if (isEditingExisting && editingSubject) {
-        await modifySubject({ ...editingSubject, ...details });
-      } else {
-        await createSubject(details);
-      }
+      if (isEditingExisting && editingSubject) await modifySubject({ ...editingSubject, ...details });
+      else await createSubject(details);
       closeSubjectModal();
     } catch (err) {
       console.error(err);
-      setErrorMessage(
-        err instanceof DuplicateSubjectError
-          ? err.message
-          : 'Failed to save subject. Please try again.'
-      );
+      setErrorMessage(err instanceof DuplicateSubjectError ? err.message : 'Could not save the subject. Try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!editingSubject || !editingSubject.id) return;
+    if (!editingSubject?.id) return;
     setIsSubmitting(true);
     try {
       await removeSubject(editingSubject.id);
       closeSubjectModal();
-    } catch (err) {
-      console.error(err);
-      setErrorMessage('Failed to delete subject.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-      onClick={closeSubjectModal}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEditingExisting ? 'Edit Subject' : 'Add New Subject'}
-        onClick={(e) => e.stopPropagation()}
-        className="glass-card"
-        style={{
-          width: '100%',
-          maxWidth: '540px',
-          maxHeight: '90dvh',
-          backgroundColor: 'var(--sarah-elevated)',
-          borderTopLeftRadius: '28px',
-          borderTopRightRadius: '28px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.15)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-        }}
-      >
-        {/* iOS Drag Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '10px', paddingBottom: '4px' }}>
-          <div style={{ width: '36px', height: '4px', borderRadius: '2px', backgroundColor: 'var(--sarah-surface-container-high)' }} />
-        </div>
-
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 20px',
-            borderBottom: '1px solid var(--sarah-outline-variant)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <BookOpen size={18} color="var(--sarah-primary)" />
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--sarah-on-background)', margin: 0 }}>
-              {isEditingExisting ? 'Edit Subject' : 'Add New Subject'}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={closeSubjectModal}
-            style={{
-              background: 'var(--sarah-surface-container-low)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '30px',
-              height: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--sarah-secondary)'
-            }}
-          >
-            <X size={17} />
+    <Sheet
+      open={isSubjectModalOpen}
+      title={isEditingExisting ? 'Edit subject' : 'New subject'}
+      onClose={closeSubjectModal}
+      onSubmit={handleSubmit}
+      footer={(
+        <>
+          <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
+            {isEditingExisting ? 'Save changes' : 'Add subject'}
           </button>
-        </div>
-
-        {/* Form Body */}
-        <form
-          onSubmit={handleSubmit}
-          className="scroll-container"
-          style={{
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '18px',
-            overflowY: 'auto'
-          }}
-        >
-          {errorMessage && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--sarah-error-container)',
-                color: 'var(--sarah-on-error-container)',
-                fontSize: '12.5px',
-                fontWeight: 500
-              }}
-            >
-              <AlertCircle size={16} />
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* 1. Name */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Subject Name *
-            </label>
-            <input
-              type="text"
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Distributed Systems"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                borderRadius: '14px',
-                border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '15px',
-                outline: 'none',
-                backgroundColor: 'var(--sarah-surface-container-low)',
-                color: 'var(--sarah-on-background)',
-                fontWeight: 500
-              }}
-            />
-          </div>
-
-          {/* 2. Course Code */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Course Code (Optional)
-            </label>
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="e.g. CS 405"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '12px',
-                border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '13.5px',
-                outline: 'none',
-                backgroundColor: 'var(--sarah-surface-container-low)',
-                color: 'var(--sarah-on-background)'
-              }}
-            />
-          </div>
-
-          {/* 3. Faculty */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Faculty (Optional)
-            </label>
-            <input
-              type="text"
-              value={faculty}
-              onChange={(e) => setFaculty(e.target.value)}
-              placeholder="e.g. Prof. R. Deshmukh"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '12px',
-                border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '13.5px',
-                outline: 'none',
-                backgroundColor: 'var(--sarah-surface-container-low)',
-                color: 'var(--sarah-on-background)'
-              }}
-            />
-          </div>
-
-          {/* 4. Credits & Weekly Hours */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-                Credits
-              </label>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={20}
-                step={0.5}
-                value={credits}
-                onChange={(e) => setCredits(e.target.value)}
-                placeholder="4"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--sarah-outline-variant)',
-                  fontSize: '13.5px',
-                  outline: 'none',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-background)'
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-                Hours / Week
-              </label>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={40}
-                step={0.5}
-                value={weeklyHours}
-                onChange={(e) => setWeeklyHours(e.target.value)}
-                placeholder="5"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--sarah-outline-variant)',
-                  fontSize: '13.5px',
-                  outline: 'none',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-background)'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 5. Color Selection Swatches */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Color Accent
-            </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '4px 0' }}>
-              {SUBJECT_PALETTE.map((c) => {
-                const isSelected = color.toLowerCase() === c.toLowerCase();
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '50%',
-                      backgroundColor: c,
-                      border: isSelected ? '3px solid var(--sarah-elevated)' : 'none',
-                      outline: isSelected ? `2px solid ${c}` : 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
-                      transition: 'transform 0.15s ease',
-                      transform: isSelected ? 'scale(1.1)' : 'scale(1)'
-                    }}
-                  >
-                    {isSelected && <Check size={16} color="#FFFFFF" strokeWidth={3} />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Actions Bar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px', paddingBottom: '20px' }} className="safe-bottom">
-            <button
-              type="submit"
+          {isEditingExisting && (
+            <DeleteConfirm
+              label="Delete subject"
+              confirmText="Delete this subject? Its tasks, notes and reminders are kept and move to General."
+              onConfirm={handleDelete}
               disabled={isSubmitting}
-              className="btn-press"
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '14px',
-                backgroundColor: 'var(--sarah-primary)',
-                color: 'var(--sarah-on-primary)',
-                border: 'none',
-                fontSize: '15px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(var(--sarah-primary-rgb), 0.35)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <Check size={18} strokeWidth={2.5} />
-              <span>{isEditingExisting ? 'Save Changes' : 'Save Subject'}</span>
-            </button>
+            />
+          )}
+        </>
+      )}
+    >
+      <FormError message={errorMessage} />
 
-            {/* Delete button if editing */}
-            {isEditingExisting && (
-              <>
-                {!showDeleteConfirm ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="btn-press"
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '12px',
-                      backgroundColor: 'transparent',
-                      color: 'var(--sarah-error)',
-                      border: '1px solid var(--sarah-error-container)',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Trash2 size={15} />
-                    <span>Delete Subject</span>
-                  </button>
-                ) : (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      backgroundColor: 'var(--sarah-error-container)',
-                      padding: '12px 14px',
-                      borderRadius: '12px'
-                    }}
-                  >
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sarah-on-error-container)', lineHeight: 1.4 }}>
-                      ⚠️ Deleting this subject will <strong>NOT</strong> delete your tasks, notes, or reminders. They will safely be moved to "General".
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '2px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(false)}
-                        style={{
-                          background: 'var(--sarah-surface-container-high)',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDelete}
-                        style={{
-                          background: 'var(--sarah-error)',
-                          color: 'var(--sarah-on-error)',
-                          border: 'none',
-                          padding: '6px 14px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Yes, Delete
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </form>
+      <Field label="Name">
+        <input className="input" autoFocus={!isEditingExisting} value={name} onChange={(e) => setName(e.target.value)} placeholder="Distributed Systems" />
+      </Field>
+
+      <div className="form-grid-2">
+        <Field label="Course code">
+          <input className="input" value={code} onChange={(e) => setCode(e.target.value)} placeholder="CS 405" />
+        </Field>
+        <Field label="Credits">
+          <input className="input" type="number" inputMode="decimal" min={0} max={20} step={0.5} value={credits} onChange={(e) => setCredits(e.target.value)} placeholder="4" />
+        </Field>
+        <Field label="Faculty">
+          <input className="input" value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="Prof. Deshmukh" />
+        </Field>
+        <Field label="Hours a week">
+          <input className="input" type="number" inputMode="decimal" min={0} max={40} step={0.5} value={weeklyHours} onChange={(e) => setWeeklyHours(e.target.value)} placeholder="5" />
+        </Field>
       </div>
-    </div>
+
+      <FieldGroup label="Colour">
+        <div role="radiogroup" aria-label="Colour" className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+          {SUBJECT_PALETTE.map(c => {
+            const isSelected = color.toLowerCase() === c.toLowerCase();
+            return (
+              <button
+                key={c}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={`Colour ${c}`}
+                onClick={() => setColor(c)}
+                className="press"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 'var(--r-pill)',
+                  background: c,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FDFDFF',
+                  boxShadow: isSelected ? `0 0 0 2px var(--surface), 0 0 0 4px ${c}` : 'none'
+                }}
+              >
+                {isSelected && <Check size={17} strokeWidth={3} />}
+              </button>
+            );
+          })}
+        </div>
+      </FieldGroup>
+    </Sheet>
   );
 };

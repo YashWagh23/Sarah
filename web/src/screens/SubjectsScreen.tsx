@@ -1,13 +1,5 @@
-import React from 'react';
-import { 
-  Plus, 
-  BookOpen, 
-  ArrowLeft, 
-  Edit3, 
-  CheckSquare, 
-  FileText, 
-  Bell 
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Plus } from 'lucide-react';
 import { useSubjects } from '../context/SubjectsContext';
 import { useTasks } from '../context/TasksContext';
 import { useNotes } from '../context/NotesContext';
@@ -16,454 +8,153 @@ import { SubjectCard } from '../components/SubjectCard';
 import { TaskCard } from '../components/TaskCard';
 import { NoteCard } from '../components/NoteCard';
 import { ReminderCard } from '../components/ReminderCard';
+import { EmptyState, SectionHead } from '../components/ui';
+import { taskDueMs } from '../lib/planner';
+
+const AddButton: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => (
+  <button type="button" className="btn btn-ghost btn-sm" onClick={onClick}>
+    <Plus size={15} />
+    {label}
+  </button>
+);
+
+const InlineEmpty: React.FC<{ text: string }> = ({ text }) => (
+  <p className="panel meta" style={{ padding: '14px 16px' }}>{text}</p>
+);
 
 export const SubjectsScreen: React.FC = () => {
-  const { 
-    subjects, 
-    openCreateSubjectModal, 
-    openEditSubjectModal,
-    viewingSubject,
-    openSubjectDetail,
-    closeSubjectDetail
-  } = useSubjects();
-
-  const { 
-    tasks, 
-    toggleTaskCompletion, 
-    openEditTaskModal, 
-    openCreateTaskModal 
-  } = useTasks();
-
-  const { 
-    notes, 
-    openEditNoteModal, 
-    openCreateNoteModal, 
-    togglePin, 
-    removeNote 
-  } = useNotes();
-
-  const { 
-    activeReminders, 
-    openEditReminderModal, 
-    openCreateReminderModal, 
-    dismiss, 
-    snooze, 
-    removeReminder 
-  } = useReminders();
+  const { subjects, openCreateSubjectModal, openEditSubjectModal, viewingSubject, openSubjectDetail, closeSubjectDetail } = useSubjects();
+  const { tasks, toggleTaskCompletion, openEditTaskModal, openCreateTaskModal } = useTasks();
+  const { notes, openEditNoteModal, openCreateNoteModal, togglePin } = useNotes();
+  const { activeReminders, openEditReminderModal, openCreateReminderModal, dismiss, snooze } = useReminders();
+  const [showDone, setShowDone] = useState(false);
 
   // Detail selection lives in the subjects context so a rename or delete keeps
   // this view in sync instead of stranding it on a stale copy of the record.
-  const selectedSubject = viewingSubject;
+  const subject = viewingSubject;
 
-  // If a subject is selected for detail view
-  if (selectedSubject) {
-    const subjectTasks = tasks.filter(
-      t => t.subject.toLowerCase() === selectedSubject.name.toLowerCase()
-    );
-    const subjectActiveTasks = subjectTasks.filter(t => !t.completed);
-    const subjectCompletedTasks = subjectTasks.filter(t => t.completed);
-
-    const subjectNotes = notes.filter(
-      n => n.subject.toLowerCase() === selectedSubject.name.toLowerCase()
-    );
-
+  if (subject) {
+    const key = subject.name.toLowerCase();
+    const subjectTasks = tasks.filter(t => t.subject.toLowerCase() === key);
+    const open = subjectTasks.filter(t => !t.completed).sort((a, b) => taskDueMs(a) - taskDueMs(b));
+    const done = subjectTasks.filter(t => t.completed);
+    const subjectNotes = notes.filter(n => n.subject.toLowerCase() === key);
     const subjectReminders = activeReminders.filter(
-      r => (r.subject && r.subject.toLowerCase() === selectedSubject.name.toLowerCase()) ||
-           (r.taskId && tasks.find(t => t.id === r.taskId)?.subject.toLowerCase() === selectedSubject.name.toLowerCase())
+      r => r.subject?.toLowerCase() === key
+        || (r.taskId && tasks.find(t => t.id === r.taskId)?.subject.toLowerCase() === key)
     );
+    const details = [
+      subject.code,
+      subject.faculty,
+      subject.credits != null ? `${subject.credits} credits` : null,
+      subject.weeklyHours != null ? `${subject.weeklyHours}h a week` : null
+    ].filter(Boolean).join(', ');
 
     return (
-      <div
-        className="animate-fade-in"
-        style={{
-          padding: '16px 18px 90px 18px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '18px'
-        }}
-      >
-        {/* Navigation & Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button
-            type="button"
-            onClick={closeSubjectDetail}
-            className="btn-press"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'var(--sarah-surface-container-low)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '8px 12px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--sarah-on-background)',
-              cursor: 'pointer'
-            }}
-          >
-            <ArrowLeft size={16} />
-            <span>All Courses</span>
+      <div className="screen">
+        <div className="row" style={{ justifyContent: 'space-between', margin: '-8px -8px -8px -8px' }}>
+          <button type="button" className="btn btn-ghost" onClick={closeSubjectDetail} style={{ color: 'var(--text-2)' }}>
+            <ArrowLeft size={18} />
+            Subjects
           </button>
-
-          <button
-            type="button"
-            onClick={() => openEditSubjectModal(selectedSubject)}
-            className="btn-press"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              background: 'var(--sarah-surface-container-low)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '8px 12px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--sarah-secondary)',
-              cursor: 'pointer'
-            }}
-          >
-            <Edit3 size={14} />
-            <span>Edit</span>
+          <button type="button" className="btn btn-ghost" onClick={() => openEditSubjectModal(subject)}>
+            <Pencil size={16} />
+            Edit
           </button>
         </div>
 
-        {/* Subject Header Banner */}
-        <div
-          className="surface-card"
-          style={{
-            padding: '18px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
-            borderLeft: `5px solid ${selectedSubject.color}`,
-            backgroundColor: 'var(--sarah-surface-card)'
-          }}
-        >
-          <div
-            style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '14px',
-              backgroundColor: `${selectedSubject.color}18`,
-              color: selectedSubject.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}
-          >
-            <BookOpen size={24} />
+        <header className="row" style={{ gap: 14, alignItems: 'stretch' }}>
+          <span className="subject-mark" style={{ width: 5, background: subject.color }} />
+          <div className="grow">
+            <h2 className="screen-title">{subject.name}</h2>
+            <p className="screen-sub">{details || `${open.length} open, ${subjectNotes.length} notes`}</p>
           </div>
-          <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--sarah-on-background)', margin: 0, letterSpacing: '-0.02em' }}>
-              {selectedSubject.name}
-            </h2>
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
-              {selectedSubject.code && (
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--sarah-secondary)', letterSpacing: '0.04em' }}>
-                  {selectedSubject.code}
-                </span>
+        </header>
+
+        <section aria-labelledby="s-tasks" className="stack-8">
+          <SectionHead id="s-tasks" title="Tasks" count={open.length} action={<AddButton label="Task" onClick={() => openCreateTaskModal(subject.name)} />} />
+          {open.length > 0 ? (
+            <div className="list">
+              {open.map(t => <TaskCard key={t.id} task={t} showDate onToggle={toggleTaskCompletion} onEdit={openEditTaskModal} />)}
+            </div>
+          ) : (
+            <InlineEmpty text="Nothing open for this subject." />
+          )}
+          {done.length > 0 && (
+            <>
+              <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start', color: 'var(--text-2)' }} onClick={() => setShowDone(v => !v)}>
+                {showDone ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                {done.length} done
+              </button>
+              {showDone && (
+                <div className="list">
+                  {done.map(t => <TaskCard key={t.id} task={t} onToggle={toggleTaskCompletion} onEdit={openEditTaskModal} />)}
+                </div>
               )}
-              <span style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)' }}>
-                {subjectActiveTasks.length} pending tasks • {subjectNotes.length} notes
-              </span>
-            </div>
-            {(selectedSubject.faculty || selectedSubject.credits != null || selectedSubject.weeklyHours != null) && (
-              <div style={{ fontSize: '11.5px', color: 'var(--sarah-secondary)', marginTop: '3px' }}>
-                {[
-                  selectedSubject.faculty,
-                  selectedSubject.credits != null ? `${selectedSubject.credits} credits` : null,
-                  selectedSubject.weeklyHours != null ? `${selectedSubject.weeklyHours}h/week` : null
-                ].filter(Boolean).join(' • ')}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Section 1: Tasks for Subject */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <CheckSquare size={14} color="var(--sarah-primary)" />
-              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--sarah-primary)' }}>
-                Course Tasks ({subjectTasks.length})
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => openCreateTaskModal(selectedSubject.name)}
-              style={{
-                background: 'none',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '3px',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                color: 'var(--sarah-primary)',
-                cursor: 'pointer',
-                padding: '2px 4px'
-              }}
-            >
-              <Plus size={13} />
-              <span>Add Task</span>
-            </button>
-          </div>
-
-          {subjectActiveTasks.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {subjectActiveTasks.map((t) => (
-                <TaskCard
-                  key={t.id}
-                  task={t}
-                  onToggle={toggleTaskCompletion}
-                  onEdit={openEditTaskModal}
-                />
-              ))}
-            </div>
-          ) : (
-            <div style={{ fontSize: '12.5px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-lowest)', padding: '12px 14px', borderRadius: '12px', textAlign: 'center' }}>
-              No pending tasks for this course.
-            </div>
-          )}
-
-          {subjectCompletedTasks.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sarah-secondary)', textTransform: 'uppercase', paddingLeft: '4px' }}>
-                Completed ({subjectCompletedTasks.length})
-              </span>
-              {subjectCompletedTasks.map((t) => (
-                <TaskCard
-                  key={t.id}
-                  task={t}
-                  onToggle={toggleTaskCompletion}
-                  onEdit={openEditTaskModal}
-                />
-              ))}
-            </div>
+            </>
           )}
         </section>
 
-        {/* Section 2: Academic Notes for Subject */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <FileText size={14} color="var(--sarah-tertiary)" />
-              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--sarah-tertiary)' }}>
-                Course Notes ({subjectNotes.length})
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => openCreateNoteModal(selectedSubject.name)}
-              style={{
-                background: 'none',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '3px',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                color: 'var(--sarah-primary)',
-                cursor: 'pointer',
-                padding: '2px 4px'
-              }}
-            >
-              <Plus size={13} />
-              <span>Capture Note</span>
-            </button>
-          </div>
-
+        <section aria-labelledby="s-notes" className="stack-8">
+          <SectionHead id="s-notes" title="Notes" count={subjectNotes.length} action={<AddButton label="Note" onClick={() => openCreateNoteModal(subject.name)} />} />
           {subjectNotes.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {subjectNotes.map((note) => (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  onEdit={openEditNoteModal}
-                  onTogglePin={togglePin}
-                  onDelete={removeNote}
-                />
-              ))}
+            <div className="stack-8">
+              {subjectNotes.map(n => <NoteCard key={n.id} note={n} onEdit={openEditNoteModal} onTogglePin={togglePin} />)}
             </div>
           ) : (
-            <div style={{ fontSize: '12.5px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-lowest)', padding: '12px 14px', borderRadius: '12px', textAlign: 'center' }}>
-              No academic notes for this course yet.
-            </div>
+            <InlineEmpty text="No notes for this subject yet." />
           )}
         </section>
 
-        {/* Section 3: Active Reminders for Subject — always shown so one can be added */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Bell size={14} color="var(--sarah-primary)" />
-              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--sarah-primary)' }}>
-                Active Reminders ({subjectReminders.length})
-              </span>
+        <section aria-labelledby="s-rem" className="stack-8">
+          <SectionHead
+            id="s-rem"
+            title="Reminders"
+            count={subjectReminders.length}
+            action={<AddButton label="Reminder" onClick={() => openCreateReminderModal(undefined, undefined, subject.name)} />}
+          />
+          {subjectReminders.length > 0 ? (
+            <div className="list">
+              {subjectReminders.map(r => (
+                <ReminderCard key={r.id} reminder={r} onDismiss={dismiss} onSnooze={snooze} onEdit={openEditReminderModal} />
+              ))}
             </div>
-
-            <button
-              type="button"
-              onClick={() => openCreateReminderModal(undefined, undefined, selectedSubject.name)}
-              style={{
-                background: 'none',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '3px',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                color: 'var(--sarah-primary)',
-                cursor: 'pointer',
-                padding: '2px 4px'
-              }}
-            >
-              <Plus size={13} />
-              <span>Add Reminder</span>
-            </button>
-          </div>
-
-          {subjectReminders.length === 0 && (
-            <div style={{ fontSize: '12.5px', color: 'var(--sarah-secondary)', backgroundColor: 'var(--sarah-surface-container-lowest)', padding: '12px 14px', borderRadius: '12px', textAlign: 'center' }}>
-              No reminders for this course.
-            </div>
+          ) : (
+            <InlineEmpty text="No reminders for this subject." />
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {subjectReminders.map((reminder) => (
-              <ReminderCard
-                key={reminder.id}
-                reminder={reminder}
-                onDismiss={dismiss}
-                onSnooze={snooze}
-                onEdit={openEditReminderModal}
-                onDelete={removeReminder}
-              />
-            ))}
-          </div>
         </section>
       </div>
     );
   }
 
-  // Main Subjects List View
   return (
-    <div 
-      className="animate-fade-in"
-      style={{
-        padding: '16px 18px 90px 18px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px'
-      }}
-    >
-      {/* Top Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="screen">
+      <header className="screen-head">
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--sarah-on-background)', margin: 0, letterSpacing: '-0.02em' }}>
-            Subjects
-          </h2>
-          <p style={{ fontSize: '13px', color: 'var(--sarah-secondary)', margin: 0 }}>
-            Keep your college life organized by course.
-          </p>
+          <h2 className="screen-title">Subjects</h2>
+          <p className="screen-sub">{subjects.length} {subjects.length === 1 ? 'course' : 'courses'} this semester</p>
         </div>
-        <button
-          type="button"
-          onClick={() => openCreateSubjectModal()}
-          className="btn-press"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'var(--sarah-primary)',
-            color: 'var(--sarah-on-primary)',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '8px 14px',
-            fontSize: '13px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(var(--sarah-primary-rgb), 0.28)',
-            whiteSpace: 'nowrap',
-            flexShrink: 0
-          }}
-        >
-          <Plus size={15} strokeWidth={2.5} />
-          <span>New Subject</span>
+        <button type="button" className="btn btn-primary" onClick={openCreateSubjectModal}>
+          <Plus size={16} />
+          New subject
         </button>
-      </div>
+      </header>
 
-      {/* Course Cards Grid/List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {subjects.map((subject) => (
-          <SubjectCard
-            key={subject.id}
-            subject={subject}
-            onClick={() => openSubjectDetail(subject)}
-            onEdit={() => openEditSubjectModal(subject)}
-          />
-        ))}
-      </div>
-
-      {subjects.length === 0 && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '40px 10px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '12px'
-          }}
-        >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '16px',
-              backgroundColor: 'var(--sarah-surface-container-low)',
-              color: 'var(--sarah-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <BookOpen size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-              No subjects yet.
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
-              Add your courses to organize tasks, academic notes, and reminders.
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => openCreateSubjectModal()}
-            className="btn-press"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'var(--sarah-primary)',
-              color: 'var(--sarah-on-primary)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            <Plus size={15} />
-            <span>New Subject</span>
-          </button>
+      {subjects.length > 0 ? (
+        <div className="list">
+          {subjects.map(s => <SubjectCard key={s.id} subject={s} onClick={() => openSubjectDetail(s)} />)}
         </div>
+      ) : (
+        <EmptyState
+          title="No subjects yet"
+          body="Add your courses to keep each one's tasks, notes and reminders together."
+          action={(
+            <button type="button" className="btn btn-primary" onClick={openCreateSubjectModal}>
+              <Plus size={16} />
+              New subject
+            </button>
+          )}
+        />
       )}
     </div>
   );

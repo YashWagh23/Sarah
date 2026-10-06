@@ -61,31 +61,9 @@ const AppContent: React.FC = () => {
       {/* First-run setup: name, classes and bedtime feed tonight's plan */}
       <WelcomeSheet />
 
-      {/* Global Toast Notification */}
+      {/* Global toast */}
       {toastMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          style={{
-            position: 'fixed',
-            top: '64px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'var(--sarah-toast-bg)',
-            color: 'var(--sarah-toast-fg)',
-            padding: '8px 18px',
-            borderRadius: '20px',
-            fontSize: '12.5px',
-            fontWeight: 600,
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            zIndex: 120,
-            pointerEvents: 'none',
-            whiteSpace: 'nowrap',
-            animation: 'fadeIn 0.2s ease'
-          }}
-        >
+        <div key={toastMessage} role="status" aria-live="polite" className="toast">
           {toastMessage}
         </div>
       )}

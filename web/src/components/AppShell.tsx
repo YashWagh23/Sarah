@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BatteryCharging, Moon, Target, Zap } from 'lucide-react';
+import { BatteryCharging, ChevronDown, Moon, Target, WifiOff, Zap } from 'lucide-react';
 import { BottomNav, type TabId } from './BottomNav';
 import { useUserProfile } from '../context/UserProfileContext';
 import { type EnergyLevel } from '../lib/db';
-import { useNow } from '../lib/datetime';
+import { ENERGY_PROFILES } from '../lib/planner';
 
-const ENERGY_OPTIONS: Array<{ id: EnergyLevel; label: string; icon: React.ComponentType<{ size?: number }> }> = [
-  { id: 'high', label: 'High energy', icon: Zap },
-  { id: 'normal', label: 'Steady', icon: Target },
-  { id: 'low', label: 'Low energy', icon: BatteryCharging },
-  { id: 'exhausted', label: 'Resting', icon: Moon }
+const ENERGY_OPTIONS: Array<{ id: EnergyLevel; icon: React.ComponentType<{ size?: number }> }> = [
+  { id: 'high', icon: Zap },
+  { id: 'normal', icon: Target },
+  { id: 'low', icon: BatteryCharging },
+  { id: 'exhausted', icon: Moon }
 ];
 
 interface AppShellProps {
@@ -18,61 +18,49 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-export const AppShell: React.FC<AppShellProps> = ({
-  activeTab,
-  onTabSelect,
-  children
-}) => {
-  const [isOnline, setIsOnline] = useState<boolean>(() => {
-    return typeof navigator !== 'undefined' ? navigator.onLine : true;
-  });
+export const AppShell: React.FC<AppShellProps> = ({ activeTab, onTabSelect, children }) => {
+  const [isOnline, setIsOnline] = useState<boolean>(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
   const { profile, setEnergyLevel } = useUserProfile();
   const [isEnergyMenuOpen, setIsEnergyMenuOpen] = useState(false);
   const energyMenuRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
 
-  const activeEnergy = ENERGY_OPTIONS.find(o => o.id === profile.energyLevel) ?? ENERGY_OPTIONS[1];
-  const ActiveEnergyIcon = activeEnergy.icon;
+  const active = ENERGY_OPTIONS.find(o => o.id === profile.energyLevel) ?? ENERGY_OPTIONS[1];
+  const ActiveIcon = active.icon;
 
   useEffect(() => {
     if (!isEnergyMenuOpen) return;
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      if (!energyMenuRef.current?.contains(event.target as Node)) {
-        setIsEnergyMenuOpen(false);
-      }
+    const onPointer = (event: MouseEvent | TouchEvent) => {
+      if (!energyMenuRef.current?.contains(event.target as Node)) setIsEnergyMenuOpen(false);
     };
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsEnergyMenuOpen(false);
     };
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('touchstart', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('touchstart', onPointer);
+    document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('touchstart', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('touchstart', onPointer);
+      document.removeEventListener('keydown', onKey);
     };
   }, [isEnergyMenuOpen]);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
     };
   }, []);
 
-  // Ticks so a PWA left open overnight shows the new day, not the launch day.
-  const now = useNow(60000);
-  const currentDate = new Date(now).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric'
-  });
+  // Each tab starts at the top instead of inheriting the last tab's scroll.
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [activeTab]);
 
   return (
     <div
@@ -81,207 +69,101 @@ export const AppShell: React.FC<AppShellProps> = ({
         flexDirection: 'column',
         height: '100dvh',
         width: '100%',
-        maxWidth: '540px',
+        maxWidth: 560,
         margin: '0 auto',
-        backgroundColor: 'var(--sarah-background)',
-        position: 'relative',
-        boxShadow: '0 0 50px rgba(0, 0, 0, 0.05)',
+        background: 'var(--bg)',
+        position: 'relative'
       }}
     >
-      {/* Top Header Bar with Safe Area Top */}
       <header
         className="safe-top"
         style={{
-          width: '100%',
-          background: 'var(--sarah-header-bg)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: '1px solid var(--sarah-header-border)',
+          background: 'var(--chrome-bg)',
+          backdropFilter: 'blur(18px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+          borderBottom: '1px solid var(--line)',
           zIndex: 40,
           flexShrink: 0
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 18px',
-            height: '52px'
-          }}
-        >
-          {/* Brand Logo & Name */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}
-          >
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '9px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 6px rgba(var(--sarah-primary-rgb), 0.2)',
-                backgroundColor: 'var(--sarah-surface-card)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <img
-                src="./sarah_logo.png"
-                alt="Sarah Logo"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-                onError={(e) => {
-                  // Fallback to favicon or icon if needed
-                  (e.target as HTMLImageElement).src = './favicon.png';
-                }}
-              />
-            </div>
-            <div>
-              <h1
-                style={{
-                  fontSize: '17px',
-                  fontWeight: 700,
-                  color: 'var(--sarah-on-background)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.1
-                }}
-              >
-                Sarah
-              </h1>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 500,
-                  color: 'var(--sarah-secondary)'
-                }}
-              >
-                {currentDate}
+        <div className="row" style={{ justifyContent: 'space-between', height: 56, padding: '0 12px 0 16px' }}>
+          <div className="row-8">
+            <img src="./sarah_logo.png" alt="" width={28} height={28} style={{ borderRadius: 8, display: 'block' }} />
+            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em' }}>Sarah</span>
+            {!isOnline && (
+              <span className="tag" title="Offline. Everything still works and saves on this device.">
+                <WifiOff size={12} />
+                Offline
               </span>
-            </div>
+            )}
           </div>
 
-          {/* Top Right: connectivity dot + energy switcher */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span
-              title={isOnline ? 'Online' : 'Offline — everything still works'}
-              aria-label={isOnline ? 'Online' : 'Offline ready'}
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: isOnline ? 'var(--sarah-success)' : 'var(--sarah-amber)',
-                flexShrink: 0
-              }}
-            />
+          <div ref={energyMenuRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={isEnergyMenuOpen}
+              aria-label={`Energy: ${ENERGY_PROFILES[active.id].label}. Change`}
+              onClick={() => setIsEnergyMenuOpen(o => !o)}
+              className="chip press"
+              style={{ height: 34 }}
+            >
+              <ActiveIcon size={15} />
+              <span style={{ fontWeight: 600, color: 'var(--text)' }}>{ENERGY_PROFILES[active.id].label}</span>
+              <ChevronDown size={14} />
+            </button>
 
-            <div ref={energyMenuRef} style={{ position: 'relative' }}>
-              <button
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={isEnergyMenuOpen}
-                aria-label={`Energy level: ${activeEnergy.label}. Change it.`}
-                onClick={() => setIsEnergyMenuOpen(open => !open)}
-                className="btn-press"
+            {isEnergyMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Energy level"
+                className="list"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  backgroundColor: 'rgba(var(--sarah-primary-rgb), 0.1)',
-                  border: '1px solid rgba(var(--sarah-primary-rgb), 0.18)',
-                  padding: '5px 11px',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  color: 'var(--sarah-primary)',
-                  fontSize: '11.5px',
-                  fontWeight: 600
+                  position: 'absolute',
+                  right: 0,
+                  top: 42,
+                  width: 236,
+                  zIndex: 60,
+                  boxShadow: 'var(--shadow-2)',
+                  animation: 'pop 0.16s var(--ease-out) both'
                 }}
               >
-                <ActiveEnergyIcon size={13} />
-                <span>{activeEnergy.label}</span>
-              </button>
-
-              {isEnergyMenuOpen && (
-                <div
-                  role="menu"
-                  aria-label="Energy level"
-                  className="glass-card"
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: '38px',
-                    width: '170px',
-                    padding: '5px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px',
-                    backgroundColor: 'var(--sarah-elevated)',
-                    boxShadow: 'var(--menu-shadow)',
-                    borderRadius: '14px',
-                    zIndex: 60
-                  }}
-                >
-                  {ENERGY_OPTIONS.map((opt) => {
-                    const Icon = opt.icon;
-                    const isSelected = profile.energyLevel === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={isSelected}
-                        onClick={() => {
-                          setEnergyLevel(opt.id);
-                          setIsEnergyMenuOpen(false);
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '8px 10px',
-                          border: 'none',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          fontSize: '12.5px',
-                          fontWeight: isSelected ? 700 : 500,
-                          backgroundColor: isSelected ? 'rgba(var(--sarah-primary-rgb), 0.1)' : 'transparent',
-                          color: isSelected ? 'var(--sarah-primary)' : 'var(--sarah-on-background)'
-                        }}
-                      >
-                        <Icon size={14} />
-                        <span>{opt.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                {ENERGY_OPTIONS.map(opt => {
+                  const Icon = opt.icon;
+                  const isSelected = profile.energyLevel === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={isSelected}
+                      className="list-row"
+                      style={{ minHeight: 52, color: isSelected ? 'var(--accent-text)' : 'var(--text)' }}
+                      onClick={() => {
+                        setEnergyLevel(opt.id);
+                        setIsEnergyMenuOpen(false);
+                      }}
+                    >
+                      <Icon size={17} />
+                      <span className="grow">
+                        <span style={{ display: 'block', fontSize: 14, fontWeight: isSelected ? 650 : 550 }}>
+                          {ENERGY_PROFILES[opt.id].label}
+                        </span>
+                        <span className="meta">{ENERGY_PROFILES[opt.id].hint}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main
-        className="scroll-container"
-        style={{
-          flex: 1,
-          width: '100%',
-          position: 'relative'
-        }}
-      >
+      <main ref={mainRef} className="scroll-container" style={{ flex: 1, position: 'relative' }}>
         {children}
       </main>
 
-      {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabSelect={onTabSelect} />
     </div>
   );

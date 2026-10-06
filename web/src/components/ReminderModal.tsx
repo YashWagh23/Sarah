@@ -1,623 +1,190 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Trash2, 
-  Bell, 
-  Check, 
-  AlertCircle,
-  Link as LinkIcon,
-  BookOpen
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useReminders } from '../context/RemindersContext';
 import { useTasks } from '../context/TasksContext';
 import { useSubjects } from '../context/SubjectsContext';
 import { toLocalDateStr, toLocalTimeStr } from '../lib/datetime';
+import { DeleteConfirm, Field, FieldGroup, FormError, Sheet } from './ui';
+
+type Preset = 'in15m' | 'in1h' | 'tonight9pm' | 'tomorrow9am';
+
+const PRESETS: Array<{ id: Preset; label: string }> = [
+  { id: 'in15m', label: 'In 15 min' },
+  { id: 'in1h', label: 'In 1 hour' },
+  { id: 'tonight9pm', label: 'Tonight, 9 PM' },
+  { id: 'tomorrow9am', label: 'Tomorrow, 9 AM' }
+];
+
+function presetTime(id: Preset): Date {
+  const target = new Date();
+  if (id === 'in15m') target.setTime(Date.now() + 15 * 60000);
+  if (id === 'in1h') target.setTime(Date.now() + 60 * 60000);
+  if (id === 'tonight9pm') {
+    target.setHours(21, 0, 0, 0);
+    if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
+  }
+  if (id === 'tomorrow9am') {
+    target.setDate(target.getDate() + 1);
+    target.setHours(9, 0, 0, 0);
+  }
+  return target;
+}
 
 export const ReminderModal: React.FC = () => {
   const { isReminderModalOpen, editingReminder, closeReminderModal, createReminder, modifyReminder, removeReminder } = useReminders();
   const { activeTasks } = useTasks();
   const { subjects } = useSubjects();
 
-  const getLocalDateStr = toLocalDateStr;
-  const getLocalTimeStr = toLocalTimeStr;
-
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [date, setDate] = useState(() => getLocalDateStr(new Date()));
-  const [time, setTime] = useState(() => {
-    const inOneHour = new Date(Date.now() + 3600000);
-    return getLocalTimeStr(inOneHour);
-  });
-  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
-  const [selectedSubject, setSelectedSubject] = useState<string>('');
+  const [date, setDate] = useState(() => toLocalDateStr(new Date()));
+  const [time, setTime] = useState(() => toLocalTimeStr(new Date(Date.now() + 3600000)));
+  const [taskId, setTaskId] = useState('');
+  const [subject, setSubject] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    if (editingReminder && editingReminder.id) {
-      setTitle(editingReminder.title);
-      setMessage(editingReminder.message || '');
-      const d = new Date(editingReminder.reminderAt);
-      setDate(getLocalDateStr(d));
-      setTime(getLocalTimeStr(d));
-      setSelectedTaskId(editingReminder.taskId || '');
-      setSelectedSubject(editingReminder.subject || '');
-      setShowDeleteConfirm(false);
-    } else {
-      // New reminder
-      const inOneHour = new Date(Date.now() + 3600000);
-      setTitle(editingReminder?.title || '');
-      setMessage('');
-      setDate(getLocalDateStr(inOneHour));
-      setTime(getLocalTimeStr(inOneHour));
-      setSelectedTaskId(editingReminder?.taskId || '');
-      setSelectedSubject(editingReminder?.subject || '');
-      setShowDeleteConfirm(false);
-    }
+    const r = editingReminder;
+    const when = r?.id ? new Date(r.reminderAt) : new Date(Date.now() + 3600000);
+    setTitle(r?.title || '');
+    setMessage(r?.message || '');
+    setDate(toLocalDateStr(when));
+    setTime(toLocalTimeStr(when));
+    setTaskId(r?.taskId || '');
+    setSubject(r?.subject || '');
     setErrorMessage('');
   }, [editingReminder, isReminderModalOpen]);
 
-  useEffect(() => {
-    if (isReminderModalOpen) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          closeReminderModal();
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        document.body.style.overflow = original;
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
-  }, [isReminderModalOpen, closeReminderModal]);
-
-  if (!isReminderModalOpen) return null;
-
   const isEditingExisting = Boolean(editingReminder && editingReminder.id);
-
-  // Quick Time Presets
-  const handleQuickPreset = (type: 'in15m' | 'in1h' | 'tonight9pm' | 'tomorrow9am') => {
-    const target = new Date();
-    if (type === 'in15m') {
-      target.setTime(Date.now() + 15 * 60000);
-    } else if (type === 'in1h') {
-      target.setTime(Date.now() + 60 * 60000);
-    } else if (type === 'tonight9pm') {
-      target.setHours(21, 0, 0, 0);
-      if (target.getTime() <= Date.now()) {
-        target.setDate(target.getDate() + 1);
-      }
-    } else if (type === 'tomorrow9am') {
-      target.setDate(target.getDate() + 1);
-      target.setHours(9, 0, 0, 0);
-    }
-    setDate(getLocalDateStr(target));
-    setTime(getLocalTimeStr(target));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      setErrorMessage('Please enter a reminder title.');
+      setErrorMessage('Say what the reminder is for.');
       return;
     }
-
     const [year, month, day] = date.split('-').map(Number);
     const [hours, minutes] = time.split(':').map(Number);
-
-    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours) || isNaN(minutes)) {
-      setErrorMessage('Please select a valid date and time.');
+    if ([year, month, day, hours, minutes].some(n => Number.isNaN(n))) {
+      setErrorMessage('Pick a valid date and time.');
       return;
     }
-
-    const reminderDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
-    const reminderAt = reminderDate.getTime();
+    const reminderAt = new Date(year, month - 1, day, hours, minutes, 0, 0).getTime();
 
     // Alerts only fire for reminders that come due while the app is open, so a
     // time already in the past would be saved and then silently never ring.
     const isUnchangedExistingTime = isEditingExisting && editingReminder?.reminderAt === reminderAt;
     if (reminderAt < Date.now() - 60000 && !isUnchangedExistingTime) {
-      setErrorMessage('That time has already passed — pick a time in the future.');
+      setErrorMessage('That time has already passed. Pick a time in the future.');
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      if (isEditingExisting && editingReminder) {
-        await modifyReminder({
-          ...editingReminder,
-          title: title.trim(),
-          message: message.trim() || undefined,
-          reminderAt,
-          taskId: selectedTaskId || undefined,
-          subject: selectedSubject || undefined,
-          dismissed: false
-        });
-      } else {
-        await createReminder({
-          title: title.trim(),
-          message: message.trim() || undefined,
-          reminderAt,
-          taskId: selectedTaskId || undefined,
-          subject: selectedSubject || undefined,
-          completed: false,
-          dismissed: false
-        });
-      }
+      const fields = {
+        title: title.trim(),
+        message: message.trim() || undefined,
+        reminderAt,
+        taskId: taskId || undefined,
+        subject: subject || undefined,
+        dismissed: false
+      };
+      if (isEditingExisting && editingReminder) await modifyReminder({ ...editingReminder, ...fields });
+      else await createReminder({ ...fields, completed: false });
       closeReminderModal();
     } catch (err) {
       console.error(err);
-      setErrorMessage('Failed to save reminder. Please try again.');
+      setErrorMessage('Could not save the reminder. Try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!editingReminder || !editingReminder.id) return;
+    if (!editingReminder?.id) return;
     setIsSubmitting(true);
     try {
       await removeReminder(editingReminder.id);
       closeReminderModal();
-    } catch (err) {
-      console.error(err);
-      setErrorMessage('Failed to delete reminder.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-      onClick={closeReminderModal}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEditingExisting ? 'Edit Reminder' : 'Set Reminder'}
-        onClick={(e) => e.stopPropagation()}
-        className="glass-card"
-        style={{
-          width: '100%',
-          maxWidth: '540px',
-          maxHeight: '90dvh',
-          backgroundColor: 'var(--sarah-elevated)',
-          borderTopLeftRadius: '28px',
-          borderTopRightRadius: '28px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.15)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-        }}
-      >
-        {/* iOS Drag Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '10px', paddingBottom: '4px' }}>
-          <div style={{ width: '36px', height: '4px', borderRadius: '2px', backgroundColor: 'var(--sarah-surface-container-high)' }} />
-        </div>
-
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 20px',
-            borderBottom: '1px solid var(--sarah-outline-variant)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Bell size={18} color="var(--sarah-primary)" />
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--sarah-on-background)', margin: 0 }}>
-              {isEditingExisting ? 'Edit Reminder' : 'Set Academic Reminder'}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={closeReminderModal}
-            style={{
-              background: 'var(--sarah-surface-container-low)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '30px',
-              height: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--sarah-secondary)'
-            }}
-          >
-            <X size={17} />
+    <Sheet
+      open={isReminderModalOpen}
+      title={isEditingExisting ? 'Edit reminder' : 'New reminder'}
+      onClose={closeReminderModal}
+      onSubmit={handleSubmit}
+      footer={(
+        <>
+          <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
+            {isEditingExisting ? 'Save changes' : 'Set reminder'}
           </button>
+          {isEditingExisting && (
+            <DeleteConfirm label="Delete reminder" confirmText="Delete this reminder?" onConfirm={handleDelete} disabled={isSubmitting} />
+          )}
+        </>
+      )}
+    >
+      <FormError message={errorMessage} />
+
+      <Field label="Remind me to">
+        <input
+          className="input"
+          autoFocus={!isEditingExisting}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Submit the lab PDF on the portal"
+        />
+      </Field>
+
+      <FieldGroup label="When">
+        <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+          {PRESETS.map(p => {
+            const t = presetTime(p.id);
+            const isOn = date === toLocalDateStr(t) && time === toLocalTimeStr(t);
+            return (
+              <button
+                key={p.id}
+                type="button"
+                className="chip"
+                aria-pressed={isOn}
+                onClick={() => {
+                  setDate(toLocalDateStr(t));
+                  setTime(toLocalTimeStr(t));
+                }}
+              >
+                {p.label}
+              </button>
+            );
+          })}
         </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
+          <input className="input" type="date" aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input className="input" type="time" aria-label="Time" value={time} onChange={(e) => setTime(e.target.value)} />
+        </div>
+      </FieldGroup>
 
-        {/* Form Body */}
-        <form
-          onSubmit={handleSubmit}
-          className="scroll-container"
-          style={{
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '18px',
-            overflowY: 'auto'
-          }}
-        >
-          {errorMessage && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--sarah-error-container)',
-                color: 'var(--sarah-on-error-container)',
-                fontSize: '12.5px',
-                fontWeight: 500
-              }}
-            >
-              <AlertCircle size={16} />
-              <span>{errorMessage}</span>
-            </div>
-          )}
+      <Field label="Details">
+        <input className="input" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Portal closes at 11:59 PM" />
+      </Field>
 
-          {/* 1. Title */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Reminder Title *
-            </label>
-            <input
-              type="text"
-              autoFocus
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Submit Lab Assignment PDF"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                borderRadius: '14px',
-                border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '15px',
-                outline: 'none',
-                backgroundColor: 'var(--sarah-surface-container-low)',
-                color: 'var(--sarah-on-background)',
-                fontWeight: 500
-              }}
-            />
-          </div>
-
-          {/* 2. Optional Message */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Message / Notes (Optional)
-            </label>
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="e.g. Check submission portal before 11:59 PM"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '12px',
-                border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '13.5px',
-                outline: 'none',
-                backgroundColor: 'var(--sarah-surface-container-low)',
-                color: 'var(--sarah-on-background)'
-              }}
-            />
-          </div>
-
-          {/* 3. Quick Presets */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Quick Presets
-            </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('in15m')}
-                className="btn-press"
-                style={{
-                  border: '1px solid var(--sarah-outline-variant)',
-                  borderRadius: '12px',
-                  padding: '6px 12px',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-surface)',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
-                }}
-              >
-                In 15m
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('in1h')}
-                className="btn-press"
-                style={{
-                  border: '1px solid var(--sarah-outline-variant)',
-                  borderRadius: '12px',
-                  padding: '6px 12px',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-surface)',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
-                }}
-              >
-                In 1 hour
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('tonight9pm')}
-                className="btn-press"
-                style={{
-                  border: '1px solid var(--sarah-outline-variant)',
-                  borderRadius: '12px',
-                  padding: '6px 12px',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-surface)',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
-                }}
-              >
-                Tonight 9 PM
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickPreset('tomorrow9am')}
-                className="btn-press"
-                style={{
-                  border: '1px solid var(--sarah-outline-variant)',
-                  borderRadius: '12px',
-                  padding: '6px 12px',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-surface)',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
-                }}
-              >
-                Tomorrow 9 AM
-              </button>
-            </div>
-          </div>
-
-          {/* 4. Date & Time Inputs */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-              Reminder Time *
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '8px' }}>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--sarah-outline-variant)',
-                  fontSize: '13.5px',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-background)',
-                  outline: 'none'
-                }}
-              />
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--sarah-outline-variant)',
-                  fontSize: '13.5px',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-background)',
-                  outline: 'none'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 5. Subject Selector (Optional) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <BookOpen size={12} color="var(--sarah-secondary)" />
-              <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-                Subject (Optional)
-              </label>
-            </div>
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '12px',
-                border: '1px solid var(--sarah-outline-variant)',
-                fontSize: '13.5px',
-                backgroundColor: 'var(--sarah-surface-container-low)',
-                color: 'var(--sarah-on-background)',
-                outline: 'none'
-              }}
-            >
-              <option value="">None (No specific subject)</option>
-              {subjects.map(s => (
-                <option key={s.id} value={s.name}>
-                  {s.name} {s.code ? `(${s.code})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 6. Link to Task (Optional) */}
-          {activeTasks.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <LinkIcon size={12} color="var(--sarah-secondary)" />
-                <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--sarah-on-surface-variant)' }}>
-                  Link to Task (Optional)
-                </label>
-              </div>
-              <select
-                value={selectedTaskId}
-                onChange={(e) => setSelectedTaskId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--sarah-outline-variant)',
-                  fontSize: '13.5px',
-                  backgroundColor: 'var(--sarah-surface-container-low)',
-                  color: 'var(--sarah-on-background)',
-                  outline: 'none'
-                }}
-              >
-                <option value="">None (Independent reminder)</option>
-                {activeTasks.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.title} ({t.subject})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Actions Bar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '6px', paddingBottom: '20px' }} className="safe-bottom">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-press"
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '14px',
-                backgroundColor: 'var(--sarah-primary)',
-                color: 'var(--sarah-on-primary)',
-                border: 'none',
-                fontSize: '15px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(var(--sarah-primary-rgb), 0.35)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <Check size={18} strokeWidth={2.5} />
-              <span>{isEditingExisting ? 'Save Changes' : 'Set Reminder'}</span>
-            </button>
-
-            {/* Delete button if editing */}
-            {isEditingExisting && (
-              <>
-                {!showDeleteConfirm ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="btn-press"
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '12px',
-                      backgroundColor: 'transparent',
-                      color: 'var(--sarah-error)',
-                      border: '1px solid var(--sarah-error-container)',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Trash2 size={15} />
-                    <span>Delete Reminder</span>
-                  </button>
-                ) : (
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '8px',
-                      backgroundColor: 'var(--sarah-error-container)',
-                      padding: '8px 12px',
-                      borderRadius: '12px',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--sarah-on-error-container)' }}>
-                      Are you sure?
-                    </span>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(false)}
-                        style={{
-                          background: 'var(--sarah-surface-container-high)',
-                          border: 'none',
-                          padding: '5px 10px',
-                          borderRadius: '8px',
-                          fontSize: '11.5px',
-                          fontWeight: 600,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDelete}
-                        style={{
-                          background: 'var(--sarah-error)',
-                          color: 'var(--sarah-on-error)',
-                          border: 'none',
-                          padding: '5px 12px',
-                          borderRadius: '8px',
-                          fontSize: '11.5px',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Yes, Delete
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </form>
+      <div className="form-grid-2">
+        <Field label="Subject">
+          <select className="input" value={subject} onChange={(e) => setSubject(e.target.value)}>
+            <option value="">None</option>
+            {subjects.map(s => <option key={s.id} value={s.name}>{s.code ? `${s.name} (${s.code})` : s.name}</option>)}
+          </select>
+        </Field>
+        <Field label="Linked task">
+          <select className="input" value={taskId} onChange={(e) => setTaskId(e.target.value)} disabled={activeTasks.length === 0}>
+            <option value="">None</option>
+            {activeTasks.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+          </select>
+        </Field>
       </div>
-    </div>
+    </Sheet>
   );
 };
