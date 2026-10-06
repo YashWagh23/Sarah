@@ -29,6 +29,8 @@ import { useNotes } from '../context/NotesContext';
 import { useSubjects } from '../context/SubjectsContext';
 import { exportAllDataJSON, importAllDataJSON, type EnergyLevel, type ImportMode, type ThemePreference } from '../lib/db';
 import { toLocalDateStr } from '../lib/datetime';
+import { ENERGY_PROFILES } from '../lib/planner';
+import { CollegeDaysPicker, describeCollegeDays } from '../components/CollegeDaysPicker';
 
 export const ProfileScreen: React.FC = () => {
   const { notificationPermission, requestNotificationPermission, refreshReminders } = useReminders();
@@ -50,6 +52,7 @@ export const ProfileScreen: React.FC = () => {
   const [collegeEndTime, setCollegeEndTime] = useState(profile.collegeEndTime || '17:00');
   const [commuteMinutes, setCommuteMinutes] = useState(profile.commuteMinutes || 30);
   const [dailyStudyGoalHours, setDailyStudyGoalHours] = useState(profile.dailyStudyGoalHours ?? 3);
+  const [collegeDays, setCollegeDays] = useState<number[]>(profile.collegeDays ?? [1, 2, 3, 4, 5]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importMode, setImportMode] = useState<ImportMode>('merge');
@@ -69,6 +72,7 @@ export const ProfileScreen: React.FC = () => {
       setCollegeEndTime(profile.collegeEndTime || '17:00');
       setCommuteMinutes(profile.commuteMinutes || 30);
       setDailyStudyGoalHours(profile.dailyStudyGoalHours ?? 3);
+      setCollegeDays(profile.collegeDays ?? [1, 2, 3, 4, 5]);
     }
   }, [profile, isEditingSchedule]);
 
@@ -94,7 +98,8 @@ export const ProfileScreen: React.FC = () => {
       wakeUpTime,
       collegeEndTime,
       commuteMinutes: clamp(Number(commuteMinutes) || 0, 0, 180),
-      dailyStudyGoalHours: clamp(Number(dailyStudyGoalHours) || 0, 0, 16)
+      dailyStudyGoalHours: clamp(Number(dailyStudyGoalHours) || 0, 0, 16),
+      collegeDays
     });
     setIsEditingSchedule(false);
   };
@@ -134,8 +139,8 @@ export const ProfileScreen: React.FC = () => {
         await refreshReminders();
         await refreshSubjects();
         await refreshProfile();
-        const { tasks, notes, subjects } = result.importedCounts;
-        showToast(`Restored ${tasks} tasks, ${notes} notes, ${subjects} subjects 🎉`);
+        const { tasks, notes, reminders, subjects } = result.importedCounts;
+        showToast(`Restored ${tasks} tasks, ${notes} notes, ${reminders} reminders, ${subjects} subjects`);
       }
     } catch (err) {
       console.error(err);
@@ -155,10 +160,10 @@ export const ProfileScreen: React.FC = () => {
   ];
 
   const energyOptions: Array<{ id: EnergyLevel; label: string; hint: string; icon: React.ComponentType<{ size?: number }> }> = [
-    { id: 'high', label: 'High', hint: '1.25x', icon: Zap },
-    { id: 'normal', label: 'Steady', hint: '1.0x', icon: Target },
-    { id: 'low', label: 'Low', hint: '0.7x', icon: BatteryCharging },
-    { id: 'exhausted', label: 'Rest', hint: '0.4x', icon: Moon }
+    { id: 'high', label: ENERGY_PROFILES.high.label, hint: '60m blocks', icon: Zap },
+    { id: 'normal', label: ENERGY_PROFILES.normal.label, hint: '45m blocks', icon: Target },
+    { id: 'low', label: ENERGY_PROFILES.low.label, hint: '30m blocks', icon: BatteryCharging },
+    { id: 'exhausted', label: ENERGY_PROFILES.exhausted.label, hint: 'Urgent only', icon: Moon }
   ];
 
   const scheduleFieldStyle: React.CSSProperties = {
@@ -175,8 +180,10 @@ export const ProfileScreen: React.FC = () => {
     { label: 'WAKE UP', value: profile.wakeUpTime || '07:00' },
     { label: 'COLLEGE END', value: profile.collegeEndTime || '17:00' },
     { label: 'COMMUTE', value: (profile.commuteMinutes ?? 30) + 'm' },
+    { label: 'CLASSES', value: describeCollegeDays(profile.collegeDays) },
     { label: 'STUDY GOAL', value: (profile.dailyStudyGoalHours ?? 3) + 'h' },
-    { label: 'DONE TODAY', value: Math.round(studyGoal.completedMinutes / 6) / 10 + 'h' }
+    { label: 'DONE TODAY', value: Math.round(studyGoal.completedMinutes / 6) / 10 + 'h' },
+    { label: 'ENERGY', value: ENERGY_PROFILES[profile.energyLevel]?.label ?? 'Steady' }
   ];
 
   const initials = profile.name
@@ -233,14 +240,16 @@ export const ProfileScreen: React.FC = () => {
             </div>
             <div>
               <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--sarah-on-background)' }}>
-                {profile.name}
+                {profile.name || 'Add your name'}
               </div>
               <div style={{ fontSize: '12px', color: 'var(--sarah-on-surface-variant)' }}>
-                {profile.branch}
+                {profile.branch || 'Branch / major not set'}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
-                {profile.semester} • College Schedule Active
-              </div>
+              {profile.semester && (
+                <div style={{ fontSize: '11px', color: 'var(--sarah-secondary)', marginTop: '2px' }}>
+                  {profile.semester}
+                </div>
+              )}
             </div>
           </div>
 
@@ -290,7 +299,7 @@ export const ProfileScreen: React.FC = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Yash Wagh"
+                placeholder="e.g. Priya Sharma"
                 style={{
                   padding: '8px 12px',
                   borderRadius: '10px',
@@ -422,6 +431,7 @@ export const ProfileScreen: React.FC = () => {
               setCollegeEndTime(profile.collegeEndTime || '17:00');
               setCommuteMinutes(profile.commuteMinutes || 30);
               setDailyStudyGoalHours(profile.dailyStudyGoalHours ?? 3);
+              setCollegeDays(profile.collegeDays ?? [1, 2, 3, 4, 5]);
               setIsEditingSchedule(prev => !prev);
             }}
             className="btn-press"
@@ -512,6 +522,11 @@ export const ProfileScreen: React.FC = () => {
                   style={scheduleFieldStyle}
                 />
               </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sarah-secondary)' }}>Days with classes</label>
+              <CollegeDaysPicker value={collegeDays} onChange={setCollegeDays} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
@@ -651,7 +666,7 @@ export const ProfileScreen: React.FC = () => {
             </span>
           </div>
           <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--sarah-secondary)' }}>
-            Scales tonight&rsquo;s study capacity
+            Shapes tonight&rsquo;s plan
           </span>
         </div>
 

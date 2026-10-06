@@ -16,6 +16,7 @@ import { NoteModal } from './components/NoteModal';
 import { ReminderModal } from './components/ReminderModal';
 import { SubjectModal } from './components/SubjectModal';
 import { QuickAddMenu } from './components/QuickAddMenu';
+import { WelcomeSheet } from './components/WelcomeSheet';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('today');
@@ -56,6 +57,9 @@ const AppContent: React.FC = () => {
 
       {/* Global Subject Modal (Add & Edit Bottom Sheet) */}
       <SubjectModal />
+
+      {/* First-run setup: name, classes and bedtime feed tonight's plan */}
+      <WelcomeSheet />
 
       {/* Global Toast Notification */}
       {toastMessage && (

@@ -157,7 +157,16 @@ async function runHardeningTest() {
   await completeTask(survivedTask.id, true);
   const completedT = await getTask(survivedTask.id);
   if (!completedT?.completed) throw new Error('Task completion failed');
+  if (typeof completedT.completedAt !== 'number') throw new Error('Completing a task must stamp completedAt');
   console.log('✓ Task completion state toggle verified.');
+
+  // Editing a finished task must not move its completion time (study-goal credit).
+  const editedDone = await updateTask({ ...completedT, title: 'Edited after completion' });
+  if (editedDone.completedAt !== completedT.completedAt) throw new Error('Editing a done task moved completedAt');
+  await completeTask(survivedTask.id, false);
+  if ((await getTask(survivedTask.id))?.completedAt !== undefined) throw new Error('Reopening must clear completedAt');
+  await completeTask(survivedTask.id, true);
+  console.log('✓ Completion timestamp survives edits and clears on reopen.');
 
   // Unpin note
   await toggleNotePinned(survivedNote.id, false);

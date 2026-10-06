@@ -13,19 +13,23 @@ export interface UserProfile {
   collegeEndTime: string; // 'HH:mm', e.g. '17:00'
   commuteMinutes: number; // e.g. 30
   dailyStudyGoalHours: number; // Target focused study hours per day
+  collegeDays: number[]; // Days with classes, 0 = Sunday … 6 = Saturday
   energyLevel: EnergyLevel;
   theme: ThemePreference;
 }
 
+// Deliberately blank: a fresh install is set up through the welcome sheet rather
+// than greeting every new student with someone else's name.
 export const DEFAULT_USER_PROFILE: UserProfile = {
-  name: 'Yash Wagh',
-  branch: 'Computer Science & Engineering',
-  semester: 'Semester 6',
+  name: '',
+  branch: '',
+  semester: '',
   targetBedtime: '23:30',
   wakeUpTime: '07:00',
   collegeEndTime: '17:00',
   commuteMinutes: 30,
   dailyStudyGoalHours: 3,
+  collegeDays: [1, 2, 3, 4, 5],
   energyLevel: 'normal',
   theme: 'system'
 };
@@ -40,6 +44,7 @@ export interface Task {
   priority: TaskPriority;
   estimatedMinutes: number;
   completed: boolean;
+  completedAt?: number; // When it was last checked off; editing a done task must not move this
   createdAt: number;
   updatedAt: number;
 }
@@ -437,10 +442,12 @@ export async function completeTask(id: string, completed: boolean): Promise<Task
   const db = await getDB();
   const existing = await db.get('tasks', id);
   if (!existing) return undefined;
+  const now = Date.now();
   const updated: Task = {
     ...existing,
     completed,
-    updatedAt: Date.now()
+    completedAt: completed ? now : undefined,
+    updatedAt: now
   };
   await db.put('tasks', updated);
   return updated;
@@ -581,6 +588,13 @@ export async function snoozeReminder(id: string, newTimeEpochMs: number): Promis
 // ─── User Profile & Preferences Operations ───────────────────────────────────
 
 const USER_PROFILE_KEY = 'sarah_user_profile_v1';
+
+/** False until the student has saved a profile once — drives the welcome sheet. */
+export async function hasStoredUserProfile(): Promise<boolean> {
+  const db = await getDB();
+  const stored = await db.get('key_val', USER_PROFILE_KEY);
+  return Boolean(stored && typeof stored === 'object');
+}
 
 export async function getUserProfile(): Promise<UserProfile> {
   const db = await getDB();

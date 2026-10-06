@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   getTasks, 
   addTask as dbAddTask, 
@@ -14,11 +14,6 @@ interface TasksContextType {
   isLoading: boolean;
   activeTasks: Task[];
   completedTasks: Task[];
-  todayTasks: Task[];
-  mustDoTasks: Task[];
-  shouldDoTasks: Task[];
-  laterTasks: Task[];
-  nextActionTask: Task | null;
   todayStr: string;
   
   // CRUD Actions
@@ -58,11 +53,13 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // One timer for the toast slot: comparing message text let an earlier timer
+  // hide a repeat of the same message after only a fraction of its time.
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(prev => (prev === msg ? null : prev));
-    }, 2800);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastMessage(null), 2800);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -111,8 +108,11 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const target = tasks.find(t => t.id === id);
     if (!target) return;
     const newStatus = !target.completed;
+    const now = Date.now();
     // Instant zero-lag optimistic UI feedback
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: newStatus, updatedAt: Date.now() } : t));
+    setTasks(prev => prev.map(t => t.id === id
+      ? { ...t, completed: newStatus, completedAt: newStatus ? now : undefined, updatedAt: now }
+      : t));
     try {
       await dbCompleteTask(id, newStatus);
       showToast(newStatus ? 'Task completed! 🎉' : 'Task reopened');
@@ -159,71 +159,11 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // to the new day instead of staying on the day it was launched.
   const todayStr = useMemo(() => toLocalDateStr(new Date(now)), [now]);
 
-  const todayTasks = useMemo(() => {
-    return tasks.filter(t => t.deadline <= todayStr && !t.completed);
-  }, [tasks, todayStr]);
-
-  const mustDoTasks = useMemo(() => {
-    return activeTasks.filter(t => t.priority === 'must');
-  }, [activeTasks]);
-
-  const shouldDoTasks = useMemo(() => {
-    return activeTasks.filter(t => t.priority === 'should');
-  }, [activeTasks]);
-
-  const laterTasks = useMemo(() => {
-    return activeTasks.filter(t => t.priority === 'later');
-  }, [activeTasks]);
-
-  // Deterministic Next Move Engine
-  // 1. Overdue incomplete tasks
-  // 2. Nearest deadline today
-  // 3. Highest priority (must -> should -> later)
-  const nextActionTask = useMemo(() => {
-    if (activeTasks.length === 0) return null;
-
-    // Check overdue
-    const overdue = activeTasks.filter(t => t.deadline < todayStr);
-    if (overdue.length > 0) {
-      // Sort by priority (must > should > later)
-      const priorityWeights: Record<string, number> = { must: 3, should: 2, later: 1 };
-      return [...overdue].sort((a, b) => priorityWeights[b.priority] - priorityWeights[a.priority])[0];
-    }
-
-    // Check due today
-    const dueToday = activeTasks.filter(t => t.deadline === todayStr);
-    if (dueToday.length > 0) {
-      const priorityWeights: Record<string, number> = { must: 3, should: 2, later: 1 };
-      return [...dueToday].sort((a, b) => {
-        const pDiff = priorityWeights[b.priority] - priorityWeights[a.priority];
-        if (pDiff !== 0) return pDiff;
-        // If times exist, compare times
-        if (a.deadlineTime && b.deadlineTime) {
-          return a.deadlineTime.localeCompare(b.deadlineTime);
-        }
-        return 0;
-      })[0];
-    }
-
-    // Otherwise, highest priority nearest future deadline
-    const priorityWeights: Record<string, number> = { must: 3, should: 2, later: 1 };
-    return [...activeTasks].sort((a, b) => {
-      const pDiff = priorityWeights[b.priority] - priorityWeights[a.priority];
-      if (pDiff !== 0) return pDiff;
-      return a.deadline.localeCompare(b.deadline);
-    })[0];
-  }, [activeTasks, todayStr]);
-
   const value = useMemo(() => ({
     tasks,
     isLoading,
     activeTasks,
     completedTasks,
-    todayTasks,
-    mustDoTasks,
-    shouldDoTasks,
-    laterTasks,
-    nextActionTask,
     todayStr,
     createTask,
     modifyTask,
@@ -246,11 +186,6 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     isLoading,
     activeTasks,
     completedTasks,
-    todayTasks,
-    mustDoTasks,
-    shouldDoTasks,
-    laterTasks,
-    nextActionTask,
     todayStr,
     createTask,
     modifyTask,

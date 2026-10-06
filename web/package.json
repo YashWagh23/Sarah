@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "tsx test-persistence.ts"
+    "test": "tsx test-persistence.ts && tsx test-planner.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
