@@ -80,7 +80,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onEdit, show
 
       <div className="stack" style={{ alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
         {!task.completed && task.priority === 'must' && <span className="tag tag-danger">Must</span>}
-        <span className="row meta mono" style={{ gap: 4, fontSize: 12 }}>
+        <span className="row meta tnum" style={{ gap: 4, fontSize: 12 }}>
           <Clock size={12} />
           {formatMinutes(task.estimatedMinutes)}
         </span>

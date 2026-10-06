@@ -62,7 +62,7 @@ export const TasksScreen: React.FC = () => {
       || Boolean(task.description?.toLowerCase().includes(q));
   };
 
-  const openGroups = useMemo(() => {
+  const openGroups = (() => {
     const now = Date.now();
     const sorted = activeTasks.filter(matches).sort((a, b) => taskDueMs(a) - taskDueMs(b));
     const buckets = GROUPS.map(g => ({ ...g, items: [] as Task[] }));
@@ -72,14 +72,11 @@ export const TasksScreen: React.FC = () => {
       buckets.find(b => b.test(days, overdue))!.items.push(task);
     }
     return buckets.filter(b => b.items.length > 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTasks, subjectFilter, query]);
+  })();
 
-  const doneTasks = useMemo(
-    () => completedTasks.filter(matches).sort((a, b) => (b.completedAt ?? b.updatedAt) - (a.completedAt ?? a.updatedAt)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [completedTasks, subjectFilter, query]
-  );
+  const doneTasks = completedTasks
+    .filter(matches)
+    .sort((a, b) => (b.completedAt ?? b.updatedAt) - (a.completedAt ?? a.updatedAt));
 
   const isFiltered = Boolean(query.trim()) || subjectFilter !== 'all';
   const shownCount = view === 'open' ? openGroups.reduce((n, g) => n + g.items.length, 0) : doneTasks.length;

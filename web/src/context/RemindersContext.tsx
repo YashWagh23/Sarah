@@ -86,9 +86,9 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const permission = await Notification.requestPermission();
       setNotificationPermission(permission);
       if (permission === 'granted') {
-        showToast('🔔 Browser notifications enabled');
+        showToast('Reminder alerts are on');
       } else if (permission === 'denied') {
-        showToast('Notifications blocked in browser settings');
+        showToast('Notifications are blocked in your browser settings');
       }
       return permission;
     } catch (err) {
@@ -119,7 +119,7 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           alertedIdsRef.current.add(reminder.id);
 
           // 1. In-app toast alert
-          showToast(`⏰ Reminder: ${reminder.title}`);
+          showToast(`Reminder: ${reminder.title}`);
 
           // 2. System browser notification if permission granted
           if (
@@ -182,7 +182,7 @@ export const RemindersProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Instant zero-lag optimistic UI update
     setReminders(prev => prev.map(r => r.id === id ? { ...r, dismissed: true, updatedAt: Date.now() } : r));
     alertedIdsRef.current.add(id);
-    showToast('Reminder dismissed');
+    showToast('Reminder done');
     try {
       await dbDismissReminder(id);
     } catch (err) {

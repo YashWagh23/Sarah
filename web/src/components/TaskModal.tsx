@@ -39,10 +39,9 @@ export const TaskModal: React.FC = () => {
     if (editingTask) {
       setTitle(editingTask.title);
       setDescription(editingTask.description || '');
-      const known = names.includes(editingTask.subject) || editingTask.subject === 'General';
-      setSubject(known ? editingTask.subject : 'General');
-      setIsCustomSubject(!known);
-      setCustomSubject(known ? '' : editingTask.subject);
+      setSubject(editingTask.subject || 'General');
+      setIsCustomSubject(false);
+      setCustomSubject('');
       setDeadline(editingTask.deadline || todayStr());
       setDeadlineTime(editingTask.deadlineTime || '23:59');
       setPriority(editingTask.priority);
@@ -182,7 +181,7 @@ export const TaskModal: React.FC = () => {
       <FieldGroup label={`Time needed: ${formatMinutes(estimatedMinutes)}`} hint="Sarah uses this to fit the task into your evening.">
         <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
           {DURATIONS.map(m => (
-            <button key={m} type="button" className="chip mono" aria-pressed={estimatedMinutes === m} onClick={() => setEstimatedMinutes(m)}>
+            <button key={m} type="button" className="chip tnum" aria-pressed={estimatedMinutes === m} onClick={() => setEstimatedMinutes(m)}>
               {formatMinutes(m)}
             </button>
           ))}

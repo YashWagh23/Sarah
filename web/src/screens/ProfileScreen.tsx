@@ -38,7 +38,7 @@ const SettingRow: React.FC<{ label: string; value: React.ReactNode; onClick?: ()
   const content = (
     <>
       <span className="grow" style={{ fontSize: 14.5 }}>{label}</span>
-      <span className="mono" style={{ fontSize: 13.5, color: 'var(--text-2)' }}>{value}</span>
+      <span className="tnum" style={{ fontSize: 13.5, color: 'var(--text-2)' }}>{value}</span>
       {onClick && <ChevronRight size={17} color="var(--text-3)" />}
     </>
   );
@@ -92,7 +92,6 @@ export const ProfileScreen: React.FC = () => {
       setCollegeDays(profile.collegeDays ?? [1, 2, 3, 4, 5]);
     }
     // Only when a sheet opens; profile edits elsewhere must not wipe a draft.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheet]);
 
   const isStandalone = typeof window !== 'undefined'
@@ -287,7 +286,7 @@ export const ProfileScreen: React.FC = () => {
           <summary style={{ fontSize: 14.5, fontWeight: 600, cursor: 'pointer' }}>Install on your phone</summary>
           <ol style={{ margin: '12px 0 0 18px', display: 'grid', gap: 8, fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.5 }}>
             <li>Open Sarah in Safari (iPhone) or Chrome (Android).</li>
-            <li className="row" style={{ gap: 4, display: 'list-item' }}>
+            <li>
               Tap Share <Share size={13} style={{ verticalAlign: '-2px' }} /> or the browser menu.
             </li>
             <li>

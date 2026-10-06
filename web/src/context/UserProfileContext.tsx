@@ -82,7 +82,7 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
     // Instant zero-lag optimistic UI update
     setProfile(updated);
-    showToast(`${ENERGY_PROFILES[energy].label} energy · ${ENERGY_PROFILES[energy].hint} — plan updated`);
+    showToast(`Energy set to ${ENERGY_PROFILES[energy].label}. Plan updated.`);
     try {
       await saveUserProfile(updated);
     } catch (err) {

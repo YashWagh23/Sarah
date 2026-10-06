@@ -363,7 +363,7 @@ export function buildTonightPlan(tasks: Task[], profile: ScheduleProfile, nowMs:
 
   if (ranked.length === 0) {
     status = 'clear';
-    headline = 'Nothing due — your evening is yours';
+    headline = 'Nothing due. Your evening is yours.';
     subtext = pastBedtime
       ? 'Get some sleep. Add anything new when it comes up.'
       : `${formatMinutes(freeMinutes)} free before ${bedtimeLabel}.`;
@@ -379,7 +379,7 @@ export function buildTonightPlan(tasks: Task[], profile: ScheduleProfile, nowMs:
     subtext = `About ${formatMinutes(shortfallMinutes)} short before ${bedtimeLabel}. Start with the top item, trim scope, or ask for an extension early.`;
   } else if (restMode) {
     status = 'rest_recommended';
-    headline = 'Rest mode — only what can’t wait';
+    headline = 'Rest mode: only what can’t wait';
     subtext = planned.length > 0
       ? `${plural(planned.length, 'urgent task')} planned; everything else moved to later.`
       : `Nothing urgent tonight. ${plural(deferred.length, 'task')} moved to later.`;

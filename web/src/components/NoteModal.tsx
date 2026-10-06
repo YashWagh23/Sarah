@@ -31,10 +31,9 @@ export const NoteModal: React.FC = () => {
     if (editingNote && editingNote.id) {
       setTitle(editingNote.title);
       setContent(editingNote.content);
-      const known = names.includes(editingNote.subject) || editingNote.subject === 'General';
-      setSubject(known ? editingNote.subject : 'General');
-      setIsCustomSubject(!known);
-      setCustomSubject(known ? '' : editingNote.subject);
+      setSubject(editingNote.subject || 'General');
+      setIsCustomSubject(false);
+      setCustomSubject('');
       setPinned(editingNote.pinned || false);
     } else {
       setTitle('');

@@ -95,7 +95,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({ reminder, onDismiss,
         <div className="row-title truncate">{reminder.title}</div>
         <div className="row" style={{ gap: 10, marginTop: 2 }}>
           <span
-            className="meta mono"
+            className="meta tnum"
             style={{ fontSize: 12, color: isLate ? 'var(--danger)' : isSoon ? 'var(--warn)' : 'var(--text-3)', fontWeight: 550 }}
           >
             {when}

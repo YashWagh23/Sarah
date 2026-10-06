@@ -36,17 +36,10 @@ const STATUS_TAG: Record<PlanStatus, { label: string; tone: string }> = {
   past_bedtime: { label: 'Bedtime', tone: 'tag-accent' }
 };
 
-function urgencyTag(scored: ScoredTask): { label: string; tone: string } {
-  switch (scored.urgency) {
-    case 'overdue':
-      return { label: 'Overdue', tone: 'tag-danger' };
-    case 'today':
-      return { label: 'Due today', tone: 'tag-danger' };
-    case 'tomorrow':
-      return { label: 'Due tomorrow', tone: 'tag-warn' };
-    default:
-      return scored.task.priority === 'must' ? { label: 'Must do', tone: 'tag-danger' } : { label: 'Up next', tone: 'tag-accent' };
-  }
+function urgencyColor(scored: ScoredTask): string {
+  if (scored.urgency === 'overdue' || scored.urgency === 'today') return 'var(--danger)';
+  if (scored.urgency === 'tomorrow') return 'var(--warn)';
+  return 'var(--text-2)';
 }
 
 const BLOCK_ICON: Record<PlanBlock['kind'], React.ComponentType<{ size?: number }>> = {
@@ -56,7 +49,7 @@ const BLOCK_ICON: Record<PlanBlock['kind'], React.ComponentType<{ size?: number 
   break: Coffee
 };
 
-const TIME_COL = 68;
+const TIME_COL = 82;
 
 export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) => {
   const { completedTasks, toggleTaskCompletion, openEditTaskModal, openCreateTaskModal } = useTasks();
@@ -93,10 +86,10 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
       const Icon = BLOCK_ICON[item.kind];
       return (
         <li key={`${item.kind}-${index}`} className="list-row" style={{ minHeight: 40, padding: '6px 14px', color: 'var(--text-3)' }}>
-          <span className="mono" style={{ width: TIME_COL - 14, fontSize: 12, flexShrink: 0 }}>{formatClock(item.startMs)}</span>
+          <span className="tnum" style={{ width: TIME_COL - 14, whiteSpace: 'nowrap', fontSize: 12, flexShrink: 0 }}>{formatClock(item.startMs)}</span>
           <Icon size={15} />
           <span style={{ fontSize: 13 }}>{item.label}</span>
-          <span className="mono" style={{ marginLeft: 'auto', fontSize: 12 }}>{formatMinutes(item.end - item.start)}</span>
+          <span className="tnum" style={{ marginLeft: 'auto', fontSize: 12 }}>{formatMinutes(item.end - item.start)}</span>
         </li>
       );
     }
@@ -114,7 +107,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           }}
           style={{ cursor: 'pointer' }}
         >
-          <span className="mono" style={{ width: TIME_COL - 14, fontSize: 12.5, fontWeight: 600, flexShrink: 0 }}>
+          <span className="tnum" style={{ width: TIME_COL - 14, whiteSpace: 'nowrap', fontSize: 12.5, fontWeight: 600, flexShrink: 0 }}>
             {formatClock(item.startMs)}
           </span>
           <span className="subject-mark" style={{ background: getSubjectColor(task.subject) }} />
@@ -127,7 +120,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               {scored.reason}
             </div>
           </div>
-          <span className="meta mono" style={{ fontSize: 12, flexShrink: 0 }}>{formatMinutes(item.end - item.start)}</span>
+          <span className="meta tnum" style={{ fontSize: 12, flexShrink: 0 }}>{formatMinutes(item.end - item.start)}</span>
           <span className="check-hit">
             <button
               type="button"
@@ -191,7 +184,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
               ].map(stat => (
                 <div key={stat.label}>
                   <dt className="meta">{stat.label}</dt>
-                  <dd className="mono" style={{ fontSize: 15, fontWeight: 600 }}>{stat.value}</dd>
+                  <dd className="tnum" style={{ fontSize: 15, fontWeight: 600 }}>{stat.value}</dd>
                 </div>
               ))}
             </dl>
@@ -210,7 +203,7 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           >
             <span style={{ width: `${studyGoal.percent}%`, background: studyGoal.isMet ? 'var(--ok)' : 'var(--accent)' }} />
           </div>
-          <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: studyGoal.isMet ? 'var(--ok)' : 'var(--text)', flexShrink: 0 }}>
+          <span className="tnum" style={{ fontSize: 12.5, fontWeight: 600, color: studyGoal.isMet ? 'var(--ok)' : 'var(--text)', flexShrink: 0 }}>
             {formatMinutes(studyGoal.completedMinutes)} / {formatMinutes(studyGoal.goalMinutes)}
           </span>
         </div>
@@ -230,24 +223,20 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
             className="card press stack-12"
             style={{ padding: 16, cursor: 'pointer', borderColor: 'rgba(var(--accent-rgb), 0.35)', boxShadow: 'var(--shadow-2)' }}
           >
-            <div className="row" style={{ justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
-              <div className="grow stack-4">
-                <h4 style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.25 }}>{next.task.title}</h4>
-                <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
-                  <span className="row meta" style={{ gap: 6 }}>
-                    <span className="swatch" style={{ background: getSubjectColor(next.task.subject) }} />
-                    {next.task.subject}
-                  </span>
-                  <span className="meta" style={{ color: next.urgency === 'overdue' ? 'var(--danger)' : undefined }}>{next.reason}</span>
-                </div>
-              </div>
-              <span className={`tag ${urgencyTag(next).tone}`}>{urgencyTag(next).label}</span>
+            <div className="stack-4">
+              <span style={{ fontSize: 13, fontWeight: 600, color: urgencyColor(next) }}>{next.reason}</span>
+              <h4 style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.25 }}>{next.task.title}</h4>
+              <span className="row meta" style={{ gap: 6 }}>
+                <span className="swatch" style={{ background: getSubjectColor(next.task.subject) }} />
+                {next.task.subject}
+                {next.task.priority === 'must' && <span className="tag tag-danger" style={{ marginLeft: 4 }}>Must</span>}
+              </span>
             </div>
             <div className="row" style={{ justifyContent: 'space-between', gap: 12 }}>
-              <span className="meta mono" style={{ fontSize: 12.5 }}>
+              <span className="meta tnum" style={{ fontSize: 12.5 }}>
                 {nextSession
-                  ? `${formatClock(nextSession.startMs)}, ${formatMinutes(next.task.estimatedMinutes)}`
-                  : `${formatMinutes(next.task.estimatedMinutes)}, not scheduled tonight`}
+                  ? `Starts ${formatClock(nextSession.startMs)}, takes ${formatMinutes(next.task.estimatedMinutes)}`
+                  : `Takes ${formatMinutes(next.task.estimatedMinutes)}, not scheduled tonight`}
               </span>
               <button
                 type="button"
@@ -320,12 +309,12 @@ export const TodayScreen: React.FC<TodayScreenProps> = ({ onNavigateToNotes }) =
           <SectionHead
             id="plan-title"
             title="Tonight's plan"
-            action={<span className="meta mono">{formatMinutes(plan.plannedMinutes)}</span>}
+            action={<span className="meta tnum">{formatMinutes(plan.plannedMinutes)}</span>}
           />
           <ol className="list" style={{ listStyle: 'none' }}>
             {plan.items.map(renderTimelineRow)}
             <li className="list-row" style={{ minHeight: 40, padding: '6px 14px', color: 'var(--accent-text)' }}>
-              <span className="mono" style={{ width: TIME_COL - 14, fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{plan.bedtimeLabel}</span>
+              <span className="tnum" style={{ width: TIME_COL - 14, whiteSpace: 'nowrap', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{plan.bedtimeLabel}</span>
               <Moon size={15} />
               <span style={{ fontSize: 13, fontWeight: 600 }}>Bedtime</span>
             </li>

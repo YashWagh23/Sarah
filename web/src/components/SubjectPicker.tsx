@@ -19,6 +19,10 @@ export const SubjectPicker: React.FC<SubjectPickerProps> = ({ value, isCustom, c
   const options = subjects.length > 0
     ? subjects.map(s => ({ name: s.name, color: s.color }))
     : [{ name: FALLBACK_SUBJECT, color: getSubjectColor(FALLBACK_SUBJECT) }];
+  // A record filed under a subject with no Subject entry still shows it selected.
+  if (value && !options.some(o => o.name.toLowerCase() === value.toLowerCase())) {
+    options.unshift({ name: value, color: getSubjectColor(value) });
+  }
 
   return (
     <FieldGroup label="Subject">

@@ -82,7 +82,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const createNote = useCallback(async (noteData: Omit<AcademicNote, 'id' | 'createdAt' | 'updatedAt'>) => {
     const created = await dbAddNote(noteData);
     await refreshNotes();
-    showToast('Note captured successfully');
+    showToast('Note saved');
     return created;
   }, [refreshNotes, showToast]);
 
@@ -113,7 +113,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setNotes(prev => prev.map(n => n.id === id ? { ...n, pinned: newPinned, updatedAt: Date.now() } : n));
     try {
       await dbToggleNotePinned(id, newPinned);
-      showToast(newPinned ? '📌 Note pinned to top' : 'Note unpinned');
+      showToast(newPinned ? 'Pinned to Today' : 'Note unpinned');
     } catch (err) {
       console.error('Failed to toggle pin:', err);
       await refreshNotes();

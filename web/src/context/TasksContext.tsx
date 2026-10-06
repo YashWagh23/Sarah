@@ -81,7 +81,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const createTask = useCallback(async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     const created = await dbAddTask(taskData);
     await refresh();
-    showToast('Task added successfully');
+    showToast('Task added');
     return created;
   }, [refresh, showToast]);
 
@@ -115,7 +115,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       : t));
     try {
       await dbCompleteTask(id, newStatus);
-      showToast(newStatus ? 'Task completed! 🎉' : 'Task reopened');
+      showToast(newStatus ? 'Done. Plan updated.' : 'Task reopened');
     } catch (err) {
       console.error('Failed to complete task:', err);
       await refresh();

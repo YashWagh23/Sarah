@@ -1,5 +1,4 @@
 @import '@fontsource-variable/geist';
-@import '@fontsource-variable/geist-mono';
 
 /* ───────────────────────────────────────────────────────────────────────────
    Sarah design tokens
@@ -52,7 +51,6 @@
   --r-sheet: 24px;
 
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
@@ -164,10 +162,9 @@ input[type="date"], input[type="time"], input[type="number"] {
   stroke-width: 1.85;
 }
 
-.mono {
-  font-family: var(--font-mono);
+/* Times and durations: tabular figures so columns line up. */
+.tnum {
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
 }
 
 .safe-top { padding-top: env(safe-area-inset-top, 0px); }

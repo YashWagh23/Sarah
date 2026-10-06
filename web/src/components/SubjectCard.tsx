@@ -28,7 +28,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, onClick }) =>
         </span>
       </span>
       {details && (
-        <span className="meta mono" style={{ textAlign: 'right', fontSize: 12, flexShrink: 0 }}>
+        <span className="meta tnum" style={{ textAlign: 'right', fontSize: 12, flexShrink: 0 }}>
           {openTasks} open
         </span>
       )}
